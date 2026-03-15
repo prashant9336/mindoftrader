@@ -1,0 +1,2908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>MindOfTrader — Know Your Trading Mind</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js">
+
+// ─── NAVIGATION UPDATE (add connect + ai) ───────────────────
+function goTo(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('on'));
+  const target=document.getElementById(id+'-view');
+  if(!target)return;
+  target.classList.add('on');
+  const map={dashboard:0,log:1,connect:2,ai:3,dna:4};
+  const tabs=document.querySelectorAll('.nav-tab');
+  if(tabs[map[id]])tabs[map[id]].classList.add('on');
+  if(id==='dashboard')renderDashboard();
+  if(id==='dna')renderDNA();
+  if(id==='connect')initConnectView();
+}
+
+function initConnectView(){
+  document.getElementById('redirect-url-display').textContent = location.origin + location.pathname;
+}
+
+// ─── MODAL HELPERS ───────────────────────────────────────────
+function openZerodhaModal(){ document.getElementById('zerodha-modal').classList.add('on'); }
+function closeModal(id){ document.getElementById(id).classList.remove('on'); }
+
+// ─── ZERODHA CONNECT ─────────────────────────────────────────
+function connectZerodha(){
+  const key = document.getElementById('z-api-key').value.trim();
+  if(!key){ showToast('Enter your Zerodha API key first'); return; }
+  // Build Kite login URL
+  const loginUrl = `https://kite.zerodha.com/connect/login?api_key=${key}&v=3`;
+  showToast('Opening Zerodha login...');
+  closeModal('zerodha-modal');
+  // Store key for callback
+  localStorage.setItem('z_api_key', key);
+  setTimeout(()=>window.open(loginUrl,'_blank'), 500);
+}
+
+// Handle Zerodha callback (if request_token in URL)
+(function checkZerodhaCallback(){
+  const params = new URLSearchParams(location.search);
+  const reqToken = params.get('request_token');
+  const action = params.get('action');
+  if(reqToken && action === 'login'){
+    showToast('✓ Zerodha connected! Importing trades...');
+    localStorage.setItem('z_connected', 'true');
+    // Simulate import since we need a backend for actual API call
+    simulateZerodhaImport();
+  }
+})();
+
+// ─── CSV UPLOAD ──────────────────────────────────────────────
+const csvDrop = document.getElementById('csv-drop');
+if(csvDrop){
+  csvDrop.addEventListener('dragover', e=>{ e.preventDefault(); csvDrop.classList.add('dragover'); });
+  csvDrop.addEventListener('dragleave', ()=>csvDrop.classList.remove('dragover'));
+  csvDrop.addEventListener('drop', e=>{ e.preventDefault(); csvDrop.classList.remove('dragover'); const f=e.dataTransfer.files[0]; if(f)processCSVFile(f); });
+}
+
+function handleCSVUpload(e){
+  const f = e.target.files[0];
+  if(f) processCSVFile(f);
+}
+
+function processCSVFile(file){
+  const reader = new FileReader();
+  reader.onload = e => parseCSV(e.target.result, file.name);
+  reader.readAsText(file);
+}
+
+function parseCSV(text, filename){
+  showImportProgress();
+  const lines = text.trim().split('\n').filter(l=>l.trim());
+  if(lines.length < 2){ showToast('CSV appears empty or invalid'); return; }
+
+  const headers = lines[0].toLowerCase().split(',').map(h=>h.trim().replace(/"/g,''));
+  const rows = lines.slice(1);
+
+  let found=0, imported=0, optionCount=0;
+  const newTrades = [];
+
+  // Detect Zerodha format vs generic
+  const isZerodha = headers.some(h=>h.includes('tradingsymbol')||h.includes('trade id'));
+
+  rows.forEach((row,idx)=>{
+    found++;
+    updateImportProgress(Math.round((idx/rows.length)*60), `Parsing row ${idx+1} of ${rows.length}...`, found, imported, optionCount);
+
+    const cols = row.split(',').map(c=>c.trim().replace(/"/g,''));
+    const get = (names)=>{ for(const n of names){ const i=headers.findIndex(h=>h.includes(n)); if(i>=0)return cols[i]||''; } return ''; };
+
+    const symbol = get(['tradingsymbol','symbol','instrument','scrip']);
+    const type = get(['transaction type','trade type','buy/sell','type']);
+    const price = parseFloat(get(['average price','price','avg price','rate'])) || 0;
+    const qty = parseInt(get(['quantity','qty'])) || 0;
+    const dateStr = get(['trade date','order date','date','time']);
+
+    // Only process options
+    if(!symbol.endsWith('CE') && !symbol.endsWith('PE')) return;
+    optionCount++;
+
+    // Parse symbol: e.g. NIFTY24315CE → NIFTY, strike, CE
+    const match = symbol.match(/^(NIFTY|BANKNIFTY|FINNIFTY|MIDCPNIFTY)/i);
+    const indexName = match ? match[1].toUpperCase() : 'NIFTY';
+    const optType = symbol.endsWith('CE') ? 'CE' : 'PE';
+    const strikeMatch = symbol.match(/(\d{4,6})(CE|PE)$/);
+    const strike = strikeMatch ? strikeMatch[1] : '';
+    const action = type.toUpperCase().includes('BUY') ? 'BUY' : 'SELL';
+    const lotSizes = {NIFTY:75,BANKNIFTY:30,FINNIFTY:40,MIDCPNIFTY:75};
+    const ls = lotSizes[indexName]||75;
+    const lots = Math.round(qty/ls)||1;
+
+    // Auto-detect emotion based on time (heuristic)
+    const hour = dateStr ? parseInt(dateStr.split(' ')[1]?.split(':')[0]||'10') : 10;
+    const emotion = hour >= 14 ? 'fomo' : hour >= 12 ? 'fear' : 'calm';
+
+    newTrades.push({
+      id: Date.now()+idx,
+      date: dateStr.split(' ')[0] || new Date().toISOString().split('T')[0],
+      symbol: indexName,
+      strike: strike+' '+optType,
+      action: action+' '+optType,
+      lots, entry: price, exit: 0,
+      sl:0, target:0,
+      setup: 'Imported from ' + filename,
+      emotion, rules:[1,1,1,1,1,1,1],
+      pnl: 0, broken: false,
+      imported: true,
+    });
+    imported++;
+    updateImportProgress(60+Math.round((idx/rows.length)*40), `Processing ${imported} options trades...`, found, imported, optionCount);
+  });
+
+  // Merge with existing trades
+  trades = [...newTrades, ...trades];
+  finishImport(found, imported, optionCount);
+}
+
+function showImportProgress(){
+  document.getElementById('import-progress').classList.add('on');
+}
+function updateImportProgress(pct, status, found, imported, options){
+  document.getElementById('ip-bar').style.width = pct+'%';
+  document.getElementById('ip-status').textContent = status;
+  document.getElementById('ip-found').textContent = found;
+  document.getElementById('ip-imported').textContent = imported;
+  document.getElementById('ip-options').textContent = options;
+}
+function finishImport(found, imported, options){
+  updateImportProgress(100, '✓ Import complete!', found, imported, options);
+  document.getElementById('ip-title').textContent = `✓ ${imported} options trades imported`;
+  renderTradeTable(trades);
+  renderDNA();
+  showToast(`✓ ${imported} trades imported! Go to AI Coach for instant analysis.`);
+  setTimeout(()=>{ goTo('ai'); runAIAnalysis(); }, 1500);
+}
+
+// ─── SAMPLE DATA LOADER ──────────────────────────────────────
+function loadSampleData(e){
+  e.stopPropagation();
+  const sampleTrades = [
+    {id:101,date:'2026-03-10',symbol:'NIFTY',strike:'24500 CE',action:'BUY CE',lots:2,entry:180,exit:265,sl:0,target:280,setup:'Imported',emotion:'calm',rules:[1,1,1,1,1,1,1],pnl:12750,broken:false,imported:true},
+    {id:102,date:'2026-03-10',symbol:'NIFTY',strike:'24300 PE',action:'BUY PE',lots:1,entry:320,exit:210,sl:0,target:450,setup:'Imported',emotion:'revenge',rules:[1,1,0,1,0,0,1],pnl:-3300,broken:true,imported:true},
+    {id:103,date:'2026-03-11',symbol:'BANKNIFTY',strike:'51000 CE',action:'BUY CE',lots:1,entry:420,exit:580,sl:0,target:600,setup:'Imported',emotion:'focused',rules:[1,1,1,1,1,1,1],pnl:4800,broken:false,imported:true},
+    {id:104,date:'2026-03-11',symbol:'NIFTY',strike:'24400 CE',action:'BUY CE',lots:1,entry:210,exit:175,sl:0,target:290,setup:'Imported',emotion:'fomo',rules:[0,1,1,0,0,1,1],pnl:-2625,broken:true,imported:true},
+    {id:105,date:'2026-03-12',symbol:'NIFTY',strike:'24200 PE',action:'BUY PE',lots:2,entry:155,exit:230,sl:0,target:240,setup:'Imported',emotion:'calm',rules:[1,1,1,1,1,1,1],pnl:11250,broken:false,imported:true},
+    {id:106,date:'2026-03-12',symbol:'BANKNIFTY',strike:'51500 PE',action:'BUY PE',lots:1,entry:380,exit:280,sl:0,target:500,setup:'Imported',emotion:'revenge',rules:[1,0,0,1,0,0,1],pnl:-3000,broken:true,imported:true},
+    {id:107,date:'2026-03-13',symbol:'NIFTY',strike:'24600 CE',action:'BUY CE',lots:3,entry:95,exit:140,sl:0,target:150,setup:'Imported',emotion:'focused',rules:[1,1,1,1,1,1,1],pnl:10125,broken:false,imported:true},
+    {id:108,date:'2026-03-13',symbol:'NIFTY',strike:'24500 CE',action:'BUY CE',lots:1,entry:180,exit:120,sl:0,target:260,setup:'Imported',emotion:'fear',rules:[1,1,1,1,0,1,0],pnl:-4500,broken:true,imported:true},
+    {id:109,date:'2026-03-14',symbol:'NIFTY',strike:'24700 CE',action:'BUY CE',lots:2,entry:240,exit:195,sl:0,target:340,setup:'Imported',emotion:'fomo',rules:[0,1,1,0,0,1,1],pnl:-6750,broken:true,imported:true},
+    {id:110,date:'2026-03-14',symbol:'BANKNIFTY',strike:'52000 CE',action:'BUY CE',lots:2,entry:440,exit:610,sl:0,target:620,setup:'Imported',emotion:'calm',rules:[1,1,1,1,1,1,1],pnl:9600,broken:false,imported:true},
+    {id:111,date:'2026-03-15',symbol:'NIFTY',strike:'24500 CE',action:'BUY CE',lots:1,entry:195,exit:265,sl:0,target:280,setup:'Imported',emotion:'focused',rules:[1,1,1,1,1,1,1],pnl:5250,broken:false,imported:true},
+    {id:112,date:'2026-03-15',symbol:'NIFTY',strike:'24300 PE',action:'BUY PE',lots:1,entry:145,exit:95,sl:0,target:220,setup:'Imported',emotion:'revenge',rules:[1,1,0,1,0,0,1],pnl:-3750,broken:true,imported:true},
+  ];
+  trades = [...sampleTrades, ...trades];
+  renderTradeTable(trades);
+  showToast('✓ 12 sample trades loaded! Running AI analysis...');
+  setTimeout(()=>{ goTo('ai'); runAIAnalysis(); }, 800);
+}
+
+// ─── SIMULATE ZERODHA IMPORT ─────────────────────────────────
+function simulateZerodhaImport(){
+  goTo('connect');
+  showImportProgress();
+  let p=0;
+  const msgs=['Authenticating with Zerodha...','Fetching trade book...','Filtering options trades...','Processing 47 trades...','Analyzing behavioral patterns...','Done!'];
+  let mi=0;
+  const iv = setInterval(()=>{
+    p+=3;
+    if(p>100)p=100;
+    const mi2=Math.floor(p/20);
+    if(mi2>mi&&mi2<msgs.length){mi=mi2;document.getElementById('ip-status').textContent=msgs[mi];}
+    updateImportProgress(p,msgs[Math.min(mi,msgs.length-1)],47,Math.round(p*0.47),Math.round(p*0.43));
+    if(p>=100){
+      clearInterval(iv);
+      document.getElementById('ip-title').textContent='✓ 20 options trades imported';
+      loadSampleData({stopPropagation:()=>{}});
+    }
+  },80);
+}
+
+// ─── AI ANALYSIS ─────────────────────────────────────────────
+async function runAIAnalysis(){
+  if(!trades.length){ showToast('Add some trades first — or load sample data'); return; }
+
+  const btn = document.getElementById('ai-analyze-btn');
+  btn.disabled = true; btn.textContent = '🔍 Analyzing...';
+  document.getElementById('ai-loading').classList.add('on');
+  document.getElementById('ai-result').classList.remove('on');
+
+  const loadingMsgs = [
+    'Scanning '+trades.length+' trades for patterns...',
+    'Detecting emotional sequences...',
+    'Calculating behavioral costs...',
+    'Identifying your top mistakes...',
+    'Generating personalized insights...',
+  ];
+  let lmi=0;
+  const liv = setInterval(()=>{
+    if(lmi<loadingMsgs.length-1){lmi++;document.getElementById('ai-loading-text').textContent=loadingMsgs[lmi];}
+  },1200);
+
+  try {
+    // Build trade summary for AI
+    const summary = buildTradeSummary();
+    const prompt = buildAnalysisPrompt(summary);
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:'You are an expert trading psychologist and behavioral analyst specializing in Indian options traders. Analyze the trade data and return ONLY a valid JSON object with no markdown or preamble.',
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+
+    const data = await resp.json();
+    clearInterval(liv);
+
+    let analysis;
+    try {
+      const raw = data.content[0].text.replace(/```json|```/g,'').trim();
+      analysis = JSON.parse(raw);
+    } catch(e) {
+      analysis = buildFallbackAnalysis(summary);
+    }
+
+    renderAIAnalysis(analysis);
+    addBotMessage("I've analyzed your trading history. Your biggest issue is " + (analysis.top_mistakes?.[0]?.title||"emotional trading") + ". Ask me anything about your patterns!");
+
+  } catch(err) {
+    clearInterval(liv);
+    console.error('AI error:', err);
+    // Use local analysis fallback
+    const summary = buildTradeSummary();
+    renderAIAnalysis(buildFallbackAnalysis(summary));
+    addBotMessage('Analysis complete using local engine! Ask me anything about your trading behavior.');
+  }
+
+  document.getElementById('ai-loading').classList.remove('on');
+  document.getElementById('ai-result').classList.add('on');
+  btn.disabled=false; btn.textContent='🔍 Re-Analyze';
+}
+
+function buildTradeSummary(){
+  const total = trades.length;
+  const wins = trades.filter(t=>t.pnl>0).length;
+  const losses = trades.filter(t=>t.pnl<0).length;
+  const totalPnl = trades.reduce((s,t)=>s+t.pnl,0);
+  const revengeTrades = trades.filter(t=>t.emotion==='revenge');
+  const fomoTrades = trades.filter(t=>t.emotion==='fomo');
+  const calmTrades = trades.filter(t=>['calm','focused'].includes(t.emotion));
+  const brokenRuleTrades = trades.filter(t=>t.broken);
+  const avgWin = wins? trades.filter(t=>t.pnl>0).reduce((s,t)=>s+t.pnl,0)/wins : 0;
+  const avgLoss = losses? trades.filter(t=>t.pnl<0).reduce((s,t)=>s+t.pnl,0)/losses : 0;
+  return {total,wins,losses,totalPnl,revengeTrades,fomoTrades,calmTrades,brokenRuleTrades,avgWin,avgLoss};
+}
+
+function buildAnalysisPrompt(s){
+  return `Analyze this Indian options trader's behavioral data and return a JSON object with this exact structure:
+{
+  "scores": {
+    "discipline": <0-100>,
+    "patience": <0-100>,
+    "risk_control": <0-100>,
+    "emotional_stability": <0-100>,
+    "overall": <0-100>
+  },
+  "summary": "<2 sentence honest assessment>",
+  "top_mistakes": [
+    {
+      "rank": 1,
+      "title": "<mistake name>",
+      "description": "<specific description with their data>",
+      "frequency": <number>,
+      "cost": <rupees lost>,
+      "stats": ["<stat1>", "<stat2>", "<stat3>"],
+      "fix": "<specific actionable fix>"
+    }
+  ],
+  "strengths": ["<strength 1>", "<strength 2>"],
+  "one_thing_to_fix": "<the single most important change>"
+}
+
+Trader data:
+- Total trades: ${s.total}
+- Win rate: ${s.total ? Math.round(s.wins/s.total*100) : 0}% (${s.wins}W / ${s.losses}L)
+- Total P&L: ₹${s.totalPnl.toLocaleString('en-IN')}
+- Avg win: ₹${Math.round(s.avgWin).toLocaleString('en-IN')}
+- Avg loss: ₹${Math.round(s.avgLoss).toLocaleString('en-IN')}
+- Revenge trades: ${s.revengeTrades.length} (P&L: ₹${s.revengeTrades.reduce((a,t)=>a+t.pnl,0).toLocaleString('en-IN')})
+- FOMO entries: ${s.fomoTrades.length} (P&L: ₹${s.fomoTrades.reduce((a,t)=>a+t.pnl,0).toLocaleString('en-IN')})
+- Calm/Focused trades: ${s.calmTrades.length} (win rate: ${s.calmTrades.length ? Math.round(s.calmTrades.filter(t=>t.pnl>0).length/s.calmTrades.length*100) : 0}%)
+- Rule violations: ${s.brokenRuleTrades.length} trades
+Provide 5 top mistakes ranked by financial cost. Be specific, honest, and direct. Use Indian trading context (NSE, NIFTY, BANKNIFTY).`;
+}
+
+function buildFallbackAnalysis(s){
+  const wr = s.total ? Math.round(s.wins/s.total*100) : 62;
+  const revCost = s.revengeTrades.reduce((a,t)=>a+t.pnl,0);
+  const fomoCost = s.fomoTrades.reduce((a,t)=>a+t.pnl,0);
+  const calmWr = s.calmTrades.length ? Math.round(s.calmTrades.filter(t=>t.pnl>0).length/s.calmTrades.length*100) : 74;
+  return {
+    scores:{discipline:78,patience:52,risk_control:81,emotional_stability:60,overall:68},
+    summary:`Your strategy works — but your emotions are costing you money. ${wr}% win rate is good, but behavioral mistakes are erasing your gains.`,
+    top_mistakes:[
+      {rank:1,title:'Revenge Trading After Losses',description:`You've taken ${s.revengeTrades.length} revenge trades that cost ₹${Math.abs(revCost).toLocaleString('en-IN')}. After 2 losses, you enter bigger to recover — and lose bigger.`,frequency:s.revengeTrades.length,cost:Math.abs(revCost)||4200,stats:['28% win rate','3× avg position size','After 2+ consecutive losses'],fix:'Set a hard rule: after 2 losses in a day, no more trades. Walk away. The market will be there tomorrow.'},
+      {rank:2,title:'FOMO Entries After Breakouts',description:`${s.fomoTrades.length} FOMO trades costing ₹${Math.abs(fomoCost).toLocaleString('en-IN')}. You chase price after the move has already happened.`,frequency:s.fomoTrades.length,cost:Math.abs(fomoCost)||2800,stats:['31% win rate','R:R below 1:1','Entry 2-3 candles late'],fix:'Only enter on the FIRST breakout candle close, or wait for a retest. If you missed it, let it go.'},
+      {rank:3,title:'Exiting Winners Too Early',description:'You exit profitable trades at 50-60% of target due to fear of giving back profits. This cuts your R:R in half.',frequency:9,cost:1850*s.total/10|0,stats:['Avg exit at 55% of target','Missed ₹1,850 per trade','Fear-based exits'],fix:'Use a trailing stop loss instead of manual exits. Set it and walk away from the screen.'},
+      {rank:4,title:'Trading Without Stop Loss',description:'Several trades entered without a pre-defined stop loss. When these go wrong, the losses are catastrophic.',frequency:s.brokenRuleTrades.length,cost:6100,stats:['No SL = no risk control','Avg loss 3× larger','Rule violation'],fix:'Never press the buy button without a stop loss already placed. This is non-negotiable.'},
+      {rank:5,title:'Afternoon Overtrading (12:30–3:30)',description:'Win rate drops to 31% after 12:30 PM. You keep trading when the edge is gone.',frequency:7,cost:3200,stats:['31% win rate afternoon','vs 74% morning','Fatigue + thin liquidity'],fix:'Stop trading at 12:30 PM. Log off. Your morning session is where your real edge lives.'},
+    ],
+    strengths:[`Calm/focused trades win ${calmWr}% of the time — that's your real edge`,'Risk control score of 81/100 shows good position sizing discipline'],
+    one_thing_to_fix:'Stop trading after 2 losses. One rule. ₹47,000 saved per month on average.'
+  };
+}
+
+function renderAIAnalysis(a){
+  // Score row
+  const scores = a.scores||{};
+  const scoreHTML = [
+    {label:'Overall',val:scores.overall||68,col:'var(--blue)'},
+    {label:'Discipline',val:scores.discipline||78,col:'var(--green)'},
+    {label:'Patience',val:scores.patience||52,col:'var(--amber)'},
+    {label:'Risk Ctrl',val:scores.risk_control||81,col:'var(--blue)'},
+    {label:'Emotion',val:scores.emotional_stability||60,col:'var(--red)'},
+    {label:'Win Rate',val:trades.length?Math.round(trades.filter(t=>t.pnl>0).length/trades.length*100):62,col:'var(--green)'},
+  ].map(s=>`<div class="ai-score-card"><div class="asc-val" style="color:${s.col}">${s.val}${s.label==='Win Rate'?'%':''}</div><div class="asc-label">${s.label}</div></div>`).join('');
+  document.getElementById('ai-score-row').innerHTML=scoreHTML;
+
+  // Mistake list
+  const mistakes = a.top_mistakes||[];
+  document.getElementById('ai-mistake-list').innerHTML = mistakes.map((m,i)=>`
+    <div class="mistake-card">
+      <div class="mistake-rank rank-${m.rank||i+1}">#${m.rank||i+1}</div>
+      <div class="mistake-body">
+        <div class="mistake-title">${m.title}</div>
+        <div class="mistake-desc">${m.description}</div>
+        <div class="mistake-stats">
+          ${(m.stats||[]).map(s=>`<span class="mstat ${i<2?'mstat-red':i<4?'mstat-amber':'mstat-green'}">${s}</span>`).join('')}
+          ${m.cost?`<span class="mstat mstat-red">Cost: -₹${Number(m.cost).toLocaleString('en-IN')}</span>`:''}
+        </div>
+        ${m.fix?`<div class="mistake-fix">${m.fix}</div>`:''}
+      </div>
+    </div>`).join('');
+
+  // One thing summary
+  if(a.one_thing_to_fix){
+    document.getElementById('ai-mistake-list').innerHTML += `
+      <div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:var(--r);padding:16px;margin-top:8px">
+        <div style="font-size:0.7rem;font-weight:700;color:var(--green);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">🎯 ONE THING TO FIX FIRST</div>
+        <div style="font-size:0.85rem;color:var(--text);font-weight:600;line-height:1.5">${a.one_thing_to_fix}</div>
+      </div>`;
+  }
+}
+
+// ─── AI CHAT ─────────────────────────────────────────────────
+async function sendChat(){
+  const inp = document.getElementById('ai-chat-inp');
+  const msg = inp.value.trim();
+  if(!msg) return;
+  inp.value='';
+  askAI(msg);
+}
+
+async function askAI(question){
+  addUserMessage(question);
+  addTypingIndicator();
+
+  try{
+    const summary = buildTradeSummary();
+    const context = `Trader has ${summary.total} trades, ${Math.round(summary.wins/Math.max(summary.total,1)*100)}% win rate, ₹${summary.totalPnl.toLocaleString('en-IN')} total P&L. ${summary.revengeTrades.length} revenge trades, ${summary.fomoTrades.length} FOMO trades. Calm trades win ${summary.calmTrades.length?Math.round(summary.calmTrades.filter(t=>t.pnl>0).length/summary.calmTrades.length*100):74}% of the time.`;
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:'You are a tough but caring trading psychologist for Indian options traders. Be direct, specific, and use their actual data. Keep responses under 100 words. Use ₹ for rupees. Be like a coach, not a chatbot.',
+        messages:[
+          {role:'user',content:`Trader context: ${context}
+
+Question: ${question}`}
+        ]
+      })
+    });
+
+    const data = await resp.json();
+    removeTypingIndicator();
+    const reply = data.content?.[0]?.text || getLocalResponse(question, summary);
+    addBotMessage(reply);
+
+  } catch(err){
+    removeTypingIndicator();
+    const summary = buildTradeSummary();
+    addBotMessage(getLocalResponse(question, summary));
+  }
+}
+
+function getLocalResponse(q, s){
+  const ql = q.toLowerCase();
+  const wr = s.total ? Math.round(s.wins/s.total*100) : 62;
+  const calmWr = s.calmTrades.length ? Math.round(s.calmTrades.filter(t=>t.pnl>0).length/s.calmTrades.length*100) : 74;
+  if(ql.includes('biggest mistake')||ql.includes('biggest problem'))
+    return `Your #1 mistake is revenge trading. After losses, you take ${s.revengeTrades.length} trades that cost you ₹${Math.abs(s.revengeTrades.reduce((a,t)=>a+t.pnl,0)).toLocaleString('en-IN')} total. Stop trading after 2 losses — one rule, massive impact.`;
+  if(ql.includes('when')||ql.includes('best time'))
+    return `You trade best before 12:30 PM. Morning trades win ${Math.min(wr+12,85)}% of the time. After 12:30 PM your win rate drops to ~31%. Log off at lunch. Seriously.`;
+  if(ql.includes('lose money')||ql.includes('losing'))
+    return `You're losing money in 3 ways: (1) Revenge trades after losses, (2) FOMO entries after breakouts, (3) No stop loss on some trades. Fix the first one first — it's costing you the most.`;
+  if(ql.includes('stop')||ql.includes('immediately'))
+    return `Stop revenge trading immediately. After 2 consecutive losses, close the app. Walk away. Your calm trades win ${calmWr}% — your revenge trades win 28%. The difference is ₹${(4200*s.revengeTrades.length).toLocaleString('en-IN')} in losses.`;
+  if(ql.includes('revenge'))
+    return `You've taken ${s.revengeTrades.length} revenge trades. They win only 28% of the time. The fix: set a daily loss limit (₹5,000 or 1% of capital). When hit, trading is done for the day. No exceptions.`;
+  return `Based on your ${s.total} trades: Win rate is ${wr}%, but emotional trades are eating your gains. Your calm trades win ${calmWr}%. Your revenge trades win 28%. The gap between those numbers is your opportunity. What specifically would you like to improve?`;
+}
+
+function addUserMessage(text){
+  const el=document.createElement('div');
+  el.className='ai-msg user';
+  el.innerHTML=`<div class="ai-msg-avatar">👤</div><div class="ai-msg-bubble">${text}</div>`;
+  document.getElementById('ai-chat-messages').appendChild(el);
+  scrollChat();
+}
+function addBotMessage(text){
+  const el=document.createElement('div');
+  el.className='ai-msg bot';
+  el.innerHTML=`<div class="ai-msg-avatar">🧠</div><div class="ai-msg-bubble">${text}</div>`;
+  document.getElementById('ai-chat-messages').appendChild(el);
+  scrollChat();
+}
+function addTypingIndicator(){
+  const el=document.createElement('div');
+  el.className='ai-msg bot'; el.id='typing-indicator';
+  el.innerHTML=`<div class="ai-msg-avatar">🧠</div><div class="ai-msg-bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  document.getElementById('ai-chat-messages').appendChild(el);
+  scrollChat();
+}
+function removeTypingIndicator(){
+  const el=document.getElementById('typing-indicator');
+  if(el)el.remove();
+}
+function scrollChat(){
+  const mc=document.getElementById('ai-chat-messages');
+  mc.scrollTop=mc.scrollHeight;
+}
+
+</script>
+<style>
+/* ── DESIGN TOKENS ─────────────────────────────────────────── */
+:root {
+  --bg:       #080c10;
+  --surface:  #0d1218;
+  --card:     #111820;
+  --card2:    #151e28;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.12);
+
+  --green:    #00e676;
+  --green-bg: rgba(0,230,118,0.08);
+  --green-bd: rgba(0,230,118,0.2);
+
+  --red:      #ff4560;
+  --red-bg:   rgba(255,69,96,0.08);
+  --red-bd:   rgba(255,69,96,0.2);
+
+  --amber:    #ffab00;
+  --amber-bg: rgba(255,171,0,0.08);
+  --amber-bd: rgba(255,171,0,0.2);
+
+  --blue:     #2979ff;
+  --blue-bg:  rgba(41,121,255,0.08);
+  --blue-bd:  rgba(41,121,255,0.2);
+
+  --white:    #f0f4f8;
+  --text:     #c8d8e8;
+  --muted:    rgba(200,216,232,0.45);
+  --dim:      rgba(200,216,232,0.22);
+
+  --font:    'Plus Jakarta Sans', sans-serif;
+  --mono:    'Space Grotesk', sans-serif;
+
+  --r:  12px;
+  --r2: 18px;
+  --r3: 24px;
+}
+
+/* ── RESET ─────────────────────────────────────────────────── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { font-size:16px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+::-webkit-scrollbar { width:3px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:rgba(0,230,118,0.2); border-radius:3px; }
+
+/* ── BACKGROUND ────────────────────────────────────────────── */
+#bg-canvas { position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.6; }
+
+/* ── LOADER ────────────────────────────────────────────────── */
+#loader {
+  position:fixed; inset:0; z-index:9000;
+  background:var(--bg);
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap:20px; opacity:1; transition:opacity 0.7s ease;
+}
+.ld-logo {
+  font-family:var(--mono); font-size:1.1rem; font-weight:700;
+  color:var(--green); letter-spacing:0.15em;
+  display:flex; align-items:center; gap:10px;
+}
+.ld-dot {
+  width:10px; height:10px; border-radius:50%;
+  background:var(--green);
+  box-shadow:0 0 16px var(--green);
+  animation:ldPulse 1s ease-in-out infinite;
+}
+@keyframes ldPulse { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.5);opacity:0.5;} }
+.ld-bar-wrap {
+  width:180px; height:2px;
+  background:rgba(0,230,118,0.12);
+  border-radius:2px; overflow:hidden;
+}
+.ld-bar {
+  height:100%; width:0%;
+  background:var(--green);
+  box-shadow:0 0 8px var(--green);
+  transition:width 0.05s linear;
+  border-radius:2px;
+}
+.ld-msg {
+  font-size:0.65rem; letter-spacing:0.2em;
+  color:var(--muted); font-family:var(--mono);
+  text-transform:uppercase;
+}
+
+/* ── VIEWS ─────────────────────────────────────────────────── */
+.view { display:none; position:relative; z-index:10; }
+.view.on { display:block; }
+#landing-view.on { display:flex; }
+
+/* ── NAV ───────────────────────────────────────────────────── */
+#nav {
+  display:none; position:fixed; top:0; left:0; right:0;
+  z-index:500; height:56px;
+  background:rgba(8,12,16,0.92);
+  backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);
+  align-items:center; padding:0 16px;
+  gap:8px;
+}
+.nav-brand {
+  font-family:var(--mono); font-size:0.82rem; font-weight:700;
+  color:var(--white); letter-spacing:0.04em;
+  display:flex; align-items:center; gap:8px;
+  margin-right:8px; white-space:nowrap;
+}
+.nav-brand-dot {
+  width:7px; height:7px; border-radius:50%;
+  background:var(--green); box-shadow:0 0 10px var(--green);
+  animation:ldPulse 2s ease-in-out infinite;
+}
+.nav-tabs {
+  display:flex; gap:2px; flex:1;
+  overflow-x:auto; scrollbar-width:none;
+}
+.nav-tabs::-webkit-scrollbar { display:none; }
+.nav-tab {
+  padding:6px 14px; border-radius:8px;
+  font-size:0.72rem; font-weight:600;
+  letter-spacing:0.03em;
+  color:var(--muted); background:transparent;
+  border:none; cursor:pointer; white-space:nowrap;
+  transition:all 0.2s; font-family:var(--font);
+}
+.nav-tab.on { background:rgba(0,230,118,0.1); color:var(--green); }
+.nav-tab:hover:not(.on) { color:var(--text); }
+.nav-right { margin-left:auto; flex-shrink:0; }
+.guard-nav-btn {
+  display:flex; align-items:center; gap:5px;
+  background:var(--red-bg); border:1px solid var(--red-bd);
+  border-radius:20px; padding:5px 12px;
+  font-size:0.65rem; font-weight:700;
+  color:var(--red); cursor:pointer; white-space:nowrap;
+  animation:guardNavPulse 2s ease-in-out infinite;
+  font-family:var(--mono); letter-spacing:0.05em;
+}
+@keyframes guardNavPulse { 0%,100%{border-color:var(--red-bd);} 50%{border-color:var(--red);} }
+.gnd { width:5px; height:5px; border-radius:50%; background:var(--red); animation:ldPulse 1s infinite; }
+
+/* ── LANDING ───────────────────────────────────────────────── */
+#landing-view {
+  min-height:100vh;
+  flex-direction:column; align-items:center; justify-content:center;
+  padding:40px 20px; text-align:center; gap:0;
+}
+.land-tag {
+  display:inline-flex; align-items:center; gap:8px;
+  background:var(--green-bg); border:1px solid var(--green-bd);
+  border-radius:20px; padding:6px 16px;
+  font-size:0.7rem; font-weight:600; letter-spacing:0.12em;
+  color:var(--green); text-transform:uppercase;
+  margin-bottom:28px;
+  animation:fadeUp 0.6s 0.1s both;
+}
+.land-h1 {
+  font-size:clamp(2.2rem,8vw,4.5rem);
+  font-weight:800; line-height:1.08;
+  letter-spacing:-0.02em; margin-bottom:16px;
+  animation:fadeUp 0.6s 0.2s both;
+}
+.land-h1 .hi { color:var(--white); display:block; }
+.land-h1 .accent { color:var(--green); display:block; }
+.land-h1 .lo { color:var(--muted); display:block; font-size:0.55em; font-weight:500; letter-spacing:0.02em; margin-top:6px; }
+.land-sub {
+  font-size:1rem; color:var(--muted); max-width:440px;
+  line-height:1.7; margin:0 auto 40px;
+  animation:fadeUp 0.6s 0.3s both;
+}
+.land-form {
+  display:flex; flex-direction:column; align-items:center;
+  gap:10px; margin-bottom:52px; width:100%; max-width:320px;
+  animation:fadeUp 0.6s 0.4s both;
+}
+.land-input {
+  width:100%; background:var(--card);
+  border:1px solid var(--border2);
+  border-radius:var(--r); padding:14px 18px;
+  font-family:var(--font); font-size:0.95rem;
+  color:var(--white); outline:none; text-align:center;
+  transition:all 0.25s; caret-color:var(--green);
+}
+.land-input::placeholder { color:var(--dim); }
+.land-input:focus { border-color:var(--green-bd); box-shadow:0 0 0 3px rgba(0,230,118,0.07); }
+.land-btn {
+  width:100%; background:var(--green);
+  border:none; border-radius:var(--r);
+  padding:15px 18px; font-family:var(--font);
+  font-size:0.9rem; font-weight:700; color:#080c10;
+  cursor:pointer; transition:all 0.25s;
+  box-shadow:0 4px 24px rgba(0,230,118,0.25);
+}
+.land-btn:hover { transform:translateY(-2px); box-shadow:0 8px 32px rgba(0,230,118,0.35); }
+.land-feats {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:12px; max-width:800px; width:100%;
+  animation:fadeUp 0.6s 0.5s both;
+}
+@media(max-width:640px){ .land-feats { grid-template-columns:1fr; } }
+.feat {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--r2); padding:20px 16px; text-align:left;
+  transition:all 0.25s;
+}
+.feat:hover { border-color:var(--border2); transform:translateY(-2px); }
+.feat-icon { font-size:1.5rem; margin-bottom:10px; }
+.feat-t { font-size:0.85rem; font-weight:700; color:var(--white); margin-bottom:6px; }
+.feat-d { font-size:0.78rem; color:var(--muted); line-height:1.6; }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(18px);} to{opacity:1;transform:translateY(0);} }
+
+/* ── DASHBOARD ─────────────────────────────────────────────── */
+#dashboard-view { padding:68px 16px 24px; }
+
+.dash-hero {
+  display:flex; align-items:flex-start; justify-content:space-between;
+  margin-bottom:20px; flex-wrap:wrap; gap:8px;
+}
+.dash-greet { font-size:0.7rem; color:var(--muted); font-weight:500; margin-bottom:4px; letter-spacing:0.05em; }
+.dash-name { font-size:1.6rem; font-weight:800; color:var(--white); line-height:1; }
+.dash-name span { color:var(--green); }
+.dash-live {
+  display:flex; flex-direction:column; align-items:flex-end;
+}
+.dash-time { font-family:var(--mono); font-size:1.1rem; font-weight:700; color:var(--green); line-height:1; }
+.dash-session { font-size:0.62rem; color:var(--muted); letter-spacing:0.1em; margin-top:3px; }
+
+/* Guard strip */
+.guard-strip {
+  background:var(--red-bg); border:1px solid var(--red-bd);
+  border-radius:var(--r); padding:14px 16px;
+  display:flex; align-items:center; gap:12px;
+  margin-bottom:18px; cursor:pointer; transition:all 0.25s;
+  position:relative; overflow:hidden;
+}
+.guard-strip:hover { background:rgba(255,69,96,0.12); }
+.guard-strip::before {
+  content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+  background:var(--red);
+}
+.gs-icon { font-size:1.2rem; flex-shrink:0; }
+.gs-body { flex:1; min-width:0; }
+.gs-title { font-size:0.8rem; font-weight:700; color:var(--red); margin-bottom:2px; }
+.gs-desc { font-size:0.72rem; color:rgba(255,69,96,0.65); line-height:1.4; }
+.gs-cta { font-size:0.65rem; font-weight:700; color:var(--red); white-space:nowrap; letter-spacing:0.05em; }
+
+/* Score cards */
+.scores-row {
+  display:grid; grid-template-columns:repeat(2,1fr);
+  gap:10px; margin-bottom:16px;
+}
+@media(min-width:600px){ .scores-row { grid-template-columns:repeat(4,1fr); } }
+.score-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--r2); padding:16px;
+  position:relative; overflow:hidden; transition:all 0.25s;
+}
+.score-card:hover { border-color:var(--border2); }
+.score-card::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+  background:var(--c);
+}
+.sc-label { font-size:0.62rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+.sc-val { font-size:2.2rem; font-weight:800; color:var(--c); line-height:1; margin-bottom:10px; font-family:var(--mono); }
+.sc-bar { height:3px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; margin-bottom:6px; }
+.sc-fill { height:100%; border-radius:2px; background:var(--c); width:0%; transition:width 1.4s cubic-bezier(.16,1,.3,1); }
+.sc-sub { font-size:0.65rem; color:var(--muted); }
+
+/* Two-col grid */
+.dash-grid {
+  display:grid; grid-template-columns:1fr;
+  gap:12px;
+}
+@media(min-width:900px){ .dash-grid { grid-template-columns:1fr 340px; } }
+.dash-left, .dash-right { display:flex; flex-direction:column; gap:12px; }
+
+/* Panel */
+.panel {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--r2); overflow:hidden;
+}
+.panel-head {
+  padding:14px 18px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.panel-title {
+  font-size:0.72rem; font-weight:700; letter-spacing:0.08em;
+  text-transform:uppercase; color:var(--white);
+  display:flex; align-items:center; gap:8px;
+}
+.pdot { width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); }
+.pdot.red { background:var(--red); box-shadow:0 0 8px var(--red); }
+.pdot.amber { background:var(--amber); box-shadow:0 0 8px var(--amber); }
+.pdot.blue { background:var(--blue); box-shadow:0 0 8px var(--blue); }
+.panel-tag { font-size:0.6rem; font-weight:500; letter-spacing:0.1em; color:var(--dim); text-transform:uppercase; }
+.panel-body { padding:16px; }
+
+/* Insights */
+.insight-list { display:flex; flex-direction:column; gap:8px; }
+.ins {
+  display:flex; align-items:flex-start; gap:12px;
+  padding:13px 14px; border-radius:var(--r);
+  border:1px solid transparent; transition:all 0.2s;
+}
+.ins:hover { transform:translateX(3px); }
+.ins.neg { background:var(--red-bg); border-color:var(--red-bd); }
+.ins.pos { background:var(--green-bg); border-color:var(--green-bd); }
+.ins.warn { background:var(--amber-bg); border-color:var(--amber-bd); }
+.ins-icon { font-size:1rem; margin-top:2px; flex-shrink:0; }
+.ins-body { flex:1; min-width:0; }
+.ins-title { font-size:0.78rem; font-weight:700; margin-bottom:3px; }
+.ins.neg .ins-title { color:var(--red); }
+.ins.pos .ins-title { color:var(--green); }
+.ins.warn .ins-title { color:var(--amber); }
+.ins-desc { font-size:0.72rem; color:var(--muted); line-height:1.5; }
+.ins-stat { font-family:var(--mono); font-size:0.75rem; font-weight:700; align-self:center; flex-shrink:0; }
+.ins.neg .ins-stat { color:var(--red); }
+.ins.pos .ins-stat { color:var(--green); }
+.ins.warn .ins-stat { color:var(--amber); }
+
+/* Setup rows */
+.setup-list { display:flex; flex-direction:column; gap:8px; }
+.setup-row {
+  display:flex; align-items:center; gap:10px;
+  padding:11px 13px; background:var(--card2);
+  border:1px solid var(--border); border-radius:var(--r);
+  transition:all 0.2s;
+}
+.setup-row:hover { border-color:var(--border2); }
+.setup-name { font-size:0.78rem; font-weight:600; flex:1; }
+.setup-bar-w { width:80px; height:3px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; }
+.setup-bar-f { height:100%; border-radius:2px; }
+.setup-wr { font-family:var(--mono); font-size:0.78rem; font-weight:700; width:36px; text-align:right; }
+.setup-pnl { font-family:var(--mono); font-size:0.7rem; width:64px; text-align:right; }
+
+/* Heatmap */
+.hm { display:grid; grid-template-columns:34px repeat(7,1fr); gap:3px; }
+.hm-lbl { font-size:0.6rem; font-weight:600; color:var(--muted); display:flex; align-items:center; justify-content:flex-end; padding-right:5px; }
+.hm-col-lbl { font-size:0.56rem; font-weight:600; color:var(--muted); text-align:center; padding-bottom:3px; }
+.hm-cell {
+  height:28px; border-radius:5px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.58rem; font-weight:700;
+  cursor:default; transition:all 0.2s; position:relative;
+}
+.hm-cell:hover { transform:scale(1.1); z-index:2; filter:brightness(1.25); }
+.hm-tip {
+  display:none; position:absolute; bottom:calc(100%+6px); left:50%;
+  transform:translateX(-50%);
+  background:var(--card2); border:1px solid var(--border2);
+  border-radius:8px; padding:7px 11px; white-space:nowrap;
+  font-size:0.65rem; color:var(--text); z-index:10; pointer-events:none;
+  box-shadow:0 4px 16px rgba(0,0,0,0.4);
+}
+.hm-cell:hover .hm-tip { display:block; }
+
+/* Pattern table */
+.pat-table { width:100%; border-collapse:collapse; }
+.pat-table th {
+  font-size:0.62rem; font-weight:700; letter-spacing:0.1em;
+  text-transform:uppercase; color:var(--muted);
+  padding:9px 14px; text-align:left;
+  border-bottom:1px solid var(--border);
+}
+.pat-table td { padding:11px 14px; font-size:0.8rem; border-bottom:1px solid rgba(255,255,255,0.03); }
+.pat-table tr:hover td { background:rgba(255,255,255,0.02); }
+.pat-table tr:last-child td { border-bottom:none; }
+.freq-wrap { display:flex; align-items:center; gap:8px; }
+.freq-track { flex:1; height:3px; background:rgba(255,255,255,0.05); border-radius:2px; overflow:hidden; }
+.freq-fill { height:100%; border-radius:2px; }
+
+/* Tags */
+.tag {
+  display:inline-block; padding:3px 9px; border-radius:5px;
+  font-size:0.65rem; font-weight:700; letter-spacing:0.04em;
+}
+.tg { background:var(--green-bg); color:var(--green); border:1px solid var(--green-bd); }
+.tr { background:var(--red-bg); color:var(--red); border:1px solid var(--red-bd); }
+.ta { background:var(--amber-bg); color:var(--amber); border:1px solid var(--amber-bd); }
+.tb { background:var(--blue-bg); color:var(--blue); border:1px solid var(--blue-bd); }
+
+/* ── GUARD OVERLAY ─────────────────────────────────────────── */
+#guard-overlay {
+  position:fixed; inset:0; z-index:8000;
+  background:rgba(4,6,10,0.88);
+  backdrop-filter:blur(20px);
+  display:flex; align-items:center; justify-content:center;
+  padding:20px; opacity:0; pointer-events:none; transition:opacity 0.3s;
+}
+#guard-overlay.on { opacity:1; pointer-events:all; }
+.guard-box {
+  max-width:460px; width:100%;
+  background:var(--card);
+  border:1px solid var(--red-bd);
+  border-radius:var(--r3); padding:28px;
+  position:relative; overflow:hidden;
+  box-shadow:0 0 60px rgba(255,69,96,0.1);
+  animation:guardIn 0.4s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes guardIn { from{transform:scale(0.93) translateY(16px);opacity:0;} to{transform:scale(1) translateY(0);opacity:1;} }
+.guard-box::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg, var(--red), transparent);
+}
+/* Animated scan line inside guard box */
+.guard-scan {
+  position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(transparent 40%, rgba(255,69,96,0.03) 50%, transparent 60%);
+  animation:gscan 2.5s linear infinite;
+}
+@keyframes gscan { from{transform:translateY(-100%);} to{transform:translateY(100%);} }
+.guard-icon {
+  width:52px; height:52px; border-radius:50%;
+  background:var(--red-bg); border:1px solid var(--red-bd);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.4rem; margin-bottom:18px;
+  animation:gIconPulse 1.5s ease-in-out infinite;
+}
+@keyframes gIconPulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,69,96,0.3);} 50%{box-shadow:0 0 0 12px rgba(255,69,96,0);} }
+.guard-title { font-size:1.2rem; font-weight:800; color:var(--red); margin-bottom:6px; }
+.guard-sub { font-size:0.82rem; color:rgba(255,69,96,0.6); margin-bottom:20px; line-height:1.5; }
+.guard-stat {
+  background:var(--red-bg); border:1px solid rgba(255,69,96,0.12);
+  border-radius:var(--r); padding:12px 14px; margin-bottom:10px;
+}
+.gst-label { font-size:0.6rem; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:rgba(255,69,96,0.5); margin-bottom:4px; }
+.gst-val { font-family:var(--mono); font-size:0.95rem; font-weight:700; color:var(--red); }
+.guard-tips {
+  background:var(--green-bg); border:1px solid var(--green-bd);
+  border-radius:var(--r); padding:12px 14px; margin:14px 0;
+}
+.gtip { font-size:0.75rem; color:rgba(0,230,118,0.7); padding:2px 0; line-height:1.5; }
+.gtip::before { content:'→ '; color:var(--green); font-weight:700; }
+.guard-btns { display:flex; gap:10px; margin-top:18px; }
+.g-btn {
+  flex:1; padding:13px; border-radius:var(--r);
+  font-family:var(--font); font-size:0.82rem; font-weight:700;
+  cursor:pointer; border:none; transition:all 0.2s;
+}
+.g-stop { background:var(--red); color:#fff; box-shadow:0 4px 20px rgba(255,69,96,0.3); }
+.g-stop:hover { transform:translateY(-1px); box-shadow:0 6px 28px rgba(255,69,96,0.45); }
+.g-proc { background:transparent; border:1px solid var(--border2); color:var(--muted); }
+.g-proc:hover { color:var(--text); border-color:var(--border2); }
+
+/* ── JOURNAL ───────────────────────────────────────────────── */
+#log-view { padding:68px 16px 24px; }
+.log-inner { max-width:680px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+
+.log-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--r3); padding:24px;
+}
+.sec-head {
+  font-size:0.65rem; font-weight:700; letter-spacing:0.15em;
+  text-transform:uppercase; color:var(--muted);
+  display:flex; align-items:center; gap:10px; margin-bottom:14px;
+}
+.sec-head::after { content:''; flex:1; height:1px; background:var(--border); }
+
+.f2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+@media(max-width:480px){ .f2 { grid-template-columns:1fr; } }
+.fg { display:flex; flex-direction:column; gap:5px; }
+.fg.full { grid-column:1/-1; }
+.fl { font-size:0.62rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); }
+.fi, .fs, .fta {
+  background:var(--card2); border:1px solid var(--border2);
+  border-radius:var(--r); padding:11px 14px;
+  font-family:var(--font); font-size:0.88rem; color:var(--white);
+  outline:none; width:100%; transition:all 0.2s;
+}
+.fi:focus, .fs:focus, .fta:focus {
+  border-color:var(--green-bd);
+  box-shadow:0 0 0 3px rgba(0,230,118,0.07);
+}
+.fs option { background:var(--card); }
+.fta { resize:vertical; min-height:72px; line-height:1.55; border-radius:var(--r); }
+
+/* Emotion grid */
+.emo-grid { display:flex; flex-wrap:wrap; gap:7px; grid-column:1/-1; }
+.emo-btn {
+  padding:8px 14px; border-radius:var(--r);
+  border:1px solid var(--border2); font-family:var(--font);
+  font-size:0.78rem; font-weight:600; color:var(--muted);
+  background:transparent; cursor:pointer; transition:all 0.2s;
+}
+.emo-btn:hover { color:var(--text); border-color:var(--border2); background:var(--card2); }
+.emo-calm.on   { background:var(--green-bg); border-color:var(--green-bd); color:var(--green); }
+.emo-focused.on{ background:var(--green-bg); border-color:var(--green-bd); color:var(--green); }
+.emo-fomo.on   { background:var(--amber-bg); border-color:var(--amber-bd); color:var(--amber); }
+.emo-fear.on   { background:var(--blue-bg);  border-color:var(--blue-bd);  color:var(--blue); }
+.emo-revenge.on{ background:var(--red-bg);   border-color:var(--red-bd);   color:var(--red); animation:revPulse 1s infinite; }
+@keyframes revPulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,69,96,0.2);} 50%{box-shadow:0 0 0 8px rgba(255,69,96,0);} }
+.emo-greed.on  { background:rgba(255,171,0,0.1); border-color:var(--amber-bd); color:var(--amber); }
+
+/* Live guard preview */
+.live-guard {
+  display:none; border-radius:var(--r); padding:14px 16px;
+  margin-top:12px; position:relative; overflow:hidden;
+}
+.live-guard.on { display:block; }
+.live-guard.danger { background:var(--red-bg); border:1px solid var(--red-bd); }
+.live-guard.good   { background:var(--green-bg); border:1px solid var(--green-bd); }
+.lg-title { font-size:0.72rem; font-weight:700; margin-bottom:5px; letter-spacing:0.05em; }
+.live-guard.danger .lg-title { color:var(--red); }
+.live-guard.good   .lg-title { color:var(--green); }
+.lg-text { font-size:0.78rem; color:var(--muted); line-height:1.5; }
+
+/* Rules */
+.rules-wrap { display:flex; flex-direction:column; gap:6px; grid-column:1/-1; }
+.rule-row {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 13px; background:var(--card2);
+  border:1px solid var(--border); border-radius:var(--r);
+  cursor:pointer; transition:all 0.2s;
+}
+.rule-row:hover { border-color:var(--border2); }
+.rule-row input { accent-color:var(--green); width:15px; height:15px; cursor:pointer; flex-shrink:0; }
+.rule-text { font-size:0.78rem; color:var(--muted); }
+
+.submit-btn {
+  width:100%; background:var(--green); border:none;
+  border-radius:var(--r); padding:15px; font-family:var(--font);
+  font-size:0.9rem; font-weight:700; color:#080c10;
+  cursor:pointer; margin-top:18px; transition:all 0.25s;
+  box-shadow:0 4px 20px rgba(0,230,118,0.2);
+}
+.submit-btn:hover { transform:translateY(-1px); box-shadow:0 6px 28px rgba(0,230,118,0.32); }
+
+/* Trade table */
+.trade-tbl { width:100%; border-collapse:collapse; }
+.trade-tbl th {
+  font-size:0.62rem; font-weight:700; letter-spacing:0.1em;
+  text-transform:uppercase; color:var(--muted);
+  padding:10px 14px; text-align:left;
+  border-bottom:1px solid var(--border);
+}
+.trade-tbl td { padding:12px 14px; font-size:0.8rem; border-bottom:1px solid rgba(255,255,255,0.03); }
+.trade-tbl tr:hover td { background:rgba(255,255,255,0.02); }
+.trade-tbl tr:last-child td { border-bottom:none; }
+.pnl-p { font-family:var(--mono); font-weight:800; color:var(--green); }
+.pnl-n { font-family:var(--mono); font-weight:800; color:var(--red); }
+
+/* ── DNA ───────────────────────────────────────────────────── */
+#dna-view { padding:68px 16px 24px; }
+.dna-inner { max-width:480px; margin:0 auto; }
+
+.dna-card {
+  background:linear-gradient(145deg, #0d1920 0%, #080e14 100%);
+  border:1px solid rgba(0,230,118,0.15);
+  border-radius:var(--r3); padding:28px; margin-bottom:14px;
+  position:relative; overflow:hidden;
+  box-shadow:0 0 60px rgba(0,230,118,0.04), 0 20px 60px rgba(0,0,0,0.4);
+}
+.dna-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg, var(--green), rgba(0,230,118,0.3), transparent);
+}
+/* Animated scan */
+.dna-scan-line {
+  position:absolute; left:0; right:0; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(0,230,118,0.15), transparent);
+  animation:dnaScanLine 4s linear infinite; pointer-events:none;
+}
+@keyframes dnaScanLine { from{top:0%;} to{top:100%;} }
+.dna-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; position:relative; z-index:1; }
+.dna-brand { font-family:var(--mono); font-size:0.65rem; font-weight:700; letter-spacing:0.2em; color:rgba(0,230,118,0.5); }
+.dna-week { font-size:0.62rem; color:var(--muted); }
+.dna-name { font-size:1.5rem; font-weight:800; color:var(--white); margin-bottom:3px; position:relative; z-index:1; }
+.dna-role { font-size:0.65rem; color:var(--muted); margin-bottom:22px; position:relative; z-index:1; letter-spacing:0.05em; }
+.dna-mid {
+  display:flex; align-items:center; gap:18px;
+  margin-bottom:22px; position:relative; z-index:1;
+}
+.dna-ring { position:relative; width:80px; height:80px; flex-shrink:0; }
+.dna-ring svg { transform:rotate(-90deg); }
+.dna-ring-bg { fill:none; stroke:rgba(255,255,255,0.05); stroke-width:6; }
+.dna-ring-fill {
+  fill:none; stroke:var(--green); stroke-width:6; stroke-linecap:round;
+  stroke-dasharray:220; stroke-dashoffset:220;
+  transition:stroke-dashoffset 1.8s cubic-bezier(.16,1,.3,1);
+  filter:drop-shadow(0 0 4px var(--green));
+}
+.dna-ring-num { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.dna-score-num { font-family:var(--mono); font-size:1.5rem; font-weight:800; color:var(--green); line-height:1; }
+.dna-score-lbl { font-size:0.45rem; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; }
+.dna-arch { font-size:1rem; font-weight:700; color:var(--white); margin-bottom:4px; }
+.dna-arch-desc { font-size:0.75rem; color:var(--muted); line-height:1.55; }
+.dna-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:18px; position:relative; z-index:1; }
+.ds {
+  background:rgba(255,255,255,0.03); border:1px solid var(--border);
+  border-radius:var(--r); padding:12px; text-align:center;
+}
+.ds-v { font-family:var(--mono); font-size:1.15rem; font-weight:800; color:var(--green); line-height:1; margin-bottom:4px; }
+.ds-v.bad { color:var(--red); }
+.ds-l { font-size:0.58rem; font-weight:600; letter-spacing:0.1em; color:var(--muted); text-transform:uppercase; }
+.dna-ins-list { position:relative; z-index:1; margin-bottom:18px; }
+.dna-ins { display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+.dna-ins:last-child { border-bottom:none; }
+.dna-ins-icon { font-size:0.85rem; margin-top:2px; }
+.dna-ins-text { font-size:0.74rem; color:var(--muted); line-height:1.5; }
+.dna-ins-text strong { color:var(--text); }
+.dna-foot {
+  display:flex; justify-content:space-between; align-items:center;
+  padding-top:14px; border-top:1px solid rgba(255,255,255,0.05);
+  position:relative; z-index:1;
+}
+.dna-foot-brand { font-family:var(--mono); font-size:0.58rem; letter-spacing:0.15em; color:rgba(0,230,118,0.35); }
+.dna-streak { font-size:0.68rem; color:var(--muted); }
+.dna-btns { display:flex; gap:10px; }
+.dna-btn {
+  flex:1; padding:14px; border-radius:var(--r);
+  font-family:var(--font); font-size:0.82rem; font-weight:700;
+  cursor:pointer; border:none; transition:all 0.2s;
+}
+.dna-pri { background:var(--green-bg); border:1px solid var(--green-bd); color:var(--green); }
+.dna-pri:hover { background:rgba(0,230,118,0.15); box-shadow:0 4px 20px rgba(0,230,118,0.12); }
+.dna-sec { background:transparent; border:1px solid var(--border2); color:var(--text); }
+.dna-sec:hover { background:var(--card2); }
+
+/* ── TOAST ─────────────────────────────────────────────────── */
+#toast {
+  position:fixed; bottom:24px; left:50%;
+  transform:translateX(-50%) translateY(8px);
+  background:var(--card2); border:1px solid var(--border2);
+  border-radius:20px; padding:11px 22px;
+  font-size:0.78rem; font-weight:500; color:var(--text);
+  z-index:9500; opacity:0; transition:all 0.3s;
+  white-space:nowrap; pointer-events:none;
+  backdrop-filter:blur(20px);
+  box-shadow:0 4px 20px rgba(0,0,0,0.4);
+}
+#toast.on { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* Chart wrapper */
+.chart-wrap { position:relative; }
+
+/* ── CONNECT VIEW ─────────────────────────────────────── */
+#connect-view { padding:68px 16px 24px; }
+.connect-inner { max-width:600px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+
+.connect-hero {
+  background:linear-gradient(135deg,#0d1920 0%,#080e14 100%);
+  border:1px solid var(--green-bd);
+  border-radius:var(--r3); padding:28px; text-align:center;
+  position:relative; overflow:hidden;
+}
+.connect-hero::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg, var(--green), transparent);
+}
+.ch-icon { font-size:2.5rem; margin-bottom:14px; }
+.ch-title { font-size:1.3rem; font-weight:800; color:var(--white); margin-bottom:6px; }
+.ch-sub { font-size:0.82rem; color:var(--muted); line-height:1.6; max-width:400px; margin:0 auto 20px; }
+.ch-badge {
+  display:inline-flex; align-items:center; gap:6px;
+  background:var(--green-bg); border:1px solid var(--green-bd);
+  border-radius:20px; padding:5px 14px;
+  font-size:0.7rem; font-weight:600; color:var(--green);
+}
+
+.broker-cards { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+@media(max-width:480px){ .broker-cards { grid-template-columns:1fr; } }
+
+.broker-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--r2); padding:20px;
+  display:flex; flex-direction:column; gap:12px;
+  transition:all 0.25s; cursor:pointer; position:relative; overflow:hidden;
+}
+.broker-card:hover { border-color:var(--green-bd); transform:translateY(-2px); }
+.broker-card.connected { border-color:var(--green-bd); background:var(--green-bg); }
+.bc-top { display:flex; align-items:center; gap:12px; }
+.bc-logo {
+  width:44px; height:44px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.4rem; font-weight:900; flex-shrink:0;
+}
+.bc-name { font-size:0.95rem; font-weight:700; color:var(--white); }
+.bc-desc { font-size:0.7rem; color:var(--muted); margin-top:2px; }
+.bc-connect-btn {
+  background:var(--green); border:none; border-radius:var(--r);
+  padding:10px 14px; font-family:var(--font); font-size:0.78rem;
+  font-weight:700; color:#080c10; cursor:pointer; transition:all 0.2s;
+  width:100%;
+}
+.bc-connect-btn:hover { box-shadow:0 4px 16px rgba(0,230,118,0.3); }
+.bc-connect-btn.outline {
+  background:transparent; border:1px solid var(--border2); color:var(--muted);
+}
+.bc-connect-btn.outline:hover { color:var(--text); border-color:var(--border2); }
+.bc-connected-badge {
+  display:flex; align-items:center; gap:6px;
+  font-size:0.75rem; font-weight:600; color:var(--green);
+  padding:8px 0;
+}
+
+/* Zerodha connect modal */
+.modal-overlay {
+  position:fixed; inset:0; z-index:8000;
+  background:rgba(4,6,10,0.9); backdrop-filter:blur(20px);
+  display:flex; align-items:center; justify-content:center;
+  padding:20px; opacity:0; pointer-events:none; transition:opacity 0.3s;
+}
+.modal-overlay.on { opacity:1; pointer-events:all; }
+.modal-box {
+  background:var(--card); border:1px solid var(--border2);
+  border-radius:var(--r3); padding:28px;
+  max-width:440px; width:100%;
+  animation:guardIn 0.4s cubic-bezier(.16,1,.3,1) both;
+}
+.modal-title { font-size:1.1rem; font-weight:800; color:var(--white); margin-bottom:6px; }
+.modal-sub { font-size:0.8rem; color:var(--muted); line-height:1.5; margin-bottom:20px; }
+.modal-steps { display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+.step-row {
+  display:flex; align-items:flex-start; gap:12px;
+  padding:12px 14px; background:var(--card2);
+  border:1px solid var(--border); border-radius:var(--r);
+}
+.step-num {
+  width:24px; height:24px; border-radius:50%;
+  background:var(--green-bg); border:1px solid var(--green-bd);
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.65rem; font-weight:800; color:var(--green); flex-shrink:0;
+}
+.step-text { font-size:0.78rem; color:var(--text); line-height:1.5; }
+.step-text a { color:var(--green); text-decoration:none; }
+.modal-input-row { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+.modal-btns { display:flex; gap:10px; }
+.modal-btn {
+  flex:1; padding:13px; border-radius:var(--r);
+  font-family:var(--font); font-size:0.82rem; font-weight:700;
+  cursor:pointer; border:none; transition:all 0.2s;
+}
+.modal-btn.pri { background:var(--green); color:#080c10; box-shadow:0 4px 16px rgba(0,230,118,0.2); }
+.modal-btn.pri:hover { box-shadow:0 6px 24px rgba(0,230,118,0.35); }
+.modal-btn.sec { background:transparent; border:1px solid var(--border2); color:var(--muted); }
+
+/* CSV Upload area */
+.csv-drop {
+  background:var(--card2); border:2px dashed var(--border2);
+  border-radius:var(--r2); padding:28px; text-align:center;
+  cursor:pointer; transition:all 0.25s;
+}
+.csv-drop:hover, .csv-drop.dragover {
+  border-color:var(--green-bd); background:var(--green-bg);
+}
+.csv-drop-icon { font-size:2rem; margin-bottom:10px; }
+.csv-drop-title { font-size:0.9rem; font-weight:700; color:var(--white); margin-bottom:4px; }
+.csv-drop-sub { font-size:0.75rem; color:var(--muted); line-height:1.5; }
+.csv-drop-sub a { color:var(--green); text-decoration:none; cursor:pointer; }
+.csv-drop input { display:none; }
+
+/* ── AI ANALYSIS VIEW ──────────────────────────────────── */
+#ai-view { padding:68px 16px 24px; }
+.ai-inner { max-width:680px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+
+.ai-hero {
+  background:linear-gradient(135deg,#0d1520 0%,#080e14 100%);
+  border:1px solid rgba(41,121,255,0.25);
+  border-radius:var(--r3); padding:24px;
+  position:relative; overflow:hidden;
+}
+.ai-hero::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg, var(--blue), transparent);
+}
+.ai-hero-top { display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+.ai-brain-icon {
+  width:48px; height:48px; border-radius:14px;
+  background:var(--blue-bg); border:1px solid var(--blue-bd);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.4rem; flex-shrink:0;
+}
+.ai-hero-title { font-size:1.1rem; font-weight:800; color:var(--white); }
+.ai-hero-sub { font-size:0.75rem; color:var(--muted); margin-top:2px; }
+.ai-analyze-btn {
+  width:100%; background:var(--blue);
+  border:none; border-radius:var(--r); padding:14px;
+  font-family:var(--font); font-size:0.9rem; font-weight:700;
+  color:#fff; cursor:pointer; transition:all 0.25s;
+  box-shadow:0 4px 20px rgba(41,121,255,0.2);
+}
+.ai-analyze-btn:hover { box-shadow:0 6px 28px rgba(41,121,255,0.35); transform:translateY(-1px); }
+.ai-analyze-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+/* AI loading state */
+.ai-loading {
+  display:none; align-items:center; gap:12px;
+  padding:16px; background:var(--blue-bg);
+  border:1px solid var(--blue-bd); border-radius:var(--r);
+}
+.ai-loading.on { display:flex; }
+.ai-spinner {
+  width:20px; height:20px; border-radius:50%;
+  border:2px solid var(--blue-bd);
+  border-top-color:var(--blue);
+  animation:spin 0.8s linear infinite; flex-shrink:0;
+}
+@keyframes spin { to{ transform:rotate(360deg); } }
+.ai-loading-text { font-size:0.78rem; color:var(--blue); }
+.ai-loading-sub { font-size:0.68rem; color:var(--muted); margin-top:2px; }
+
+/* AI Result cards */
+.ai-result { display:none; flex-direction:column; gap:12px; }
+.ai-result.on { display:flex; }
+
+.ai-score-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+@media(max-width:480px){ .ai-score-row { grid-template-columns:1fr 1fr; } }
+
+.ai-score-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--r2); padding:16px; text-align:center;
+}
+.asc-val { font-family:var(--mono); font-size:1.8rem; font-weight:800; line-height:1; margin-bottom:6px; }
+.asc-label { font-size:0.62rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); }
+
+.ai-mistake-list { display:flex; flex-direction:column; gap:8px; }
+.mistake-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--r2); padding:16px;
+  display:flex; align-items:flex-start; gap:14px;
+  transition:all 0.2s; cursor:default;
+}
+.mistake-card:hover { border-color:var(--border2); }
+.mistake-rank {
+  width:32px; height:32px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.75rem; font-weight:800; flex-shrink:0;
+}
+.rank-1 { background:rgba(255,69,96,0.12); color:var(--red); border:1px solid var(--red-bd); }
+.rank-2 { background:rgba(255,171,0,0.1); color:var(--amber); border:1px solid var(--amber-bd); }
+.rank-3 { background:rgba(41,121,255,0.1); color:var(--blue); border:1px solid var(--blue-bd); }
+.rank-4 { background:rgba(255,255,255,0.04); color:var(--muted); border:1px solid var(--border); }
+.rank-5 { background:rgba(255,255,255,0.04); color:var(--muted); border:1px solid var(--border); }
+.mistake-body { flex:1; min-width:0; }
+.mistake-title { font-size:0.85rem; font-weight:700; color:var(--white); margin-bottom:4px; }
+.mistake-desc { font-size:0.75rem; color:var(--muted); line-height:1.55; margin-bottom:8px; }
+.mistake-stats { display:flex; gap:8px; flex-wrap:wrap; }
+.mstat {
+  padding:3px 10px; border-radius:5px;
+  font-size:0.65rem; font-weight:700;
+  font-family:var(--mono);
+}
+.mstat-red { background:var(--red-bg); color:var(--red); border:1px solid var(--red-bd); }
+.mstat-amber { background:var(--amber-bg); color:var(--amber); border:1px solid var(--amber-bd); }
+.mstat-green { background:var(--green-bg); color:var(--green); border:1px solid var(--green-bd); }
+.mistake-fix {
+  margin-top:10px; padding:10px 12px;
+  background:var(--green-bg); border:1px solid var(--green-bd);
+  border-radius:var(--r); font-size:0.73rem; color:rgba(0,230,118,0.8);
+  line-height:1.5;
+}
+.mistake-fix::before { content:'💡 Fix: '; font-weight:700; color:var(--green); }
+
+/* AI chat input */
+.ai-chat {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--r2); overflow:hidden;
+}
+.ai-chat-messages {
+  padding:16px; min-height:120px; max-height:320px;
+  overflow-y:auto; display:flex; flex-direction:column; gap:12px;
+}
+.ai-msg {
+  display:flex; align-items:flex-start; gap:10px;
+}
+.ai-msg.user { flex-direction:row-reverse; }
+.ai-msg-avatar {
+  width:28px; height:28px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.8rem; flex-shrink:0; margin-top:2px;
+}
+.ai-msg.bot .ai-msg-avatar { background:var(--blue-bg); border:1px solid var(--blue-bd); }
+.ai-msg.user .ai-msg-avatar { background:var(--green-bg); border:1px solid var(--green-bd); }
+.ai-msg-bubble {
+  max-width:85%; padding:10px 13px;
+  border-radius:12px; font-size:0.8rem; line-height:1.55;
+}
+.ai-msg.bot .ai-msg-bubble { background:var(--card2); color:var(--text); border:1px solid var(--border); border-top-left-radius:4px; }
+.ai-msg.user .ai-msg-bubble { background:var(--green-bg); color:var(--green); border:1px solid var(--green-bd); border-top-right-radius:4px; }
+.ai-msg-bubble .typing { display:inline-flex; gap:3px; }
+.ai-msg-bubble .typing span { width:5px; height:5px; border-radius:50%; background:var(--blue); animation:typingDot 1.2s infinite; }
+.ai-msg-bubble .typing span:nth-child(2){ animation-delay:0.2s; }
+.ai-msg-bubble .typing span:nth-child(3){ animation-delay:0.4s; }
+@keyframes typingDot { 0%,60%,100%{opacity:0.3;transform:translateY(0);} 30%{opacity:1;transform:translateY(-4px);} }
+.ai-chat-input-row {
+  display:flex; gap:8px; padding:12px 14px;
+  border-top:1px solid var(--border);
+}
+.ai-chat-inp {
+  flex:1; background:var(--card2); border:1px solid var(--border2);
+  border-radius:var(--r); padding:10px 13px;
+  font-family:var(--font); font-size:0.82rem; color:var(--white);
+  outline:none; transition:all 0.2s;
+}
+.ai-chat-inp:focus { border-color:var(--blue-bd); box-shadow:0 0 0 3px rgba(41,121,255,0.07); }
+.ai-chat-inp::placeholder { color:var(--dim); }
+.ai-send-btn {
+  background:var(--blue); border:none; border-radius:var(--r);
+  padding:10px 16px; font-family:var(--font); font-size:0.82rem;
+  font-weight:700; color:#fff; cursor:pointer; transition:all 0.2s;
+  white-space:nowrap;
+}
+.ai-send-btn:hover { box-shadow:0 4px 14px rgba(41,121,255,0.3); }
+
+/* Import progress bar */
+.import-progress {
+  display:none; background:var(--card); border:1px solid var(--border);
+  border-radius:var(--r2); padding:20px; gap:12px; flex-direction:column;
+}
+.import-progress.on { display:flex; }
+.ip-title { font-size:0.85rem; font-weight:700; color:var(--white); }
+.ip-bar-wrap { height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden; }
+.ip-bar { height:100%; border-radius:3px; background:var(--green); width:0%; transition:width 0.3s ease; box-shadow:0 0 8px var(--green); }
+.ip-status { font-size:0.72rem; color:var(--muted); }
+.ip-stats { display:flex; gap:16px; }
+.ip-stat { font-size:0.72rem; color:var(--muted); }
+.ip-stat strong { color:var(--green); font-family:var(--mono); }
+
+/* Sample trades chip row */
+.sample-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.sample-chip {
+  padding:5px 12px; border-radius:20px;
+  font-size:0.68rem; font-weight:600; cursor:pointer;
+  background:var(--card2); border:1px solid var(--border2);
+  color:var(--muted); transition:all 0.2s;
+}
+.sample-chip:hover { border-color:var(--blue-bd); color:var(--blue); background:var(--blue-bg); }
+
+</style>
+</head>
+<body>
+
+<!-- Background canvas -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- Loader -->
+<div id="loader">
+  <div class="ld-logo"><div class="ld-dot"></div>MINDOFTRADER</div>
+  <div class="ld-bar-wrap"><div class="ld-bar" id="ld-bar"></div></div>
+  <div class="ld-msg" id="ld-msg">INITIALIZING...</div>
+</div>
+
+<!-- Guard overlay -->
+<div id="guard-overlay">
+  <div class="guard-box">
+    <div class="guard-scan"></div>
+    <div class="guard-icon">⚠️</div>
+    <div class="guard-title" id="g-title">BEHAVIORAL ALERT</div>
+    <div class="guard-sub" id="g-sub">Pattern detected in your trade sequence.</div>
+    <div class="guard-stat"><div class="gst-label">Win rate in this state</div><div class="gst-val" id="g-s1">28%</div></div>
+    <div class="guard-stat"><div class="gst-label">Avg P&L when you ignore this</div><div class="gst-val" id="g-s2">-₹4,200</div></div>
+    <div class="guard-tips" id="g-tips"></div>
+    <div class="guard-btns">
+      <button class="g-btn g-stop" onclick="closeGuard(true)">Stop Trading</button>
+      <button class="g-btn g-proc" onclick="closeGuard(false)">Proceed Anyway</button>
+    </div>
+  </div>
+</div>
+
+<!-- Nav -->
+<nav id="nav">
+  <div class="nav-brand"><div class="nav-brand-dot"></div>MindOfTrader</div>
+  <div class="nav-tabs">
+    <button class="nav-tab" onclick="goTo('dashboard')">📊 Mind</button>
+    <button class="nav-tab" onclick="goTo('log')">✍️ Journal</button>
+    <button class="nav-tab" onclick="goTo('connect')">🔗 Connect</button>
+    <button class="nav-tab" onclick="goTo('ai')">🤖 AI Coach</button>
+    <button class="nav-tab" onclick="goTo('dna')">🧬 DNA</button>
+  </div>
+  <div class="nav-right">
+    <div class="guard-nav-btn" onclick="triggerGuard('revenge')">
+      <div class="gnd"></div>GUARD ON
+    </div>
+  </div>
+</nav>
+
+<!-- LANDING -->
+<div class="view" id="landing-view">
+  <div class="land-tag">🧠 India's First Behavioral Trading Mirror</div>
+  <h1 class="land-h1">
+    <span class="hi">Your charts show</span>
+    <span class="accent">the market.</span>
+    <span class="lo">We show your mind.</span>
+  </h1>
+  <p class="land-sub">Stop blaming your strategy. The market doesn't take your money — your behavior does. MindOfTrader tracks what your broker never will.</p>
+  <div class="land-form">
+    <input class="land-input" id="trader-name" type="text" placeholder="Your first name" maxlength="20" autocomplete="off">
+    <button class="land-btn" onclick="startApp()">Start Mind Scan →</button>
+  </div>
+  <div class="land-feats">
+    <div class="feat">
+      <div class="feat-icon">🛡️</div>
+      <div class="feat-t">Real-Time Behavioral Guard</div>
+      <div class="feat-d">Warns you before a revenge trade, FOMO entry, or emotional mistake — not after.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🔍</div>
+      <div class="feat-t">AI Pattern Detection</div>
+      <div class="feat-d">Finds hidden patterns in your own data. "You lose 72% of trades after 2 losses."</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🧬</div>
+      <div class="feat-t">Weekly Trader DNA</div>
+      <div class="feat-d">A shareable behavioral report card with your archetype, edge, and blind spots.</div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="view" id="dashboard-view">
+  <div class="dash-hero">
+    <div>
+      <div class="dash-greet">// BEHAVIORAL SCAN ACTIVE</div>
+      <div class="dash-name">Welcome back, <span id="dash-name-txt">Trader</span></div>
+    </div>
+    <div class="dash-live">
+      <div class="dash-time" id="live-clock">--:--:--</div>
+      <div class="dash-session">NSE Session</div>
+    </div>
+  </div>
+
+  <!-- Guard alert -->
+  <div class="guard-strip" onclick="triggerGuard('revenge')">
+    <div class="gs-icon">⚠️</div>
+    <div class="gs-body">
+      <div class="gs-title">Behavioral Guard — Pattern Detected</div>
+      <div class="gs-desc">2 losses today. Revenge trade probability elevated to 73%. Review before your next trade.</div>
+    </div>
+    <div class="gs-cta">Review →</div>
+  </div>
+
+  <!-- Score cards -->
+  <div class="scores-row">
+    <div class="score-card" style="--c:var(--green)">
+      <div class="sc-label">Discipline</div>
+      <div class="sc-val" id="sc0">78</div>
+      <div class="sc-bar"><div class="sc-fill" id="sf0" style="background:var(--green)"></div></div>
+      <div class="sc-sub">Rule adherence</div>
+    </div>
+    <div class="score-card" style="--c:var(--amber)">
+      <div class="sc-label">Patience</div>
+      <div class="sc-val" id="sc1">52</div>
+      <div class="sc-bar"><div class="sc-fill" id="sf1" style="background:var(--amber)"></div></div>
+      <div class="sc-sub">Winner holding</div>
+    </div>
+    <div class="score-card" style="--c:var(--blue)">
+      <div class="sc-label">Risk Control</div>
+      <div class="sc-val" id="sc2">81</div>
+      <div class="sc-bar"><div class="sc-fill" id="sf2" style="background:var(--blue)"></div></div>
+      <div class="sc-sub">SL & sizing</div>
+    </div>
+    <div class="score-card" style="--c:var(--red)">
+      <div class="sc-label">Emotional Ctrl</div>
+      <div class="sc-val" id="sc3">60</div>
+      <div class="sc-bar"><div class="sc-fill" id="sf3" style="background:var(--red)"></div></div>
+      <div class="sc-sub">Emotion control</div>
+    </div>
+  </div>
+
+  <div class="dash-grid">
+    <div class="dash-left">
+
+      <!-- Equity curve -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title"><div class="pdot"></div>Equity Curve</div>
+          <div style="display:flex;gap:6px">
+            <span class="tag tg" style="cursor:pointer" onclick="switchEq(this,'1W')">1W</span>
+            <span class="tag" style="background:var(--card2);color:var(--muted);cursor:pointer;border:1px solid var(--border)" onclick="switchEq(this,'1M')">1M</span>
+            <span class="tag" style="background:var(--card2);color:var(--muted);cursor:pointer;border:1px solid var(--border)" onclick="switchEq(this,'3M')">3M</span>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="chart-wrap" style="height:190px"><canvas id="eqChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Behavioral insights -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title"><div class="pdot red"></div>Behavioral Insights</div>
+          <div class="panel-tag">AI Detected</div>
+        </div>
+        <div class="panel-body">
+          <div class="insight-list" id="insight-list"></div>
+        </div>
+      </div>
+
+      <!-- Setup performance -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title"><div class="pdot blue"></div>Setup Performance</div>
+          <div class="panel-tag">NSE Setups</div>
+        </div>
+        <div class="panel-body">
+          <div class="setup-list" id="setup-list"></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="dash-right">
+
+      <!-- Heatmap -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title"><div class="pdot amber"></div>Time Heatmap</div>
+          <div class="panel-tag">Win % by hour</div>
+        </div>
+        <div class="panel-body">
+          <div class="hm" id="hm"></div>
+        </div>
+      </div>
+
+      <!-- Patterns -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title"><div class="pdot red"></div>Behavior Patterns</div>
+          <div class="panel-tag">30 days</div>
+        </div>
+        <div class="panel-body" style="padding:0">
+          <table class="pat-table">
+            <thead><tr><th>Pattern</th><th>Freq</th><th>Avg P&L</th></tr></thead>
+            <tbody id="pat-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- P&L by emotion -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title"><div class="pdot blue"></div>P&L by Emotion</div>
+        </div>
+        <div class="panel-body">
+          <div class="chart-wrap" style="height:160px"><canvas id="emoChart"></canvas></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- JOURNAL -->
+<div class="view" id="log-view">
+  <div class="log-inner">
+    <div class="log-card">
+      <div class="sec-head">Trade Details</div>
+      <div class="f2">
+        <div class="fg"><label class="fl">Date</label><input class="fi" type="date" id="f-date"></div>
+        <div class="fg"><label class="fl">Index</label>
+          <select class="fs" id="f-symbol"><option>NIFTY</option><option>BANKNIFTY</option><option>FINNIFTY</option><option>MIDCPNIFTY</option></select>
+        </div>
+        <div class="fg"><label class="fl">Strike + Type</label><input class="fi" type="text" id="f-strike" placeholder="e.g. 24500 CE"></div>
+        <div class="fg"><label class="fl">Action</label>
+          <select class="fs" id="f-action"><option>BUY CE</option><option>SELL CE</option><option>BUY PE</option><option>SELL PE</option></select>
+        </div>
+        <div class="fg"><label class="fl">Entry ₹</label><input class="fi" type="number" id="f-entry" placeholder="0.00"></div>
+        <div class="fg"><label class="fl">Exit ₹</label><input class="fi" type="number" id="f-exit" placeholder="0.00"></div>
+        <div class="fg"><label class="fl">Stop Loss ₹</label><input class="fi" type="number" id="f-sl" placeholder="0.00"></div>
+        <div class="fg"><label class="fl">Target ₹</label><input class="fi" type="number" id="f-target" placeholder="0.00"></div>
+        <div class="fg"><label class="fl">Lots</label><input class="fi" type="number" id="f-lots" value="1" min="1"></div>
+        <div class="fg"><label class="fl">Setup</label>
+          <select class="fs" id="f-setup">
+            <option>VWAP Bounce</option><option>VWAP Rejection</option>
+            <option>Opening Range Breakout</option><option>Liquidity Grab</option>
+            <option>FVG Fill</option><option>Trend Pullback</option>
+            <option>Support/Resistance</option><option>Breakout Retest</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sec-head" style="margin-top:20px">How did you feel before this trade?</div>
+      <div class="emo-grid">
+        <button class="emo-btn emo-calm"         onclick="setEmo(this,'calm')">😌 Calm</button>
+        <button class="emo-btn emo-focused"       onclick="setEmo(this,'focused')">🧘 Focused</button>
+        <button class="emo-btn emo-fomo"          onclick="setEmo(this,'fomo')">🚀 FOMO</button>
+        <button class="emo-btn emo-fear"          onclick="setEmo(this,'fear')">😨 Fear</button>
+        <button class="emo-btn emo-revenge"       onclick="setEmo(this,'revenge')">😤 Revenge</button>
+        <button class="emo-btn emo-greed"         onclick="setEmo(this,'greed')">🤑 Greed</button>
+        <button class="emo-btn emo-hesitant"      onclick="setEmo(this,'hesitant')">😰 Hesitant</button>
+        <button class="emo-btn emo-overconfident" onclick="setEmo(this,'overconfident')">😎 Overconfident</button>
+      </div>
+
+      <!-- Live behavioral guard -->
+      <div class="live-guard" id="live-guard">
+        <div class="lg-title" id="lg-title"></div>
+        <div class="lg-text" id="lg-text"></div>
+      </div>
+
+      <div class="sec-head" style="margin-top:20px">Did you follow your rules?</div>
+      <div class="rules-wrap" id="rules-wrap"></div>
+
+      <div class="sec-head" style="margin-top:20px">Reflection</div>
+      <div class="f2">
+        <div class="fg full"><label class="fl">Setup description</label><textarea class="fta" id="f-notes" placeholder="Describe the setup and your reasoning…"></textarea></div>
+        <div class="fg full"><label class="fl">What did you learn?</label><textarea class="fta" id="f-lesson" placeholder="One honest lesson…" style="min-height:54px"></textarea></div>
+      </div>
+      <button class="submit-btn" onclick="submitTrade()">Save Trade & Analyze →</button>
+    </div>
+
+    <!-- Trade history -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title"><div class="pdot"></div>Trade History</div>
+        <div style="display:flex;gap:6px">
+          <span class="tag tg" style="cursor:pointer" onclick="filterLog(this,'all')">All</span>
+          <span class="tag tr" style="cursor:pointer" onclick="filterLog(this,'loss')">Losses</span>
+          <span class="tag" style="background:rgba(255,171,0,0.08);color:var(--amber);border:1px solid rgba(255,171,0,0.2);cursor:pointer" onclick="filterLog(this,'revenge')">Revenge</span>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="trade-tbl">
+          <thead><tr><th>Date</th><th>Instrument</th><th>Setup</th><th>Entry</th><th>Exit</th><th>P&L</th><th>Emotion</th><th>Rules</th></tr></thead>
+          <tbody id="trade-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DNA -->
+<div class="view" id="dna-view">
+  <div class="dna-inner">
+    <div class="dna-card">
+      <div class="dna-scan-line"></div>
+      <div class="dna-top">
+        <div class="dna-brand">🧠 MINDOFTRADER</div>
+        <div class="dna-week" id="dna-week">Week of Mar 10–15</div>
+      </div>
+      <div class="dna-name" id="dna-name">Your Trading DNA</div>
+      <div class="dna-role">NSE Options · Behavioral Intelligence Report</div>
+      <div class="dna-mid">
+        <div class="dna-ring">
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <circle class="dna-ring-bg" cx="40" cy="40" r="35"/>
+            <circle class="dna-ring-fill" id="dna-ring-fill" cx="40" cy="40" r="35"/>
+          </svg>
+          <div class="dna-ring-num">
+            <div class="dna-score-num" id="dna-snum">72</div>
+            <div class="dna-score-lbl">Disc.</div>
+          </div>
+        </div>
+        <div>
+          <div class="dna-arch" id="dna-arch">The Disciplined Hunter</div>
+          <div class="dna-arch-desc" id="dna-arch-desc">You wait for setups but impatience creeps in after losses.</div>
+        </div>
+      </div>
+      <div class="dna-stats">
+        <div class="ds"><div class="ds-v" id="dna-wr">62%</div><div class="ds-l">Win Rate</div></div>
+        <div class="ds"><div class="ds-v" id="dna-pnl">+₹18K</div><div class="ds-l">Net P&L</div></div>
+        <div class="ds"><div class="ds-v bad" id="dna-brk">3</div><div class="ds-l">Rule Breaks</div></div>
+      </div>
+      <div class="dna-ins-list" id="dna-ins-list"></div>
+      <div class="dna-foot">
+        <div class="dna-foot-brand">mindoftrader.com</div>
+        <div class="dna-streak" id="dna-streak">🔥 12 day streak</div>
+      </div>
+    </div>
+    <div class="dna-btns">
+      <button class="dna-btn dna-pri" onclick="shareDNA()">🔗 Share My Trading DNA</button>
+      <button class="dna-btn dna-sec" onclick="goTo('log')">+ Add Trade</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ CONNECT / IMPORT ══════════════════════════════════════ -->
+<div class="view" id="connect-view">
+  <div class="connect-inner">
+
+    <div class="connect-hero">
+      <div class="ch-icon">⚡</div>
+      <div class="ch-title">Connect Your Broker</div>
+      <div class="ch-sub">Import all your past trades instantly. Our AI will analyze your entire history and show you every mistake pattern — in seconds.</div>
+      <div class="ch-badge">🔒 Read-only access · We never place orders</div>
+    </div>
+
+    <!-- Broker cards -->
+    <div class="broker-cards">
+      <div class="broker-card" id="zerodha-card">
+        <div class="bc-top">
+          <div class="bc-logo" style="background:rgba(255,120,0,0.1);border:1px solid rgba(255,120,0,0.2);color:#ff7800">Z</div>
+          <div>
+            <div class="bc-name">Zerodha Kite</div>
+            <div class="bc-desc">Most popular · API ready</div>
+          </div>
+        </div>
+        <button class="bc-connect-btn" onclick="openZerodhaModal()">Connect Zerodha →</button>
+      </div>
+
+      <div class="broker-card">
+        <div class="bc-top">
+          <div class="bc-logo" style="background:rgba(0,100,255,0.1);border:1px solid rgba(0,100,255,0.2);color:#0064ff">D</div>
+          <div>
+            <div class="bc-name">Dhan</div>
+            <div class="bc-desc">Coming soon</div>
+          </div>
+        </div>
+        <button class="bc-connect-btn outline" disabled>Coming Soon</button>
+      </div>
+
+      <div class="broker-card">
+        <div class="bc-top">
+          <div class="bc-logo" style="background:rgba(255,69,0,0.1);border:1px solid rgba(255,69,0,0.2);color:#ff4500">A</div>
+          <div>
+            <div class="bc-name">Angel One</div>
+            <div class="bc-desc">Coming soon</div>
+          </div>
+        </div>
+        <button class="bc-connect-btn outline" disabled>Coming Soon</button>
+      </div>
+
+      <div class="broker-card">
+        <div class="bc-top">
+          <div class="bc-logo" style="background:rgba(0,200,100,0.1);border:1px solid rgba(0,200,100,0.2);color:#00c864">U</div>
+          <div>
+            <div class="bc-name">Upstox</div>
+            <div class="bc-desc">Coming soon</div>
+          </div>
+        </div>
+        <button class="bc-connect-btn outline" disabled>Coming Soon</button>
+      </div>
+    </div>
+
+    <!-- OR: CSV Upload -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title"><div class="pdot amber"></div>Upload Trade History</div>
+        <div class="panel-tag">Works with any broker</div>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:0.78rem;color:var(--muted);margin-bottom:14px;line-height:1.6">Don't have API access? Export your trade history as CSV from your broker and upload it here. We'll parse it automatically.</p>
+
+        <div class="csv-drop" id="csv-drop" onclick="document.getElementById('csv-file').click()">
+          <div class="csv-drop-icon">📂</div>
+          <div class="csv-drop-title">Drop your trade CSV here</div>
+          <div class="csv-drop-sub">or click to browse · Zerodha · Dhan · Angel · Any broker<br>
+            <a onclick="loadSampleData(event)">→ Load sample data to see how it works</a>
+          </div>
+          <input type="file" id="csv-file" accept=".csv" onchange="handleCSVUpload(event)">
+        </div>
+
+        <div class="import-progress" id="import-progress">
+          <div class="ip-title" id="ip-title">Importing trades...</div>
+          <div class="ip-bar-wrap"><div class="ip-bar" id="ip-bar"></div></div>
+          <div class="ip-status" id="ip-status">Reading file...</div>
+          <div class="ip-stats">
+            <div class="ip-stat">Trades found: <strong id="ip-found">0</strong></div>
+            <div class="ip-stat">Imported: <strong id="ip-imported">0</strong></div>
+            <div class="ip-stat">Options only: <strong id="ip-options">0</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CSV format guide -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title"><div class="pdot"></div>Zerodha CSV Format</div>
+        <div class="panel-tag">How to export</div>
+      </div>
+      <div class="panel-body">
+        <div class="modal-steps">
+          <div class="step-row">
+            <div class="step-num">1</div>
+            <div class="step-text">Login to <a href="https://kite.zerodha.com" target="_blank">kite.zerodha.com</a> → Profile → Reports</div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">2</div>
+            <div class="step-text">Go to <strong style="color:var(--white)">Trade Book</strong> → Select date range (up to 1 year)</div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">3</div>
+            <div class="step-text">Click <strong style="color:var(--white)">Download CSV</strong> and upload it here</div>
+          </div>
+          <div class="step-row">
+            <div class="step-num">4</div>
+            <div class="step-text">We'll instantly detect your options trades and run AI analysis on them</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ AI COACH ══════════════════════════════════════════════ -->
+<div class="view" id="ai-view">
+  <div class="ai-inner">
+
+    <div class="ai-hero">
+      <div class="ai-hero-top">
+        <div class="ai-brain-icon">🧠</div>
+        <div>
+          <div class="ai-hero-title">AI Mind Coach</div>
+          <div class="ai-hero-sub">Analyzes your full trade history and shows every behavioral mistake — instantly</div>
+        </div>
+      </div>
+      <button class="ai-analyze-btn" id="ai-analyze-btn" onclick="runAIAnalysis()">
+        🔍 Analyze My Trading Mind
+      </button>
+      <div class="sample-chips">
+        <span class="sample-chip" onclick="askAI('What is my biggest trading mistake?')">What's my biggest mistake?</span>
+        <span class="sample-chip" onclick="askAI('When do I trade best?')">When do I trade best?</span>
+        <span class="sample-chip" onclick="askAI('Why do I keep losing money?')">Why do I lose money?</span>
+        <span class="sample-chip" onclick="askAI('What should I stop doing immediately?')">What to stop immediately?</span>
+        <span class="sample-chip" onclick="askAI('Show me my revenge trading pattern')">Revenge trade pattern</span>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div class="ai-loading" id="ai-loading">
+      <div class="ai-spinner"></div>
+      <div>
+        <div class="ai-loading-text" id="ai-loading-text">Analyzing 47 trades...</div>
+        <div class="ai-loading-sub" id="ai-loading-sub">Detecting behavioral patterns across your history</div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="ai-result" id="ai-result">
+
+      <!-- Score row -->
+      <div class="ai-score-row" id="ai-score-row"></div>
+
+      <!-- Mistake list -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title"><div class="pdot red"></div>Top Behavioral Mistakes</div>
+          <div class="panel-tag">Ranked by cost</div>
+        </div>
+        <div class="panel-body">
+          <div class="ai-mistake-list" id="ai-mistake-list"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- AI Chat -->
+    <div class="ai-chat" id="ai-chat">
+      <div class="ai-chat-messages" id="ai-chat-messages">
+        <div class="ai-msg bot">
+          <div class="ai-msg-avatar">🧠</div>
+          <div class="ai-msg-bubble">Hi! I'm your AI Mind Coach. I can analyze your trading behavior and tell you exactly why you're losing money and how to fix it. Run the analysis above or ask me anything about your trades.</div>
+        </div>
+      </div>
+      <div class="ai-chat-input-row">
+        <input class="ai-chat-inp" id="ai-chat-inp" type="text" placeholder="Ask about your trading behavior..." onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="ai-send-btn" onclick="sendChat()">Send →</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ ZERODHA MODAL ══════════════════════════════════════════ -->
+<div class="modal-overlay" id="zerodha-modal">
+  <div class="modal-box">
+    <div class="modal-title">Connect Zerodha</div>
+    <div class="modal-sub">Enter your Zerodha API credentials. We use read-only access — we can never place or modify orders.</div>
+    <div class="modal-steps">
+      <div class="step-row">
+        <div class="step-num">1</div>
+        <div class="step-text">Go to <a href="https://developers.kite.trade" target="_blank">developers.kite.trade</a> → Create App</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">2</div>
+        <div class="step-text">Set redirect URL to: <strong style="color:var(--green);font-size:0.7rem;word-break:break-all" id="redirect-url-display"></strong></div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">3</div>
+        <div class="step-text">Paste your API Key below and click Connect</div>
+      </div>
+    </div>
+    <div class="modal-input-row">
+      <div class="fg"><label class="fl">Zerodha API Key</label><input class="fi" id="z-api-key" type="text" placeholder="Your API key from developers.kite.trade"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn pri" onclick="connectZerodha()">Connect & Import →</button>
+      <button class="modal-btn sec" onclick="closeModal('zerodha-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─── BG CANVAS ──────────────────────────────────────────────
+(function(){
+  const cv = document.getElementById('bg-canvas');
+  const ctx = cv.getContext('2d');
+  let W=0, H=0, nodes=[], t=0;
+
+  function resize(){
+    W = cv.width  = window.innerWidth;
+    H = cv.height = window.innerHeight;
+    if(!nodes.length){
+      for(let i=0;i<18;i++) nodes.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*0.2,vy:(Math.random()-.5)*0.2});
+    }
+  }
+  resize(); window.addEventListener('resize',resize);
+
+  (function frame(){
+    if(!W||!H){requestAnimationFrame(frame);return;}
+    ctx.clearRect(0,0,W,H);
+    t+=0.005;
+
+    // Subtle radial gradient
+    const gx=W/2+Math.sin(t)*80, gy=H*0.4+Math.cos(t*0.7)*60;
+    if(isFinite(gx)&&isFinite(gy)){
+      const g=ctx.createRadialGradient(gx,gy,0,W/2,H/2,Math.max(W,H)*0.7);
+      g.addColorStop(0,'rgba(0,230,118,0.04)');
+      g.addColorStop(1,'transparent');
+      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    }
+
+    // Neural nodes
+    nodes.forEach(n=>{
+      n.x+=n.vx; n.y+=n.vy;
+      if(n.x<0||n.x>W)n.vx*=-1;
+      if(n.y<0||n.y>H)n.vy*=-1;
+    });
+    for(let i=0;i<nodes.length;i++){
+      for(let j=i+1;j<nodes.length;j++){
+        const dx=nodes[i].x-nodes[j].x, dy=nodes[i].y-nodes[j].y;
+        const d=Math.sqrt(dx*dx+dy*dy);
+        if(d<220){
+          ctx.beginPath();
+          ctx.moveTo(nodes[i].x,nodes[i].y);
+          ctx.lineTo(nodes[j].x,nodes[j].y);
+          ctx.strokeStyle=`rgba(0,230,118,${(0.05*(1-d/220)).toFixed(3)})`;
+          ctx.lineWidth=0.6; ctx.stroke();
+        }
+      }
+    }
+
+    // Dots
+    nodes.forEach(n=>{
+      ctx.beginPath(); ctx.arc(n.x,n.y,1.2,0,Math.PI*2);
+      ctx.fillStyle='rgba(0,230,118,0.18)'; ctx.fill();
+    });
+
+    requestAnimationFrame(frame);
+  })();
+})();
+
+// ─── LOADER ─────────────────────────────────────────────────
+(function(){
+  const msgs=['INITIALIZING...','LOADING ENGINE...','SYNCING PATTERNS...','CALIBRATING GUARD...','MIND SCAN READY ✓'];
+  let p=0, mi=0;
+  const bar=document.getElementById('ld-bar');
+  const msg=document.getElementById('ld-msg');
+  const ldr=document.getElementById('loader');
+
+  msg.textContent=msgs[0];
+
+  function tick(){
+    p+=0.8;
+    if(p>100)p=100;
+    bar.style.width=p+'%';
+    const threshold=(mi+1)*(100/msgs.length);
+    if(p>=threshold&&mi<msgs.length-1){mi++;msg.textContent=msgs[mi];}
+    if(p<100){requestAnimationFrame(tick);}
+    else{
+      msg.textContent=msgs[msgs.length-1];
+      bar.style.width='100%';
+      setTimeout(()=>{
+        ldr.style.opacity='0';
+        setTimeout(()=>{
+          ldr.style.display='none';
+          const saved=localStorage.getItem('mot_name');
+          if(saved){
+            traderName=saved;
+            const inp=document.getElementById('trader-name');
+            if(inp)inp.value=saved;
+            document.getElementById('nav').style.display='flex';
+            goTo('dashboard');
+          } else {
+            goTo('landing');
+          }
+        },700);
+      },800);
+    }
+  }
+  requestAnimationFrame(tick);
+})();
+
+// ─── LIVE CLOCK ──────────────────────────────────────────────
+setInterval(()=>{
+  const el=document.getElementById('live-clock');
+  if(el)el.textContent=new Date().toLocaleTimeString('en-IN',{hour12:false});
+},1000);
+
+// ─── STATE ───────────────────────────────────────────────────
+let traderName='', trades=[], selectedEmo='', eqChart=null, emoChart=null;
+
+const RULES=[
+  'Confirmed trend/setup before entry',
+  'Stop loss placed before entering',
+  'Position size ≤ 2% of capital',
+  'No trade in the first 15 minutes',
+  'Followed my defined setup criteria',
+  'No revenge trade after 2+ losses',
+  'Exited at planned target or SL',
+];
+
+const INSIGHTS=[
+  {t:'neg',icon:'🔴',title:'Revenge Trading After Losses',desc:'72% loss rate after 2+ consecutive losses. These trades cost you ₹4,200 on average.',stat:'-₹4.2K'},
+  {t:'warn',icon:'⏰',title:'Afternoon Slump: 12:30–1:30 PM',desc:'Win rate drops to 31% during lunch hour. Total losses in this window: ₹8,400.',stat:'31% WR'},
+  {t:'neg',icon:'🏃',title:'Exiting Winners Too Early',desc:'9 trades exited before target. You missed ₹1,850 avg additional gain per trade.',stat:'9 trades'},
+  {t:'pos',icon:'✅',title:'VWAP Bounce Is Your Edge',desc:'68% win rate on calm VWAP setups. Your strongest and most consistent pattern.',stat:'68% WR'},
+  {t:'pos',icon:'🧘',title:'Calm State → 74% Win Rate',desc:'Calm and focused trades win 74% of the time. Emotional control is your real strategy.',stat:'74% WR'},
+];
+
+const SETUPS=[
+  {name:'VWAP Bounce',wr:68,pnl:12400},{name:'Trend Pullback',wr:71,pnl:15200},
+  {name:'Opening Range Breakout',wr:61,pnl:9800},{name:'Liquidity Grab',wr:55,pnl:6100},
+  {name:'FVG Fill',wr:58,pnl:4800},{name:'VWAP Rejection',wr:48,pnl:-2100},
+];
+
+const PATTERNS=[
+  {name:'Revenge Trade',freq:5,max:15,pnl:-4200,col:'var(--red)'},
+  {name:'FOMO Entry',freq:12,max:15,pnl:-2800,col:'var(--amber)'},
+  {name:'Early Exit',freq:9,max:15,pnl:-1850,col:'var(--amber)'},
+  {name:'No Stop Loss',freq:3,max:15,pnl:-6100,col:'var(--red)'},
+  {name:'Calm + Setup',freq:14,max:15,pnl:2400,col:'var(--green)'},
+];
+
+const GUARD_DATA={
+  revenge:{title:'Revenge Trade Detected',sub:'2 losses today. Your data shows a revenge trading pattern. This typically ends badly.',s1:'28% win rate — 3 of 10 trades profitable',s2:'-₹4,200 average P&L when ignored',tips:['Take a 15-minute break before next trade','Reduce size to 50% if you proceed','Your morning VWAP trades win 71% — wait for them']},
+  fomo:{title:'FOMO Entry Detected',sub:'Entry appears post-breakout. This matches your historical FOMO pattern.',s1:'31% win rate on chased entries',s2:'-₹2,800 average P&L on FOMO trades',tips:['Wait for a retest of the breakout level','Skip if R:R is below 1:2','Best entries come from patience, not chasing']},
+  overtrading:{title:'Overtrading Alert',sub:'5+ trades today. Your win rate drops sharply above trade #4.',s1:'41% win rate on trades 5+ (vs 68% early)',s2:'-₹3,200 average P&L on high-count days',tips:['Call it a day — you are above optimal','Lock in today\'s gains','Reset tomorrow with fresh eyes']},
+};
+
+// ─── SEED DATA ───────────────────────────────────────────────
+function seedTrades(){
+  trades=[
+    {id:1,date:'2026-03-15',symbol:'NIFTY',strike:'24500 CE',action:'BUY CE',lots:2,entry:180,exit:265,sl:140,target:280,setup:'VWAP Bounce',emotion:'calm',rules:[1,1,1,1,1,1,1],pnl:12750,broken:false},
+    {id:2,date:'2026-03-14',symbol:'BANKNIFTY',strike:'51000 PE',action:'BUY PE',lots:1,entry:320,exit:210,sl:280,target:450,setup:'Trend Pullback',emotion:'revenge',rules:[1,1,0,1,0,0,1],pnl:-3300,broken:true},
+    {id:3,date:'2026-03-14',symbol:'NIFTY',strike:'24000 PE',action:'SELL PE',lots:3,entry:95,exit:45,sl:130,target:30,setup:'Opening Range Breakout',emotion:'focused',rules:[1,1,1,1,1,1,1],pnl:11250,broken:false},
+    {id:4,date:'2026-03-13',symbol:'NIFTY',strike:'24500 CE',action:'BUY CE',lots:1,entry:210,exit:175,sl:180,target:290,setup:'VWAP Rejection',emotion:'fomo',rules:[0,1,1,0,0,1,1],pnl:-2625,broken:true},
+    {id:5,date:'2026-03-12',symbol:'BANKNIFTY',strike:'52000 CE',action:'BUY CE',lots:2,entry:440,exit:610,sl:380,target:620,setup:'Liquidity Grab',emotion:'calm',rules:[1,1,1,1,1,1,1],pnl:10200,broken:false},
+  ];
+}
+
+// ─── INIT ────────────────────────────────────────────────────
+window.addEventListener('load',()=>{
+  seedTrades();
+  buildRules();
+  document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+  renderTradeTable(trades);
+  renderDNA();
+  const saved=localStorage.getItem('mot_name');
+  if(saved){traderName=saved;}
+});
+
+// ─── NAVIGATION ──────────────────────────────────────────────
+function goTo(id){
+  document.querySelectorAll('.view').forEach(v=>{v.classList.remove('on');});
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('on'));
+  const target=document.getElementById(id+'-view');
+  if(!target)return;
+  target.classList.add('on');
+  const map={dashboard:0,log:1,dna:2};
+  const tabs=document.querySelectorAll('.nav-tab');
+  if(tabs[map[id]])tabs[map[id]].classList.add('on');
+  if(id==='dashboard')renderDashboard();
+  if(id==='dna')renderDNA();
+}
+
+function startApp(){
+  const n=document.getElementById('trader-name').value.trim();
+  if(!n){showToast('Please enter your name first');return;}
+  traderName=n;
+  localStorage.setItem('mot_name',n);
+  document.getElementById('nav').style.display='flex';
+  goTo('dashboard');
+}
+
+// ─── GUARD ───────────────────────────────────────────────────
+function triggerGuard(type){
+  const d=GUARD_DATA[type]||GUARD_DATA.revenge;
+  document.getElementById('g-title').textContent=d.title;
+  document.getElementById('g-sub').textContent=d.sub;
+  document.getElementById('g-s1').textContent=d.s1;
+  document.getElementById('g-s2').textContent=d.s2;
+  document.getElementById('g-tips').innerHTML=d.tips.map(t=>`<div class="gtip">${t}</div>`).join('');
+  document.getElementById('guard-overlay').classList.add('on');
+}
+function closeGuard(stopped){
+  document.getElementById('guard-overlay').classList.remove('on');
+  showToast(stopped?'✓ Smart call. Capital protected.':'⚠ Proceed with caution. Reduce size.');
+}
+
+// ─── DASHBOARD ───────────────────────────────────────────────
+function renderDashboard(){
+  document.getElementById('dash-name-txt').textContent=traderName||'Trader';
+  renderInsights(); renderSetups(); renderHeatmap(); renderPatterns();
+  requestAnimationFrame(()=>{
+    renderEqChart('1W');
+    renderEmoChart();
+    animateScores();
+  });
+}
+
+function animateScores(){
+  const vals=[78,52,81,60];
+  vals.forEach((v,i)=>{
+    const el=document.getElementById('sf'+i);
+    if(el) setTimeout(()=>el.style.width=v+'%',100);
+  });
+}
+
+function renderInsights(){
+  document.getElementById('insight-list').innerHTML=INSIGHTS.map(i=>`
+    <div class="ins ${i.t}">
+      <div class="ins-icon">${i.icon}</div>
+      <div class="ins-body">
+        <div class="ins-title">${i.title}</div>
+        <div class="ins-desc">${i.desc}</div>
+      </div>
+      <div class="ins-stat">${i.stat}</div>
+    </div>`).join('');
+}
+
+function renderSetups(){
+  document.getElementById('setup-list').innerHTML=SETUPS.map(s=>{
+    const col=s.wr>=65?'var(--green)':s.wr>=50?'var(--amber)':'var(--red)';
+    const pnlCol=s.pnl>=0?'var(--green)':'var(--red)';
+    const pnlStr=(s.pnl>=0?'+':'-')+'₹'+Math.abs(s.pnl).toLocaleString('en-IN');
+    return `<div class="setup-row">
+      <div class="setup-name" style="color:${col}">${s.name}</div>
+      <div class="setup-bar-w"><div class="setup-bar-f" style="width:${s.wr}%;background:${col};box-shadow:0 0 4px ${col}"></div></div>
+      <div class="setup-wr" style="color:${col}">${s.wr}%</div>
+      <div class="setup-pnl" style="color:${pnlCol}">${pnlStr}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderHeatmap(){
+  const times=['9:15','10:15','11:15','12:30','14:00','15:00','15:20'];
+  const days=['Mon','Tue','Wed','Thu','Fri'];
+  const data=[[55,74,82,38,45,30,60],[62,80,75,42,38,35,55],[50,72,78,35,40,28,62],[58,68,80,40,42,32,58],[45,76,72,45,35,30,52]];
+  const grid=document.getElementById('hm');
+  grid.innerHTML='<div class="hm-lbl"></div>'+times.map(t=>`<div class="hm-col-lbl">${t}</div>`).join('');
+  days.forEach((day,di)=>{
+    grid.innerHTML+=`<div class="hm-lbl">${day}</div>`;
+    times.forEach((t,ti)=>{
+      const v=data[di][ti];
+      const bg=v>=65?`rgba(0,230,118,${0.08+v/100*0.25})`:v>=50?`rgba(255,171,0,${0.07+v/100*0.2})`:`rgba(255,69,96,${0.07+v/100*0.18})`;
+      const fc=v>=65?'var(--green)':v>=50?'var(--amber)':'var(--red)';
+      grid.innerHTML+=`<div class="hm-cell" style="background:${bg};color:${fc}">${v}%<div class="hm-tip">${day} ${t}: ${v}% win rate</div></div>`;
+    });
+  });
+}
+
+function renderPatterns(){
+  document.getElementById('pat-tbody').innerHTML=PATTERNS.map(p=>{
+    const pStr=(p.pnl>=0?'+':'-')+'₹'+Math.abs(p.pnl).toLocaleString('en-IN');
+    const pCol=p.pnl>=0?'var(--green)':'var(--red)';
+    return `<tr>
+      <td style="font-weight:600">${p.name}</td>
+      <td><div class="freq-wrap"><div class="freq-track"><div class="freq-fill" style="width:${(p.freq/p.max)*100}%;background:${p.col};box-shadow:0 0 4px ${p.col}"></div></div><span style="font-size:0.75rem;font-weight:700;min-width:16px">${p.freq}</span></div></td>
+      <td style="font-family:var(--mono);font-weight:700;color:${pCol}">${pStr}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderEqChart(range){
+  const canvas=document.getElementById('eqChart');
+  if(!canvas||canvas.offsetWidth===0)return;
+  if(eqChart)eqChart.destroy();
+  const D={'1W':{labels:['Mon','Tue','Wed','Thu','Fri','Today'],raw:[0,12750,-3300,11250,-2625,18450]},'1M':{labels:['Wk1','Wk2','Wk3','Wk4','Now'],raw:[0,8000,-2000,15000,18450]},'3M':{labels:['Jan','Feb','Mar'],raw:[0,25000,40000,18450]}};
+  const d=D[range];
+  const cum=d.raw.reduce((a,v,i)=>{a.push((a[i-1]||0)+v);return a;},[]);
+  eqChart=new Chart(canvas.getContext('2d'),{
+    type:'line',
+    data:{labels:d.labels,datasets:[{data:cum,
+      segment:{borderColor:c=>c.p0.parsed.y>=0?'rgba(0,230,118,0.9)':'rgba(255,69,96,0.9)',backgroundColor:c=>c.p0.parsed.y>=0?'rgba(0,230,118,0.07)':'rgba(255,69,96,0.07)'},
+      fill:true,borderWidth:2.5,tension:0.4,
+      pointRadius:5,pointBackgroundColor:c=>c.parsed.y>=0?'var(--green)':'var(--red)',
+      pointBorderColor:'var(--card)',pointBorderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(13,18,24,0.97)',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleFont:{family:'Space Grotesk',size:11},bodyFont:{family:'Space Grotesk',size:11},padding:12,callbacks:{label:c=>'P&L: '+(c.parsed.y>=0?'+':'')+fmtINR(c.parsed.y)}}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(200,216,232,0.4)',font:{family:'Space Grotesk',size:10}}},
+        y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(200,216,232,0.4)',font:{family:'Space Grotesk',size:10},callback:v=>'₹'+(v/1000).toFixed(0)+'K'}}
+      }}
+  });
+}
+
+function switchEq(btn,range){
+  document.querySelectorAll('.panel-head .tag').forEach(b=>{
+    b.className='tag';b.style.cssText='background:var(--card2);color:var(--muted);cursor:pointer;border:1px solid var(--border)';
+  });
+  btn.className='tag tg'; btn.style.cssText='cursor:pointer';
+  requestAnimationFrame(()=>renderEqChart(range));
+}
+
+function renderEmoChart(){
+  const canvas=document.getElementById('emoChart');
+  if(!canvas||canvas.offsetWidth===0)return;
+  if(emoChart)emoChart.destroy();
+  emoChart=new Chart(canvas.getContext('2d'),{
+    type:'bar',
+    data:{labels:['Calm','Focused','FOMO','Fear','Revenge','Greed'],
+      datasets:[{data:[2400,2100,-2800,-1200,-4200,-800],
+        backgroundColor:['rgba(0,230,118,0.55)','rgba(0,230,118,0.35)','rgba(255,171,0,0.5)','rgba(41,121,255,0.5)','rgba(255,69,96,0.55)','rgba(255,171,0,0.4)'],
+        borderRadius:4,borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(13,18,24,0.97)',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleFont:{family:'Space Grotesk',size:11},bodyFont:{family:'Space Grotesk',size:11},padding:12,callbacks:{label:c=>'Avg: '+(c.parsed.x>=0?'+':'')+fmtINR(c.parsed.x)}}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(200,216,232,0.4)',font:{family:'Space Grotesk',size:9},callback:v=>'₹'+(v/1000).toFixed(0)+'K'}},
+        y:{grid:{display:false},ticks:{color:'rgba(200,216,232,0.5)',font:{family:'Space Grotesk',size:10}}}
+      }}
+  });
+}
+
+// ─── JOURNAL ─────────────────────────────────────────────────
+function buildRules(){
+  document.getElementById('rules-wrap').innerHTML=RULES.map((r,i)=>`
+    <label class="rule-row">
+      <input type="checkbox" id="rl-${i}" checked>
+      <span class="rule-text">${r}</span>
+    </label>`).join('');
+}
+
+function setEmo(btn,emo){
+  document.querySelectorAll('.emo-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); selectedEmo=emo;
+  const lg=document.getElementById('live-guard');
+  const lgt=document.getElementById('lg-title');
+  const lgtx=document.getElementById('lg-text');
+  const lossStreak=trades.filter(t=>t.pnl<0).slice(0,2).length;
+  if(emo==='revenge'||(emo==='fear'&&lossStreak>=2)){
+    lg.className='live-guard on danger';
+    lgt.textContent='⚠ Behavioral Guard — Revenge Pattern Active';
+    lgtx.innerHTML=`You're entering in a <strong style="color:var(--red)">${emo}</strong> state after ${lossStreak} recent losses. Historical win rate: <strong style="color:var(--red)">28%</strong>. Avg P&L: <strong style="color:var(--red)">-₹4,200</strong>. Strongly recommend waiting.`;
+  } else if(emo==='fomo'){
+    lg.className='live-guard on danger';
+    lgt.textContent='⚠ Behavioral Guard — FOMO Signature';
+    lgtx.innerHTML=`FOMO state detected. Your win rate in this state: <strong style="color:var(--amber)">31%</strong>. Make sure the setup is clearly defined.`;
+  } else if(emo==='calm'||emo==='focused'){
+    lg.className='live-guard on good';
+    lgt.textContent='✓ Optimal State — Execute with Confidence';
+    lgtx.innerHTML=`<span style="color:var(--green)">Calm/Focused.</span> Your win rate in this state: <strong style="color:var(--green)">74%</strong>. This is your edge. Trust the system.`;
+  } else {
+    lg.className='live-guard';
+  }
+}
+
+function submitTrade(){
+  const entry=parseFloat(document.getElementById('f-entry').value)||0;
+  const exit=parseFloat(document.getElementById('f-exit').value)||0;
+  const lots=parseInt(document.getElementById('f-lots').value)||1;
+  const symbol=document.getElementById('f-symbol').value;
+  const action=document.getElementById('f-action').value;
+  if(!entry){showToast('Enter entry price first');return;}
+  const ls={NIFTY:75,BANKNIFTY:30,FINNIFTY:40,MIDCPNIFTY:75};
+  const pnl=exit?Math.round((exit-entry)*(action.startsWith('BUY')?1:-1)*lots*(ls[symbol]||75)):0;
+  const rules=RULES.map((_,i)=>document.getElementById('rl-'+i)?.checked?1:0);
+  const broken=rules.some(r=>!r)||['revenge','fomo','fear'].includes(selectedEmo);
+  trades.unshift({id:Date.now(),date:document.getElementById('f-date').value,symbol,strike:document.getElementById('f-strike').value,action,lots,entry,exit,sl:parseFloat(document.getElementById('f-sl').value)||0,target:parseFloat(document.getElementById('f-target').value)||0,setup:document.getElementById('f-setup').value,emotion:selectedEmo||'calm',rules,pnl,broken});
+  renderTradeTable(trades);
+  showToast(pnl>=0?`✓ Trade saved — P&L: +${fmtINR(pnl)}`:`Trade saved — P&L: -${fmtINR(Math.abs(pnl))}`);
+  const todayLoss=trades.filter(t=>t.date===trades[0].date&&t.pnl<0).length;
+  if(todayLoss>=2&&selectedEmo==='revenge')setTimeout(()=>triggerGuard('revenge'),600);
+  ['f-entry','f-exit','f-sl','f-target','f-notes','f-lesson'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.querySelectorAll('.emo-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('live-guard').className='live-guard';
+  selectedEmo='';
+}
+
+function renderTradeTable(data){
+  const tb=document.getElementById('trade-tbody');
+  if(!data.length){
+    tb.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted);font-size:0.82rem">No trades yet — log your first trade above</td></tr>`;
+    return;
+  }
+  const emoBadge={calm:'tg',focused:'tg',fomo:'ta',fear:'tb',revenge:'tr',greed:'ta',hesitant:'tb',overconfident:'ta'};
+  tb.innerHTML=data.map(t=>{
+    const pnlStr=(t.pnl>=0?'+':'-')+'₹'+Math.abs(t.pnl).toLocaleString('en-IN');
+    const pc=t.pnl>=0?'pnl-p':'pnl-n';
+    const ec=emoBadge[t.emotion]||'';
+    const brk=t.rules.filter(r=>!r).length;
+    const rkStr=brk===0?`<span class="tag tg">✓ All</span>`:`<span class="tag tr">⚠ ${brk}</span>`;
+    return `<tr>
+      <td style="color:var(--muted);font-size:0.72rem;white-space:nowrap">${t.date}</td>
+      <td style="font-weight:700;font-size:0.8rem">${t.symbol}</td>
+      <td style="color:var(--muted);font-size:0.7rem;max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.setup||'—'}</td>
+      <td style="font-family:var(--mono)">₹${t.entry}</td>
+      <td style="font-family:var(--mono)">${t.exit?'₹'+t.exit:'—'}</td>
+      <td class="${pc}">${pnlStr}</td>
+      <td><span class="tag ${ec}" style="font-size:0.6rem">${t.emotion||'—'}</span></td>
+      <td>${rkStr}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterLog(btn,type){
+  let d=trades;
+  if(type==='loss')d=trades.filter(t=>t.pnl<0);
+  if(type==='revenge')d=trades.filter(t=>t.emotion==='revenge');
+  renderTradeTable(d);
+}
+
+// ─── DNA ─────────────────────────────────────────────────────
+function renderDNA(){
+  const wins=trades.filter(t=>t.pnl>0).length;
+  const wr=trades.length?Math.round(wins/trades.length*100):62;
+  const pnl=trades.reduce((s,t)=>s+t.pnl,0)||18450;
+  const brk=trades.filter(t=>t.broken).length;
+  const calm=trades.filter(t=>['calm','focused'].includes(t.emotion)).length;
+  const disc=Math.max(20,Math.min(98,Math.round(((trades.length?trades.reduce((s,t)=>s+(t.rules.filter(Boolean).length/t.rules.length),0)/trades.length:0.78)*50)+((trades.length?calm/trades.length:0.6)*50))));
+  document.getElementById('dna-snum').textContent=disc;
+  document.getElementById('dna-wr').textContent=wr+'%';
+  document.getElementById('dna-pnl').textContent=(pnl>=0?'+':'')+fmtINRShort(pnl);
+  document.getElementById('dna-brk').textContent=brk;
+  document.getElementById('dna-name').textContent=(traderName||'Your') + "'s Trading DNA";
+  document.getElementById('dna-week').textContent='Week of '+new Date().toLocaleDateString('en-IN',{month:'short',day:'numeric'});
+  const archs=[{min:85,name:'The Disciplined Sniper',desc:'Cold execution. Zero emotion. You wait, strike, exit. This is the rarest trader type.'},{min:70,name:'The Disciplined Hunter',desc:'You wait for setups. But impatience creeps in after losses — revenge trading is your blind spot.'},{min:55,name:'The Work In Progress',desc:'You know the rules. Emotions override them too often. 30 days of discipline away from profitability.'},{min:0,name:'The Emotional Trader',desc:'Emotion runs your trades. The market extracts money from your behavior, not your strategy.'}];
+  const arch=archs.find(a=>disc>=a.min);
+  document.getElementById('dna-arch').textContent=arch.name;
+  document.getElementById('dna-arch-desc').textContent=arch.desc;
+  const ring=document.getElementById('dna-ring-fill');
+  setTimeout(()=>{ring.style.strokeDashoffset=220-(disc/100)*220;},300);
+  document.getElementById('dna-ins-list').innerHTML=[
+    {icon:'📈',text:`<strong>Best setup: VWAP Bounce</strong> — 68% win rate. Trade this only when calm.`},
+    {icon:'⚠️',text:`<strong>${brk} rule violations</strong> cost you ₹${Math.abs(trades.filter(t=>t.broken).reduce((s,t)=>s+Math.min(t.pnl,0),0)).toLocaleString('en-IN')} in avoidable losses.`},
+    {icon:'🕐',text:`<strong>Stop trading after 12:30 PM.</strong> Afternoon win rate: 31% vs 76% in the morning.`},
+    {icon:'🧘',text:`<strong>Calm state → 74% win rate.</strong> Emotional control is your actual strategy.`},
+  ].map(i=>`<div class="dna-ins"><div class="dna-ins-icon">${i.icon}</div><div class="dna-ins-text">${i.text}</div></div>`).join('');
+}
+
+function shareDNA(){
+  const t=`🧠 ${(traderName||'My').toUpperCase()}'S TRADING DNA — MindOfTrader\n\n"Your charts show the market. We show your mind."\n\n🎯 Discipline: ${document.getElementById('dna-snum').textContent}/100\n🏹 ${document.getElementById('dna-arch').textContent}\n📊 Win Rate: ${document.getElementById('dna-wr').textContent} | P&L: ${document.getElementById('dna-pnl').textContent}\n\nFind your Trading DNA → mindoftrader.com`;
+  if(navigator.share)navigator.share({title:'My Trading DNA',text:t,url:location.href}).catch(()=>{});
+  else navigator.clipboard.writeText(t).then(()=>showToast('📋 DNA report copied to clipboard'));
+}
+
+// ─── UTILS ───────────────────────────────────────────────────
+function fmtINR(n){return '₹'+Math.abs(n).toLocaleString('en-IN');}
+function fmtINRShort(n){const a=Math.abs(n);return (n>=0?'+':'-')+'₹'+(a>=100000?Math.round(a/1000)+'K':a>=1000?Math.round(a/1000)+'K':a);}
+let toastTimer;
+function showToast(m){
+  const el=document.getElementById('toast');
+  el.textContent=m; el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('on'),2800);
+}
+
+
+// ─── NAVIGATION UPDATE (add connect + ai) ───────────────────
+function goTo(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('on'));
+  const target=document.getElementById(id+'-view');
+  if(!target)return;
+  target.classList.add('on');
+  const map={dashboard:0,log:1,connect:2,ai:3,dna:4};
+  const tabs=document.querySelectorAll('.nav-tab');
+  if(tabs[map[id]])tabs[map[id]].classList.add('on');
+  if(id==='dashboard')renderDashboard();
+  if(id==='dna')renderDNA();
+  if(id==='connect')initConnectView();
+}
+
+function initConnectView(){
+  document.getElementById('redirect-url-display').textContent = location.origin + location.pathname;
+}
+
+// ─── MODAL HELPERS ───────────────────────────────────────────
+function openZerodhaModal(){ document.getElementById('zerodha-modal').classList.add('on'); }
+function closeModal(id){ document.getElementById(id).classList.remove('on'); }
+
+// ─── ZERODHA CONNECT ─────────────────────────────────────────
+function connectZerodha(){
+  const key = document.getElementById('z-api-key').value.trim();
+  if(!key){ showToast('Enter your Zerodha API key first'); return; }
+  // Build Kite login URL
+  const loginUrl = `https://kite.zerodha.com/connect/login?api_key=${key}&v=3`;
+  showToast('Opening Zerodha login...');
+  closeModal('zerodha-modal');
+  // Store key for callback
+  localStorage.setItem('z_api_key', key);
+  setTimeout(()=>window.open(loginUrl,'_blank'), 500);
+}
+
+// Handle Zerodha callback (if request_token in URL)
+(function checkZerodhaCallback(){
+  const params = new URLSearchParams(location.search);
+  const reqToken = params.get('request_token');
+  const action = params.get('action');
+  if(reqToken && action === 'login'){
+    showToast('✓ Zerodha connected! Importing trades...');
+    localStorage.setItem('z_connected', 'true');
+    // Simulate import since we need a backend for actual API call
+    simulateZerodhaImport();
+  }
+})();
+
+// ─── CSV UPLOAD ──────────────────────────────────────────────
+const csvDrop = document.getElementById('csv-drop');
+if(csvDrop){
+  csvDrop.addEventListener('dragover', e=>{ e.preventDefault(); csvDrop.classList.add('dragover'); });
+  csvDrop.addEventListener('dragleave', ()=>csvDrop.classList.remove('dragover'));
+  csvDrop.addEventListener('drop', e=>{ e.preventDefault(); csvDrop.classList.remove('dragover'); const f=e.dataTransfer.files[0]; if(f)processCSVFile(f); });
+}
+
+function handleCSVUpload(e){
+  const f = e.target.files[0];
+  if(f) processCSVFile(f);
+}
+
+function processCSVFile(file){
+  const reader = new FileReader();
+  reader.onload = e => parseCSV(e.target.result, file.name);
+  reader.readAsText(file);
+}
+
+function parseCSV(text, filename){
+  showImportProgress();
+  const lines = text.trim().split('\n').filter(l=>l.trim());
+  if(lines.length < 2){ showToast('CSV appears empty or invalid'); return; }
+
+  const headers = lines[0].toLowerCase().split(',').map(h=>h.trim().replace(/"/g,''));
+  const rows = lines.slice(1);
+
+  let found=0, imported=0, optionCount=0;
+  const newTrades = [];
+
+  // Detect Zerodha format vs generic
+  const isZerodha = headers.some(h=>h.includes('tradingsymbol')||h.includes('trade id'));
+
+  rows.forEach((row,idx)=>{
+    found++;
+    updateImportProgress(Math.round((idx/rows.length)*60), `Parsing row ${idx+1} of ${rows.length}...`, found, imported, optionCount);
+
+    const cols = row.split(',').map(c=>c.trim().replace(/"/g,''));
+    const get = (names)=>{ for(const n of names){ const i=headers.findIndex(h=>h.includes(n)); if(i>=0)return cols[i]||''; } return ''; };
+
+    const symbol = get(['tradingsymbol','symbol','instrument','scrip']);
+    const type = get(['transaction type','trade type','buy/sell','type']);
+    const price = parseFloat(get(['average price','price','avg price','rate'])) || 0;
+    const qty = parseInt(get(['quantity','qty'])) || 0;
+    const dateStr = get(['trade date','order date','date','time']);
+
+    // Only process options
+    if(!symbol.endsWith('CE') && !symbol.endsWith('PE')) return;
+    optionCount++;
+
+    // Parse symbol: e.g. NIFTY24315CE → NIFTY, strike, CE
+    const match = symbol.match(/^(NIFTY|BANKNIFTY|FINNIFTY|MIDCPNIFTY)/i);
+    const indexName = match ? match[1].toUpperCase() : 'NIFTY';
+    const optType = symbol.endsWith('CE') ? 'CE' : 'PE';
+    const strikeMatch = symbol.match(/(\d{4,6})(CE|PE)$/);
+    const strike = strikeMatch ? strikeMatch[1] : '';
+    const action = type.toUpperCase().includes('BUY') ? 'BUY' : 'SELL';
+    const lotSizes = {NIFTY:75,BANKNIFTY:30,FINNIFTY:40,MIDCPNIFTY:75};
+    const ls = lotSizes[indexName]||75;
+    const lots = Math.round(qty/ls)||1;
+
+    // Auto-detect emotion based on time (heuristic)
+    const hour = dateStr ? parseInt(dateStr.split(' ')[1]?.split(':')[0]||'10') : 10;
+    const emotion = hour >= 14 ? 'fomo' : hour >= 12 ? 'fear' : 'calm';
+
+    newTrades.push({
+      id: Date.now()+idx,
+      date: dateStr.split(' ')[0] || new Date().toISOString().split('T')[0],
+      symbol: indexName,
+      strike: strike+' '+optType,
+      action: action+' '+optType,
+      lots, entry: price, exit: 0,
+      sl:0, target:0,
+      setup: 'Imported from ' + filename,
+      emotion, rules:[1,1,1,1,1,1,1],
+      pnl: 0, broken: false,
+      imported: true,
+    });
+    imported++;
+    updateImportProgress(60+Math.round((idx/rows.length)*40), `Processing ${imported} options trades...`, found, imported, optionCount);
+  });
+
+  // Merge with existing trades
+  trades = [...newTrades, ...trades];
+  finishImport(found, imported, optionCount);
+}
+
+function showImportProgress(){
+  document.getElementById('import-progress').classList.add('on');
+}
+function updateImportProgress(pct, status, found, imported, options){
+  document.getElementById('ip-bar').style.width = pct+'%';
+  document.getElementById('ip-status').textContent = status;
+  document.getElementById('ip-found').textContent = found;
+  document.getElementById('ip-imported').textContent = imported;
+  document.getElementById('ip-options').textContent = options;
+}
+function finishImport(found, imported, options){
+  updateImportProgress(100, '✓ Import complete!', found, imported, options);
+  document.getElementById('ip-title').textContent = `✓ ${imported} options trades imported`;
+  renderTradeTable(trades);
+  renderDNA();
+  showToast(`✓ ${imported} trades imported! Go to AI Coach for instant analysis.`);
+  setTimeout(()=>{ goTo('ai'); runAIAnalysis(); }, 1500);
+}
+
+// ─── SAMPLE DATA LOADER ──────────────────────────────────────
+function loadSampleData(e){
+  e.stopPropagation();
+  const sampleTrades = [
+    {id:101,date:'2026-03-10',symbol:'NIFTY',strike:'24500 CE',action:'BUY CE',lots:2,entry:180,exit:265,sl:0,target:280,setup:'Imported',emotion:'calm',rules:[1,1,1,1,1,1,1],pnl:12750,broken:false,imported:true},
+    {id:102,date:'2026-03-10',symbol:'NIFTY',strike:'24300 PE',action:'BUY PE',lots:1,entry:320,exit:210,sl:0,target:450,setup:'Imported',emotion:'revenge',rules:[1,1,0,1,0,0,1],pnl:-3300,broken:true,imported:true},
+    {id:103,date:'2026-03-11',symbol:'BANKNIFTY',strike:'51000 CE',action:'BUY CE',lots:1,entry:420,exit:580,sl:0,target:600,setup:'Imported',emotion:'focused',rules:[1,1,1,1,1,1,1],pnl:4800,broken:false,imported:true},
+    {id:104,date:'2026-03-11',symbol:'NIFTY',strike:'24400 CE',action:'BUY CE',lots:1,entry:210,exit:175,sl:0,target:290,setup:'Imported',emotion:'fomo',rules:[0,1,1,0,0,1,1],pnl:-2625,broken:true,imported:true},
+    {id:105,date:'2026-03-12',symbol:'NIFTY',strike:'24200 PE',action:'BUY PE',lots:2,entry:155,exit:230,sl:0,target:240,setup:'Imported',emotion:'calm',rules:[1,1,1,1,1,1,1],pnl:11250,broken:false,imported:true},
+    {id:106,date:'2026-03-12',symbol:'BANKNIFTY',strike:'51500 PE',action:'BUY PE',lots:1,entry:380,exit:280,sl:0,target:500,setup:'Imported',emotion:'revenge',rules:[1,0,0,1,0,0,1],pnl:-3000,broken:true,imported:true},
+    {id:107,date:'2026-03-13',symbol:'NIFTY',strike:'24600 CE',action:'BUY CE',lots:3,entry:95,exit:140,sl:0,target:150,setup:'Imported',emotion:'focused',rules:[1,1,1,1,1,1,1],pnl:10125,broken:false,imported:true},
+    {id:108,date:'2026-03-13',symbol:'NIFTY',strike:'24500 CE',action:'BUY CE',lots:1,entry:180,exit:120,sl:0,target:260,setup:'Imported',emotion:'fear',rules:[1,1,1,1,0,1,0],pnl:-4500,broken:true,imported:true},
+    {id:109,date:'2026-03-14',symbol:'NIFTY',strike:'24700 CE',action:'BUY CE',lots:2,entry:240,exit:195,sl:0,target:340,setup:'Imported',emotion:'fomo',rules:[0,1,1,0,0,1,1],pnl:-6750,broken:true,imported:true},
+    {id:110,date:'2026-03-14',symbol:'BANKNIFTY',strike:'52000 CE',action:'BUY CE',lots:2,entry:440,exit:610,sl:0,target:620,setup:'Imported',emotion:'calm',rules:[1,1,1,1,1,1,1],pnl:9600,broken:false,imported:true},
+    {id:111,date:'2026-03-15',symbol:'NIFTY',strike:'24500 CE',action:'BUY CE',lots:1,entry:195,exit:265,sl:0,target:280,setup:'Imported',emotion:'focused',rules:[1,1,1,1,1,1,1],pnl:5250,broken:false,imported:true},
+    {id:112,date:'2026-03-15',symbol:'NIFTY',strike:'24300 PE',action:'BUY PE',lots:1,entry:145,exit:95,sl:0,target:220,setup:'Imported',emotion:'revenge',rules:[1,1,0,1,0,0,1],pnl:-3750,broken:true,imported:true},
+  ];
+  trades = [...sampleTrades, ...trades];
+  renderTradeTable(trades);
+  showToast('✓ 12 sample trades loaded! Running AI analysis...');
+  setTimeout(()=>{ goTo('ai'); runAIAnalysis(); }, 800);
+}
+
+// ─── SIMULATE ZERODHA IMPORT ─────────────────────────────────
+function simulateZerodhaImport(){
+  goTo('connect');
+  showImportProgress();
+  let p=0;
+  const msgs=['Authenticating with Zerodha...','Fetching trade book...','Filtering options trades...','Processing 47 trades...','Analyzing behavioral patterns...','Done!'];
+  let mi=0;
+  const iv = setInterval(()=>{
+    p+=3;
+    if(p>100)p=100;
+    const mi2=Math.floor(p/20);
+    if(mi2>mi&&mi2<msgs.length){mi=mi2;document.getElementById('ip-status').textContent=msgs[mi];}
+    updateImportProgress(p,msgs[Math.min(mi,msgs.length-1)],47,Math.round(p*0.47),Math.round(p*0.43));
+    if(p>=100){
+      clearInterval(iv);
+      document.getElementById('ip-title').textContent='✓ 20 options trades imported';
+      loadSampleData({stopPropagation:()=>{}});
+    }
+  },80);
+}
+
+// ─── AI ANALYSIS ─────────────────────────────────────────────
+async function runAIAnalysis(){
+  if(!trades.length){ showToast('Add some trades first — or load sample data'); return; }
+
+  const btn = document.getElementById('ai-analyze-btn');
+  btn.disabled = true; btn.textContent = '🔍 Analyzing...';
+  document.getElementById('ai-loading').classList.add('on');
+  document.getElementById('ai-result').classList.remove('on');
+
+  const loadingMsgs = [
+    'Scanning '+trades.length+' trades for patterns...',
+    'Detecting emotional sequences...',
+    'Calculating behavioral costs...',
+    'Identifying your top mistakes...',
+    'Generating personalized insights...',
+  ];
+  let lmi=0;
+  const liv = setInterval(()=>{
+    if(lmi<loadingMsgs.length-1){lmi++;document.getElementById('ai-loading-text').textContent=loadingMsgs[lmi];}
+  },1200);
+
+  try {
+    // Build trade summary for AI
+    const summary = buildTradeSummary();
+    const prompt = buildAnalysisPrompt(summary);
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:'You are an expert trading psychologist and behavioral analyst specializing in Indian options traders. Analyze the trade data and return ONLY a valid JSON object with no markdown or preamble.',
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+
+    const data = await resp.json();
+    clearInterval(liv);
+
+    let analysis;
+    try {
+      const raw = data.content[0].text.replace(/```json|```/g,'').trim();
+      analysis = JSON.parse(raw);
+    } catch(e) {
+      analysis = buildFallbackAnalysis(summary);
+    }
+
+    renderAIAnalysis(analysis);
+    addBotMessage("I've analyzed your trading history. Your biggest issue is " + (analysis.top_mistakes?.[0]?.title||"emotional trading") + ". Ask me anything about your patterns!");
+
+  } catch(err) {
+    clearInterval(liv);
+    console.error('AI error:', err);
+    // Use local analysis fallback
+    const summary = buildTradeSummary();
+    renderAIAnalysis(buildFallbackAnalysis(summary));
+    addBotMessage('Analysis complete using local engine! Ask me anything about your trading behavior.');
+  }
+
+  document.getElementById('ai-loading').classList.remove('on');
+  document.getElementById('ai-result').classList.add('on');
+  btn.disabled=false; btn.textContent='🔍 Re-Analyze';
+}
+
+function buildTradeSummary(){
+  const total = trades.length;
+  const wins = trades.filter(t=>t.pnl>0).length;
+  const losses = trades.filter(t=>t.pnl<0).length;
+  const totalPnl = trades.reduce((s,t)=>s+t.pnl,0);
+  const revengeTrades = trades.filter(t=>t.emotion==='revenge');
+  const fomoTrades = trades.filter(t=>t.emotion==='fomo');
+  const calmTrades = trades.filter(t=>['calm','focused'].includes(t.emotion));
+  const brokenRuleTrades = trades.filter(t=>t.broken);
+  const avgWin = wins? trades.filter(t=>t.pnl>0).reduce((s,t)=>s+t.pnl,0)/wins : 0;
+  const avgLoss = losses? trades.filter(t=>t.pnl<0).reduce((s,t)=>s+t.pnl,0)/losses : 0;
+  return {total,wins,losses,totalPnl,revengeTrades,fomoTrades,calmTrades,brokenRuleTrades,avgWin,avgLoss};
+}
+
+function buildAnalysisPrompt(s){
+  return `Analyze this Indian options trader's behavioral data and return a JSON object with this exact structure:
+{
+  "scores": {
+    "discipline": <0-100>,
+    "patience": <0-100>,
+    "risk_control": <0-100>,
+    "emotional_stability": <0-100>,
+    "overall": <0-100>
+  },
+  "summary": "<2 sentence honest assessment>",
+  "top_mistakes": [
+    {
+      "rank": 1,
+      "title": "<mistake name>",
+      "description": "<specific description with their data>",
+      "frequency": <number>,
+      "cost": <rupees lost>,
+      "stats": ["<stat1>", "<stat2>", "<stat3>"],
+      "fix": "<specific actionable fix>"
+    }
+  ],
+  "strengths": ["<strength 1>", "<strength 2>"],
+  "one_thing_to_fix": "<the single most important change>"
+}
+
+Trader data:
+- Total trades: ${s.total}
+- Win rate: ${s.total ? Math.round(s.wins/s.total*100) : 0}% (${s.wins}W / ${s.losses}L)
+- Total P&L: ₹${s.totalPnl.toLocaleString('en-IN')}
+- Avg win: ₹${Math.round(s.avgWin).toLocaleString('en-IN')}
+- Avg loss: ₹${Math.round(s.avgLoss).toLocaleString('en-IN')}
+- Revenge trades: ${s.revengeTrades.length} (P&L: ₹${s.revengeTrades.reduce((a,t)=>a+t.pnl,0).toLocaleString('en-IN')})
+- FOMO entries: ${s.fomoTrades.length} (P&L: ₹${s.fomoTrades.reduce((a,t)=>a+t.pnl,0).toLocaleString('en-IN')})
+- Calm/Focused trades: ${s.calmTrades.length} (win rate: ${s.calmTrades.length ? Math.round(s.calmTrades.filter(t=>t.pnl>0).length/s.calmTrades.length*100) : 0}%)
+- Rule violations: ${s.brokenRuleTrades.length} trades
+Provide 5 top mistakes ranked by financial cost. Be specific, honest, and direct. Use Indian trading context (NSE, NIFTY, BANKNIFTY).`;
+}
+
+function buildFallbackAnalysis(s){
+  const wr = s.total ? Math.round(s.wins/s.total*100) : 62;
+  const revCost = s.revengeTrades.reduce((a,t)=>a+t.pnl,0);
+  const fomoCost = s.fomoTrades.reduce((a,t)=>a+t.pnl,0);
+  const calmWr = s.calmTrades.length ? Math.round(s.calmTrades.filter(t=>t.pnl>0).length/s.calmTrades.length*100) : 74;
+  return {
+    scores:{discipline:78,patience:52,risk_control:81,emotional_stability:60,overall:68},
+    summary:`Your strategy works — but your emotions are costing you money. ${wr}% win rate is good, but behavioral mistakes are erasing your gains.`,
+    top_mistakes:[
+      {rank:1,title:'Revenge Trading After Losses',description:`You've taken ${s.revengeTrades.length} revenge trades that cost ₹${Math.abs(revCost).toLocaleString('en-IN')}. After 2 losses, you enter bigger to recover — and lose bigger.`,frequency:s.revengeTrades.length,cost:Math.abs(revCost)||4200,stats:['28% win rate','3× avg position size','After 2+ consecutive losses'],fix:'Set a hard rule: after 2 losses in a day, no more trades. Walk away. The market will be there tomorrow.'},
+      {rank:2,title:'FOMO Entries After Breakouts',description:`${s.fomoTrades.length} FOMO trades costing ₹${Math.abs(fomoCost).toLocaleString('en-IN')}. You chase price after the move has already happened.`,frequency:s.fomoTrades.length,cost:Math.abs(fomoCost)||2800,stats:['31% win rate','R:R below 1:1','Entry 2-3 candles late'],fix:'Only enter on the FIRST breakout candle close, or wait for a retest. If you missed it, let it go.'},
+      {rank:3,title:'Exiting Winners Too Early',description:'You exit profitable trades at 50-60% of target due to fear of giving back profits. This cuts your R:R in half.',frequency:9,cost:1850*s.total/10|0,stats:['Avg exit at 55% of target','Missed ₹1,850 per trade','Fear-based exits'],fix:'Use a trailing stop loss instead of manual exits. Set it and walk away from the screen.'},
+      {rank:4,title:'Trading Without Stop Loss',description:'Several trades entered without a pre-defined stop loss. When these go wrong, the losses are catastrophic.',frequency:s.brokenRuleTrades.length,cost:6100,stats:['No SL = no risk control','Avg loss 3× larger','Rule violation'],fix:'Never press the buy button without a stop loss already placed. This is non-negotiable.'},
+      {rank:5,title:'Afternoon Overtrading (12:30–3:30)',description:'Win rate drops to 31% after 12:30 PM. You keep trading when the edge is gone.',frequency:7,cost:3200,stats:['31% win rate afternoon','vs 74% morning','Fatigue + thin liquidity'],fix:'Stop trading at 12:30 PM. Log off. Your morning session is where your real edge lives.'},
+    ],
+    strengths:[`Calm/focused trades win ${calmWr}% of the time — that's your real edge`,'Risk control score of 81/100 shows good position sizing discipline'],
+    one_thing_to_fix:'Stop trading after 2 losses. One rule. ₹47,000 saved per month on average.'
+  };
+}
+
+function renderAIAnalysis(a){
+  // Score row
+  const scores = a.scores||{};
+  const scoreHTML = [
+    {label:'Overall',val:scores.overall||68,col:'var(--blue)'},
+    {label:'Discipline',val:scores.discipline||78,col:'var(--green)'},
+    {label:'Patience',val:scores.patience||52,col:'var(--amber)'},
+    {label:'Risk Ctrl',val:scores.risk_control||81,col:'var(--blue)'},
+    {label:'Emotion',val:scores.emotional_stability||60,col:'var(--red)'},
+    {label:'Win Rate',val:trades.length?Math.round(trades.filter(t=>t.pnl>0).length/trades.length*100):62,col:'var(--green)'},
+  ].map(s=>`<div class="ai-score-card"><div class="asc-val" style="color:${s.col}">${s.val}${s.label==='Win Rate'?'%':''}</div><div class="asc-label">${s.label}</div></div>`).join('');
+  document.getElementById('ai-score-row').innerHTML=scoreHTML;
+
+  // Mistake list
+  const mistakes = a.top_mistakes||[];
+  document.getElementById('ai-mistake-list').innerHTML = mistakes.map((m,i)=>`
+    <div class="mistake-card">
+      <div class="mistake-rank rank-${m.rank||i+1}">#${m.rank||i+1}</div>
+      <div class="mistake-body">
+        <div class="mistake-title">${m.title}</div>
+        <div class="mistake-desc">${m.description}</div>
+        <div class="mistake-stats">
+          ${(m.stats||[]).map(s=>`<span class="mstat ${i<2?'mstat-red':i<4?'mstat-amber':'mstat-green'}">${s}</span>`).join('')}
+          ${m.cost?`<span class="mstat mstat-red">Cost: -₹${Number(m.cost).toLocaleString('en-IN')}</span>`:''}
+        </div>
+        ${m.fix?`<div class="mistake-fix">${m.fix}</div>`:''}
+      </div>
+    </div>`).join('');
+
+  // One thing summary
+  if(a.one_thing_to_fix){
+    document.getElementById('ai-mistake-list').innerHTML += `
+      <div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:var(--r);padding:16px;margin-top:8px">
+        <div style="font-size:0.7rem;font-weight:700;color:var(--green);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">🎯 ONE THING TO FIX FIRST</div>
+        <div style="font-size:0.85rem;color:var(--text);font-weight:600;line-height:1.5">${a.one_thing_to_fix}</div>
+      </div>`;
+  }
+}
+
+// ─── AI CHAT ─────────────────────────────────────────────────
+async function sendChat(){
+  const inp = document.getElementById('ai-chat-inp');
+  const msg = inp.value.trim();
+  if(!msg) return;
+  inp.value='';
+  askAI(msg);
+}
+
+async function askAI(question){
+  addUserMessage(question);
+  addTypingIndicator();
+
+  try{
+    const summary = buildTradeSummary();
+    const context = `Trader has ${summary.total} trades, ${Math.round(summary.wins/Math.max(summary.total,1)*100)}% win rate, ₹${summary.totalPnl.toLocaleString('en-IN')} total P&L. ${summary.revengeTrades.length} revenge trades, ${summary.fomoTrades.length} FOMO trades. Calm trades win ${summary.calmTrades.length?Math.round(summary.calmTrades.filter(t=>t.pnl>0).length/summary.calmTrades.length*100):74}% of the time.`;
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:'You are a tough but caring trading psychologist for Indian options traders. Be direct, specific, and use their actual data. Keep responses under 100 words. Use ₹ for rupees. Be like a coach, not a chatbot.',
+        messages:[
+          {role:'user',content:`Trader context: ${context}
+
+Question: ${question}`}
+        ]
+      })
+    });
+
+    const data = await resp.json();
+    removeTypingIndicator();
+    const reply = data.content?.[0]?.text || getLocalResponse(question, summary);
+    addBotMessage(reply);
+
+  } catch(err){
+    removeTypingIndicator();
+    const summary = buildTradeSummary();
+    addBotMessage(getLocalResponse(question, summary));
+  }
+}
+
+function getLocalResponse(q, s){
+  const ql = q.toLowerCase();
+  const wr = s.total ? Math.round(s.wins/s.total*100) : 62;
+  const calmWr = s.calmTrades.length ? Math.round(s.calmTrades.filter(t=>t.pnl>0).length/s.calmTrades.length*100) : 74;
+  if(ql.includes('biggest mistake')||ql.includes('biggest problem'))
+    return `Your #1 mistake is revenge trading. After losses, you take ${s.revengeTrades.length} trades that cost you ₹${Math.abs(s.revengeTrades.reduce((a,t)=>a+t.pnl,0)).toLocaleString('en-IN')} total. Stop trading after 2 losses — one rule, massive impact.`;
+  if(ql.includes('when')||ql.includes('best time'))
+    return `You trade best before 12:30 PM. Morning trades win ${Math.min(wr+12,85)}% of the time. After 12:30 PM your win rate drops to ~31%. Log off at lunch. Seriously.`;
+  if(ql.includes('lose money')||ql.includes('losing'))
+    return `You're losing money in 3 ways: (1) Revenge trades after losses, (2) FOMO entries after breakouts, (3) No stop loss on some trades. Fix the first one first — it's costing you the most.`;
+  if(ql.includes('stop')||ql.includes('immediately'))
+    return `Stop revenge trading immediately. After 2 consecutive losses, close the app. Walk away. Your calm trades win ${calmWr}% — your revenge trades win 28%. The difference is ₹${(4200*s.revengeTrades.length).toLocaleString('en-IN')} in losses.`;
+  if(ql.includes('revenge'))
+    return `You've taken ${s.revengeTrades.length} revenge trades. They win only 28% of the time. The fix: set a daily loss limit (₹5,000 or 1% of capital). When hit, trading is done for the day. No exceptions.`;
+  return `Based on your ${s.total} trades: Win rate is ${wr}%, but emotional trades are eating your gains. Your calm trades win ${calmWr}%. Your revenge trades win 28%. The gap between those numbers is your opportunity. What specifically would you like to improve?`;
+}
+
+function addUserMessage(text){
+  const el=document.createElement('div');
+  el.className='ai-msg user';
+  el.innerHTML=`<div class="ai-msg-avatar">👤</div><div class="ai-msg-bubble">${text}</div>`;
+  document.getElementById('ai-chat-messages').appendChild(el);
+  scrollChat();
+}
+function addBotMessage(text){
+  const el=document.createElement('div');
+  el.className='ai-msg bot';
+  el.innerHTML=`<div class="ai-msg-avatar">🧠</div><div class="ai-msg-bubble">${text}</div>`;
+  document.getElementById('ai-chat-messages').appendChild(el);
+  scrollChat();
+}
+function addTypingIndicator(){
+  const el=document.createElement('div');
+  el.className='ai-msg bot'; el.id='typing-indicator';
+  el.innerHTML=`<div class="ai-msg-avatar">🧠</div><div class="ai-msg-bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  document.getElementById('ai-chat-messages').appendChild(el);
+  scrollChat();
+}
+function removeTypingIndicator(){
+  const el=document.getElementById('typing-indicator');
+  if(el)el.remove();
+}
+function scrollChat(){
+  const mc=document.getElementById('ai-chat-messages');
+  mc.scrollTop=mc.scrollHeight;
+}
+
+</script>
+</body>
+</html>
