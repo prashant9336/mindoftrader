@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /founder
+Allow: /contact
+
+# Private app — allow crawl but discourage deep indexing of app state
+Disallow: /api/
+Disallow: /admin/
+
+Sitemap: https://mindoftrader.com/sitemap.xml

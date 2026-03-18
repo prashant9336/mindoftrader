@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About MindOfTrader | Behavioral Intelligence for Traders</title>
+<meta name="description" content="Learn about MindOfTrader, a behavioral trading intelligence platform built to help traders improve discipline, emotional control, and execution quality." />
+<link rel="canonical" href="https://mindoftrader.com/about" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="About MindOfTrader | Behavioral Intelligence for Traders" />
+<meta property="og:description" content="MindOfTrader is a behavioral trading intelligence platform built to help traders improve discipline, emotional control, and execution quality." />
+<meta property="og:url" content="https://mindoftrader.com/about" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="robots" content="index, follow" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  "url": "https://mindoftrader.com/about",
+  "name": "About MindOfTrader",
+  "description": "MindOfTrader is a behavioral trading intelligence platform built to help traders improve discipline, emotional control, and execution quality.",
+  "publisher": {
+    "@type": "Organization",
+    "name": "MindOfTrader",
+    "url": "https://mindoftrader.com",
+    "founder": {
+      "@type": "Person",
+      "name": "Varsha Singh"
+    }
+  }
+}
+</script>
+<style>
+:root {
+  --bg:#080c10;--bg2:#0d1218;--card:#0f1822;--card2:#131e2a;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);
+  --green:#00e676;--green-bg:rgba(0,230,118,0.06);--green-bd:rgba(0,230,118,0.18);
+  --red:#ff4560;--red-bg:rgba(255,69,96,0.06);--red-bd:rgba(255,69,96,0.18);
+  --amber:#ffab00;--amber-bg:rgba(255,171,0,0.06);--amber-bd:rgba(255,171,0,0.18);
+  --blue:#2979ff;--blue-bg:rgba(41,121,255,0.06);--blue-bd:rgba(41,121,255,0.18);
+  --white:#f0f4f8;--text:#c8d4e0;--muted:#607080;--dim:#3a4a5a;
+  --font:'Plus Jakarta Sans',sans-serif;--mono:'Space Grotesk',monospace;
+  --r:10px;--r2:14px;--r3:20px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden;line-height:1.6;}
+canvas#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+.content{position:relative;z-index:1;}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:900;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:58px;background:rgba(8,12,16,0.88);border-bottom:1px solid var(--border);backdrop-filter:blur(16px);}
+.nav-brand{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:0.9rem;font-weight:700;color:var(--white);letter-spacing:0.04em;text-decoration:none;}
+.nav-brand-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);}
+.nav-links{display:flex;align-items:center;gap:4px;list-style:none;}
+.nav-links a{display:block;padding:6px 14px;font-size:0.82rem;font-weight:500;color:var(--muted);text-decoration:none;border-radius:var(--r);transition:all 0.2s;}
+.nav-links a:hover{color:var(--white);}
+.nav-links a.active{color:var(--green);}
+.nav-cta{background:var(--green);color:#080c10!important;font-weight:700!important;padding:7px 18px!important;box-shadow:0 2px 12px rgba(0,230,118,0.25);}
+.nav-cta:hover{box-shadow:0 4px 20px rgba(0,230,118,0.4)!important;transform:translateY(-1px);}
+.nav-hamburger{display:none;background:none;border:none;cursor:pointer;padding:4px;color:var(--text);flex-direction:column;gap:4px;}
+.nav-hamburger span{display:block;width:20px;height:2px;background:currentColor;border-radius:2px;}
+@media(max-width:700px){
+  .nav-links{display:none;position:absolute;top:58px;left:0;right:0;flex-direction:column;background:var(--bg2);border-bottom:1px solid var(--border);padding:12px;gap:2px;}
+  .nav-links.open{display:flex;}
+  .nav-hamburger{display:flex;}
+}
+
+/* PAGE HERO */
+.page-hero{padding:120px 24px 60px;text-align:center;}
+.page-tag{display:inline-block;font-size:0.65rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--green);margin-bottom:12px;}
+.page-title{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;color:var(--white);line-height:1.1;letter-spacing:-0.02em;margin-bottom:16px;}
+.page-sub{font-size:1rem;color:var(--muted);max-width:560px;margin:0 auto;line-height:1.75;}
+
+/* CONTENT */
+.page-content{padding:40px 24px 80px;}
+.page-inner{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:28px;}
+
+.content-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r3);padding:32px;
+  position:relative;overflow:hidden;
+}
+.content-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent,var(--green));opacity:0.5;}
+.card-label{font-size:0.62rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--green);margin-bottom:10px;}
+.card-title{font-size:1.15rem;font-weight:800;color:var(--white);margin-bottom:14px;line-height:1.2;}
+.card-body{font-size:0.85rem;color:var(--muted);line-height:1.8;}
+.card-body p+p{margin-top:14px;}
+
+/* Pillars */
+.pillars{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:20px;}
+.pillar{
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:var(--r2);padding:18px 16px;
+  text-align:center;
+}
+.pillar-icon{font-size:1.3rem;margin-bottom:8px;}
+.pillar-title{font-size:0.78rem;font-weight:700;color:var(--white);margin-bottom:4px;}
+.pillar-sub{font-size:0.7rem;color:var(--muted);}
+
+/* Mission banner */
+.mission-banner{
+  background:linear-gradient(135deg,var(--green-bg),var(--blue-bg));
+  border:1px solid var(--green-bd);
+  border-radius:var(--r3);padding:32px;
+  text-align:center;position:relative;overflow:hidden;
+}
+.mission-banner::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(0,230,118,0.07),transparent 70%);pointer-events:none;}
+.mission-quote{
+  font-size:clamp(1rem,2.5vw,1.3rem);
+  font-weight:700;color:var(--white);
+  line-height:1.5;font-style:italic;
+  margin-bottom:12px;
+}
+.mission-caption{font-size:0.72rem;color:var(--green);font-weight:600;letter-spacing:0.1em;text-transform:uppercase;}
+
+/* Founder card */
+.founder-card{
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:var(--r3);padding:32px;
+  display:flex;gap:24px;align-items:flex-start;
+  position:relative;overflow:hidden;
+}
+@media(max-width:560px){.founder-card{flex-direction:column;gap:16px;}}
+.founder-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--green),var(--blue),transparent);}
+.founder-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--green-bg),var(--blue-bg));border:2px solid var(--green-bd);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;box-shadow:0 0 20px rgba(0,230,118,0.1);}
+.founder-body{}
+.founder-role{font-size:0.62rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--green);margin-bottom:6px;}
+.founder-name{font-size:1.2rem;font-weight:800;color:var(--white);margin-bottom:10px;}
+.founder-bio{font-size:0.82rem;color:var(--muted);line-height:1.7;margin-bottom:14px;}
+.founder-link{font-size:0.78rem;font-weight:600;color:var(--green);text-decoration:none;border-bottom:1px solid var(--green-bd);padding-bottom:1px;transition:all 0.2s;}
+.founder-link:hover{border-color:var(--green);}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:32px 24px;background:var(--bg2);}
+.footer-inner{max-width:760px;margin:0 auto;}
+.footer-top{display:flex;flex-wrap:wrap;gap:24px;justify-content:space-between;margin-bottom:24px;}
+.footer-brand{font-family:var(--mono);font-size:0.9rem;font-weight:700;color:var(--white);display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.footer-brand-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 7px var(--green);}
+.footer-tagline{font-size:0.72rem;color:var(--muted);}
+.footer-founder{font-size:0.7rem;color:var(--dim);margin-top:6px;}
+.footer-founder strong{color:var(--green);}
+.footer-links{display:flex;flex-wrap:wrap;gap:6px 18px;align-self:flex-end;}
+.footer-links a{font-size:0.76rem;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+.footer-links a:hover{color:var(--green);}
+.footer-bottom{border-top:1px solid var(--border);padding-top:18px;}
+.footer-copy{font-size:0.7rem;color:var(--dim);margin-bottom:6px;}
+.footer-legal{font-size:0.63rem;color:var(--dim);line-height:1.65;opacity:0.8;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<div class="content">
+
+<nav>
+  <a href="/" class="nav-brand"><div class="nav-brand-dot"></div>MindOfTrader</a>
+  <button class="nav-hamburger" onclick="this.nextElementSibling.classList.toggle('open')">
+    <span></span><span></span><span></span>
+  </button>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/about" class="active">About</a></li>
+    <li><a href="/founder">Founder</a></li>
+    <li><a href="/contact">Contact</a></li>
+    <li><a href="/app" class="nav-cta">Launch App →</a></li>
+  </ul>
+</nav>
+
+<section class="page-hero">
+  <div class="page-tag">About</div>
+  <h1 class="page-title">About MindOfTrader</h1>
+  <p class="page-sub">A behavioral trading intelligence platform built to make the invisible visible — and the irrational fixable.</p>
+</section>
+
+<div class="page-content">
+  <div class="page-inner">
+
+    <div class="content-card" style="--accent:var(--blue)">
+      <div class="card-label">What We Are</div>
+      <div class="card-title">Behavioral Intelligence for Traders</div>
+      <div class="card-body">
+        <p>MindOfTrader is a behavioral trading intelligence platform built to help traders understand how discipline, emotional control, risk behavior, and execution patterns affect performance.</p>
+        <p>Unlike ordinary trading journals, MindOfTrader focuses on the psychology behind trading decisions — including revenge trading, overtrading, fear-based exits, rule violations, and setup inconsistency.</p>
+        <p>The platform is designed to turn raw trading data into practical self-awareness through behavioral analytics, AI-powered coaching, and personalized trading DNA insights.</p>
+      </div>
+    </div>
+
+    <div class="pillars">
+      <div class="pillar"><div class="pillar-icon">🛡️</div><div class="pillar-title">Behavioral Guard</div><div class="pillar-sub">Real-time intervention</div></div>
+      <div class="pillar"><div class="pillar-icon">🤖</div><div class="pillar-title">AI Coaching</div><div class="pillar-sub">Pattern analysis</div></div>
+      <div class="pillar"><div class="pillar-icon">🧬</div><div class="pillar-title">Trader DNA</div><div class="pillar-sub">Behavioral archetype</div></div>
+      <div class="pillar"><div class="pillar-icon">📊</div><div class="pillar-title">Analytics</div><div class="pillar-sub">Discipline scoring</div></div>
+      <div class="pillar"><div class="pillar-icon">✍️</div><div class="pillar-title">Smart Journal</div><div class="pillar-sub">Psychology-first logging</div></div>
+      <div class="pillar"><div class="pillar-icon">🔗</div><div class="pillar-title">Broker Connect</div><div class="pillar-sub">Zerodha + CSV</div></div>
+    </div>
+
+    <div class="mission-banner">
+      <div class="mission-quote">"Our mission is to help traders improve decision quality by making behavioral mistakes visible, measurable, and correctable."</div>
+      <div class="mission-caption">Mission — MindOfTrader</div>
+    </div>
+
+    <div class="content-card" style="--accent:var(--amber)">
+      <div class="card-label">The Problem We Solve</div>
+      <div class="card-title">Why Traders Keep Losing Despite Good Strategies</div>
+      <div class="card-body">
+        <p>Most trading education focuses on charts, indicators, and strategies. But the research is clear — for most retail traders, behavioral factors account for a larger share of losses than strategy failures do.</p>
+        <p>Revenge trading after losses. Chasing breakouts out of FOMO. Exiting winners early out of fear. Adding to losing positions. Overtrading on bad days. These patterns repeat because they're invisible in a standard P&L statement.</p>
+        <p>MindOfTrader makes these patterns visible, attaches rupee costs to each behavior, and gives traders the tools to break these cycles — starting with self-awareness, backed by data.</p>
+      </div>
+    </div>
+
+    <div class="founder-card">
+      <div class="founder-avatar">🧠</div>
+      <div class="founder-body">
+        <div class="founder-role">Founded by</div>
+        <div class="founder-name">Varsha Singh</div>
+        <div class="founder-bio">MindOfTrader was created with the belief that many traders do not fail because of strategy alone — they fail because of hidden behavioral patterns. MindOfTrader exists to make those patterns visible and actionable.</div>
+        <a href="/founder" class="founder-link">Read Varsha's full story →</a>
+      </div>
+    </div>
+
+    <div class="content-card" style="--accent:var(--green)">
+      <div class="card-label">Who It's Built For</div>
+      <div class="card-title">Indian Options Traders Who Take Trading Seriously</div>
+      <div class="card-body">
+        <p>MindOfTrader is specifically designed for NIFTY and BANKNIFTY options traders in India — where intraday options trading is widespread and behavioral pressure (FOMO, revenge trading, overtrading) is intense due to high leverage and fast price action.</p>
+        <p>Whether you're a full-time trader, a semi-professional trading alongside a job, or a serious hobbyist trying to improve consistency — MindOfTrader gives you a data mirror that reflects your actual decision-making, not your ideal one.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div>
+        <div class="footer-brand"><div class="footer-brand-dot"></div>MindOfTrader</div>
+        <div class="footer-tagline">Behavioral intelligence for traders.</div>
+        <div class="footer-founder">Founder — <strong>Varsha Singh</strong></div>
+      </div>
+      <div class="footer-links">
+        <a href="/">Home</a><a href="/about">About</a><a href="/founder">Founder</a>
+        <a href="/contact">Contact</a><a href="#">Privacy</a><a href="#">Terms</a>
+        <a href="/app">Launch App</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2026 MindOfTrader. All Rights Reserved. · Founder — Varsha Singh</div>
+      <div class="footer-legal">MindOfTrader is a behavioral analytics and journaling platform for educational and informational purposes only. It does not provide investment advice, stock recommendations, or guaranteed trading outcomes. MindOfTrader, its brand identity, platform design, behavioral scoring systems, and proprietary analytics framework are protected intellectual property.</div>
+    </div>
+  </div>
+</footer>
+</div>
+
+<script>
+(function(){const cv=document.getElementById('bg-canvas');const ctx=cv.getContext('2d');let W=0,H=0,nodes=[],t=0;function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;if(!nodes.length)for(let i=0;i<14;i++)nodes.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*0.15,vy:(Math.random()-.5)*0.15});}resize();window.addEventListener('resize',resize);(function frame(){if(!W||!H){requestAnimationFrame(frame);return;}ctx.clearRect(0,0,W,H);t+=0.004;const gx=W/2+Math.sin(t)*60,gy=H*0.4+Math.cos(t*0.7)*50;if(isFinite(gx)&&isFinite(gy)){const g=ctx.createRadialGradient(gx,gy,0,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(41,121,255,0.03)');g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}nodes.forEach(n=>{n.x+=n.vx;n.y+=n.vy;if(n.x<0||n.x>W)n.vx*=-1;if(n.y<0||n.y>H)n.vy*=-1;});for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){const dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<180){ctx.beginPath();ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);ctx.strokeStyle=`rgba(41,121,255,${(0.04*(1-d/180)).toFixed(3)})`;ctx.lineWidth=0.5;ctx.stroke();}}nodes.forEach(n=>{ctx.beginPath();ctx.arc(n.x,n.y,1,0,Math.PI*2);ctx.fillStyle='rgba(41,121,255,0.12)';ctx.fill();});requestAnimationFrame(frame);})();})();
+</script>
+</body>
+</html>

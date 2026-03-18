@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact MindOfTrader</title>
+<meta name="description" content="Contact MindOfTrader for support, product queries, partnerships, or founder-related communication." />
+<link rel="canonical" href="https://mindoftrader.com/contact" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Contact MindOfTrader" />
+<meta property="og:description" content="Contact MindOfTrader for support, product queries, partnerships, or founder communication." />
+<meta property="og:url" content="https://mindoftrader.com/contact" />
+<meta name="twitter:card" content="summary" />
+<meta name="robots" content="index, follow" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ContactPage",
+  "url": "https://mindoftrader.com/contact",
+  "name": "Contact MindOfTrader",
+  "description": "Contact MindOfTrader for support, product queries, partnerships, or founder communication.",
+  "publisher": {
+    "@type": "Organization",
+    "name": "MindOfTrader",
+    "url": "https://mindoftrader.com",
+    "founder": {
+      "@type": "Person",
+      "name": "Varsha Singh"
+    }
+  }
+}
+</script>
+<style>
+:root{
+  --bg:#080c10;--bg2:#0d1218;--card:#0f1822;--card2:#131e2a;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);
+  --green:#00e676;--green-bg:rgba(0,230,118,0.06);--green-bd:rgba(0,230,118,0.18);
+  --red:#ff4560;--red-bg:rgba(255,69,96,0.06);--red-bd:rgba(255,69,96,0.18);
+  --amber:#ffab00;--amber-bg:rgba(255,171,0,0.06);--amber-bd:rgba(255,171,0,0.18);
+  --blue:#2979ff;--blue-bg:rgba(41,121,255,0.06);--blue-bd:rgba(41,121,255,0.18);
+  --white:#f0f4f8;--text:#c8d4e0;--muted:#607080;--dim:#3a4a5a;
+  --font:'Plus Jakarta Sans',sans-serif;--mono:'Space Grotesk',monospace;
+  --r:10px;--r2:14px;--r3:20px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden;line-height:1.6;}
+canvas#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+.content{position:relative;z-index:1;}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:900;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:58px;background:rgba(8,12,16,0.88);border-bottom:1px solid var(--border);backdrop-filter:blur(16px);}
+.nav-brand{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:0.9rem;font-weight:700;color:var(--white);letter-spacing:0.04em;text-decoration:none;}
+.nav-brand-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);}
+.nav-links{display:flex;align-items:center;gap:4px;list-style:none;}
+.nav-links a{display:block;padding:6px 14px;font-size:0.82rem;font-weight:500;color:var(--muted);text-decoration:none;border-radius:var(--r);transition:all 0.2s;}
+.nav-links a:hover{color:var(--white);}
+.nav-links a.active{color:var(--green);}
+.nav-cta{background:var(--green);color:#080c10!important;font-weight:700!important;padding:7px 18px!important;box-shadow:0 2px 12px rgba(0,230,118,0.25);}
+.nav-hamburger{display:none;background:none;border:none;cursor:pointer;padding:4px;color:var(--text);flex-direction:column;gap:4px;}
+.nav-hamburger span{display:block;width:20px;height:2px;background:currentColor;border-radius:2px;}
+@media(max-width:700px){
+  .nav-links{display:none;position:absolute;top:58px;left:0;right:0;flex-direction:column;background:var(--bg2);border-bottom:1px solid var(--border);padding:12px;gap:2px;}
+  .nav-links.open{display:flex;}
+  .nav-hamburger{display:flex;}
+}
+
+.page-hero{padding:110px 24px 40px;text-align:center;}
+.page-tag{display:inline-block;font-size:0.65rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--green);margin-bottom:12px;}
+.page-title{font-size:clamp(2rem,5vw,3rem);font-weight:800;color:var(--white);line-height:1.1;letter-spacing:-0.02em;margin-bottom:14px;}
+.page-sub{font-size:0.92rem;color:var(--muted);max-width:520px;margin:0 auto;line-height:1.7;}
+
+.contact-wrap{max-width:800px;margin:0 auto;padding:40px 24px 80px;display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:700px){.contact-wrap{grid-template-columns:1fr;}}
+
+/* Contact channels */
+.channel-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r3);padding:24px;
+  position:relative;overflow:hidden;
+  transition:all 0.25s;
+}
+.channel-card:hover{border-color:var(--border2);}
+.channel-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent,var(--green));opacity:0.5;}
+.ch-icon{font-size:1.4rem;margin-bottom:12px;}
+.ch-label{font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.ch-title{font-size:0.9rem;font-weight:700;color:var(--white);margin-bottom:6px;}
+.ch-desc{font-size:0.76rem;color:var(--muted);line-height:1.6;margin-bottom:14px;}
+.ch-value{
+  font-family:var(--mono);font-size:0.8rem;color:var(--green);
+  background:var(--green-bg);border:1px solid var(--green-bd);
+  border-radius:var(--r);padding:8px 12px;
+  word-break:break-all;
+}
+.ch-value a{color:inherit;text-decoration:none;}
+
+/* Form */
+.form-card{
+  grid-column:1/-1;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r3);padding:32px;
+  position:relative;overflow:hidden;
+}
+.form-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--green),var(--blue),transparent);}
+.form-title{font-size:1.05rem;font-weight:800;color:var(--white);margin-bottom:6px;}
+.form-sub{font-size:0.78rem;color:var(--muted);margin-bottom:24px;line-height:1.6;}
+.form-sub em{color:var(--amber);font-style:normal;font-weight:600;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:560px){.form-grid{grid-template-columns:1fr;}}
+.fg{display:flex;flex-direction:column;gap:5px;}
+.fg.full{grid-column:1/-1;}
+.fl{font-size:0.62rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);}
+.fi,.fs,.fta{
+  background:var(--card2);border:1px solid var(--border2);
+  border-radius:var(--r);padding:11px 14px;
+  font-family:var(--font);font-size:0.88rem;color:var(--white);
+  outline:none;width:100%;transition:all 0.2s;
+}
+.fi:focus,.fs:focus,.fta:focus{border-color:var(--green-bd);box-shadow:0 0 0 3px rgba(0,230,118,0.07);}
+.fi::placeholder,.fta::placeholder{color:var(--dim);}
+.fs option{background:var(--card);}
+.fta{resize:vertical;min-height:100px;line-height:1.55;}
+.form-submit{
+  width:100%;background:var(--green);border:none;border-radius:var(--r);
+  padding:14px;font-family:var(--font);font-size:0.9rem;font-weight:700;
+  color:#080c10;cursor:pointer;transition:all 0.25s;margin-top:4px;
+  box-shadow:0 4px 20px rgba(0,230,118,0.22);
+}
+.form-submit:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(0,230,118,0.35);}
+.form-note{font-size:0.68rem;color:var(--dim);margin-top:12px;line-height:1.6;text-align:center;}
+
+/* Success state */
+.form-success{
+  display:none;text-align:center;padding:32px;
+}
+.form-success.show{display:block;}
+.fs-icon{font-size:2rem;margin-bottom:12px;}
+.fs-title{font-size:1.1rem;font-weight:800;color:var(--green);margin-bottom:8px;}
+.fs-sub{font-size:0.82rem;color:var(--muted);line-height:1.6;}
+
+/* Founder note */
+.founder-note{
+  grid-column:1/-1;
+  background:linear-gradient(135deg,var(--green-bg),rgba(41,121,255,0.03));
+  border:1px solid var(--green-bd);border-radius:var(--r3);
+  padding:24px;display:flex;gap:16px;align-items:center;
+}
+@media(max-width:560px){.founder-note{flex-direction:column;gap:12px;text-align:center;}}
+.fn-avatar{width:52px;height:52px;border-radius:50%;background:var(--card);border:1px solid var(--green-bd);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;}
+.fn-body{}
+.fn-role{font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--green);margin-bottom:4px;}
+.fn-name{font-size:0.92rem;font-weight:700;color:var(--white);margin-bottom:4px;}
+.fn-desc{font-size:0.76rem;color:var(--muted);line-height:1.5;}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:32px 24px;background:var(--bg2);}
+.footer-inner{max-width:800px;margin:0 auto;}
+.footer-top{display:flex;flex-wrap:wrap;gap:24px;justify-content:space-between;margin-bottom:20px;}
+.footer-brand{font-family:var(--mono);font-size:0.9rem;font-weight:700;color:var(--white);display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.footer-brand-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 7px var(--green);}
+.footer-tagline{font-size:0.72rem;color:var(--muted);}
+.footer-founder{font-size:0.7rem;color:var(--dim);margin-top:6px;}
+.footer-founder strong{color:var(--green);}
+.footer-links{display:flex;flex-wrap:wrap;gap:6px 16px;align-self:flex-end;}
+.footer-links a{font-size:0.76rem;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+.footer-links a:hover{color:var(--green);}
+.footer-bottom{border-top:1px solid var(--border);padding-top:16px;}
+.footer-copy{font-size:0.7rem;color:var(--dim);margin-bottom:5px;}
+.footer-legal{font-size:0.63rem;color:var(--dim);line-height:1.65;opacity:0.8;}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<div class="content">
+
+<nav>
+  <a href="/" class="nav-brand"><div class="nav-brand-dot"></div>MindOfTrader</a>
+  <button class="nav-hamburger" onclick="this.nextElementSibling.classList.toggle('open')">
+    <span></span><span></span><span></span>
+  </button>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/founder">Founder</a></li>
+    <li><a href="/contact" class="active">Contact</a></li>
+    <li><a href="/app" class="nav-cta">Launch App →</a></li>
+  </ul>
+</nav>
+
+<section class="page-hero">
+  <div class="page-tag">Get in Touch</div>
+  <h1 class="page-title">Contact MindOfTrader</h1>
+  <p class="page-sub">For product queries, partnerships, support, or founder-related communication, contact MindOfTrader through the official channels below.</p>
+</section>
+
+<div class="contact-wrap">
+
+  <div class="channel-card" style="--accent:var(--blue)">
+    <div class="ch-icon">💬</div>
+    <div class="ch-label">General</div>
+    <div class="ch-title">Product & Support</div>
+    <div class="ch-desc">Questions about features, bugs, account issues, or how to use the platform.</div>
+    <div class="ch-value">hello@mindoftrader.com</div>
+  </div>
+
+  <div class="channel-card" style="--accent:var(--green)">
+    <div class="ch-icon">🤝</div>
+    <div class="ch-label">Business</div>
+    <div class="ch-title">Partnerships</div>
+    <div class="ch-desc">Collaboration, co-marketing, institutional access, or integration inquiries.</div>
+    <div class="ch-value">partnerships@mindoftrader.com</div>
+  </div>
+
+  <div class="channel-card" style="--accent:var(--amber)">
+    <div class="ch-icon">📰</div>
+    <div class="ch-label">Press & Media</div>
+    <div class="ch-title">Media Inquiries</div>
+    <div class="ch-desc">Press coverage, interviews, founder quotes, or editorial access requests.</div>
+    <div class="ch-value">press@mindoftrader.com</div>
+  </div>
+
+  <div class="channel-card" style="--accent:var(--red)">
+    <div class="ch-icon">🔒</div>
+    <div class="ch-label">Legal & IP</div>
+    <div class="ch-title">Legal / IP</div>
+    <div class="ch-desc">Copyright, intellectual property, takedowns, or legal correspondence.</div>
+    <div class="ch-value">legal@mindoftrader.com</div>
+  </div>
+
+  <div class="founder-note">
+    <div class="fn-avatar">🧠</div>
+    <div class="fn-body">
+      <div class="fn-role">Founder — MindOfTrader</div>
+      <div class="fn-name">Varsha Singh</div>
+      <div class="fn-desc">For direct founder communication, media interviews, partnership discussions, or investment-related inquiries, please reach out through the official email channels above and mention "Founder" in the subject line. <a href="/founder" style="color:var(--green);text-decoration:none;">Learn more about Varsha →</a></div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-title">Send a Message</div>
+    <div class="form-sub">Fill in the form below and we'll get back to you. <em>Note: This form is ready for backend integration.</em> Messages are acknowledged within 2 business days.</div>
+    <div id="contact-form">
+      <div class="form-grid">
+        <div class="fg">
+          <label class="fl">Your Name</label>
+          <input class="fi" type="text" id="c-name" placeholder="Full name" autocomplete="name">
+        </div>
+        <div class="fg">
+          <label class="fl">Email Address</label>
+          <input class="fi" type="email" id="c-email" placeholder="you@email.com" autocomplete="email">
+        </div>
+        <div class="fg">
+          <label class="fl">Subject</label>
+          <select class="fs" id="c-subject">
+            <option value="">Select a subject</option>
+            <option>Product Support</option>
+            <option>Feature Request</option>
+            <option>Partnership / Business</option>
+            <option>Press / Media</option>
+            <option>Founder Communication</option>
+            <option>Legal / IP</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl">Your Trading Profile</label>
+          <select class="fs" id="c-profile">
+            <option value="">Optional</option>
+            <option>Intraday Options Trader</option>
+            <option>Positional Trader</option>
+            <option>Investor</option>
+            <option>Developer / Integrator</option>
+            <option>Media / Journalist</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="fg full">
+          <label class="fl">Message</label>
+          <textarea class="fta" id="c-message" placeholder="Tell us what's on your mind..."></textarea>
+        </div>
+      </div>
+      <button class="form-submit" onclick="submitForm()">Send Message →</button>
+      <div class="form-note">Your information is kept private and will only be used to respond to your inquiry. MindOfTrader does not sell or share contact information.</div>
+    </div>
+    <div class="form-success" id="form-success">
+      <div class="fs-icon">✅</div>
+      <div class="fs-title">Message Received</div>
+      <div class="fs-sub">Thanks for reaching out to MindOfTrader. We'll respond within 2 business days.<br><br>In the meantime, feel free to <a href="/app" style="color:var(--green);">explore the app</a> or <a href="/founder" style="color:var(--green);">read about the founder</a>.</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div>
+        <div class="footer-brand"><div class="footer-brand-dot"></div>MindOfTrader</div>
+        <div class="footer-tagline">Behavioral intelligence for traders.</div>
+        <div class="footer-founder">Founder — <strong>Varsha Singh</strong></div>
+      </div>
+      <div class="footer-links">
+        <a href="/">Home</a><a href="/about">About</a><a href="/founder">Founder</a>
+        <a href="/contact">Contact</a><a href="#">Privacy</a><a href="#">Terms</a>
+        <a href="/app">Launch App</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2026 MindOfTrader. All Rights Reserved. · Founder — Varsha Singh</div>
+      <div class="footer-legal">MindOfTrader is a behavioral analytics and journaling platform for educational and informational purposes only. It does not provide investment advice, stock recommendations, or guaranteed trading outcomes.</div>
+    </div>
+  </div>
+</footer>
+</div>
+
+<script>
+function submitForm(){
+  const name=document.getElementById('c-name').value.trim();
+  const email=document.getElementById('c-email').value.trim();
+  const msg=document.getElementById('c-message').value.trim();
+  if(!name||!email||!msg){alert('Please fill in your name, email, and message.');return;}
+  document.getElementById('contact-form').style.display='none';
+  document.getElementById('form-success').classList.add('show');
+}
+(function(){const cv=document.getElementById('bg-canvas');const ctx=cv.getContext('2d');let W=0,H=0,nodes=[],t=0;function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;if(!nodes.length)for(let i=0;i<12;i++)nodes.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*0.13,vy:(Math.random()-.5)*0.13});}resize();window.addEventListener('resize',resize);(function frame(){if(!W||!H){requestAnimationFrame(frame);return;}ctx.clearRect(0,0,W,H);t+=0.003;const gx=W/2+Math.sin(t)*60,gy=H*0.4+Math.cos(t*0.7)*40;if(isFinite(gx)&&isFinite(gy)){const g=ctx.createRadialGradient(gx,gy,0,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(41,121,255,0.03)');g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}nodes.forEach(n=>{n.x+=n.vx;n.y+=n.vy;if(n.x<0||n.x>W)n.vx*=-1;if(n.y<0||n.y>H)n.vy*=-1;});for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){const dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<160){ctx.beginPath();ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);ctx.strokeStyle=`rgba(41,121,255,${(0.04*(1-d/160)).toFixed(3)})`;ctx.lineWidth=0.5;ctx.stroke();}}nodes.forEach(n=>{ctx.beginPath();ctx.arc(n.x,n.y,1,0,Math.PI*2);ctx.fillStyle='rgba(41,121,255,0.12)';ctx.fill();});requestAnimationFrame(frame);})();})();
+</script>
+</body>
+</html>
