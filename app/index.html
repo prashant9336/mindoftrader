@@ -937,15 +937,15 @@ a{color:var(--green);text-decoration:none;}
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import {
-  getFirestore, collection, doc, setDoc, getDocs,
-  deleteDoc, serverTimestamp, query, orderBy
+  getFirestore, collection, doc, setDoc, getDoc, getDocs,
+  deleteDoc, serverTimestamp, query, orderBy, updateDoc,
+  increment, addDoc, where, limit
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 🔥 PASTE YOUR FIREBASE CONFIG HERE
-// Firebase Console → Project Settings → Your Apps → Web App → SDK snippet
+// 🔥 FIREBASE CONFIG
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const firebaseConfig = {
   apiKey: "AIzaSyCShSzP5z6wqQ6smiBryZR8J-CQ4drOnLc",
@@ -955,47 +955,142 @@ const firebaseConfig = {
   messagingSenderId: "1046482320403",
   appId: "1:1046482320403:web:a7b78f64528bbad87e53e6"
 };
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  MINDOFTRADER — FIRESTORE DATABASE STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  COLLECTION 1: users/{uid}/
+  ├── profile/main          → name, joinedAt, lastActive, broker, capitalSize, plan
+  ├── trades/{tradeId}      → all trade data (behavioral, NOT financial credentials)
+  ├── dna_reports/{weekId}  → weekly DNA snapshots for progress tracking
+  ├── ai_analysis/latest    → most recent AI analysis result
+  └── settings/main         → app preferences (theme, notifications)
+
+  COLLECTION 2: waitlist/{docId}
+  └── email, joinedAt, source   → Pro waitlist signups
+
+  COLLECTION 3: app_stats/global
+  └── totalUsers, totalTrades, lastUpdated  → public counters
+
+  SECURITY: Each user can ONLY read/write their own data (uid match).
+  We NEVER store: passwords, broker API keys, bank details, financial accounts.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
 
 let db = null;
-let currentUser = null;
+let auth = null;
 let firebaseReady = false;
 
 try {
   if (firebaseConfig.apiKey !== 'YOUR_API_KEY') {
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+    auth = getAuth(app);
     db = getFirestore(app);
     firebaseReady = true;
 
-    // Listen to auth state
+    // Auth state listener — fires on every page load
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        currentUser = user;
-        // Load trades from Firestore
-        window.firestoreLoadTrades && window.firestoreLoadTrades(user.uid);
+        // User is signed in — load all their data
+        await window.db_loadAllUserData(user.uid);
+        // Update last active timestamp
+        window.db_updateLastActive(user.uid);
       }
     });
 
-    // Expose signOut globally
+    // Expose sign out
     window.firebaseSignOut = () => signOut(auth).then(() => {
       localStorage.removeItem('mot_user');
       localStorage.removeItem('mot_trades');
       window.location.href = '/login';
     });
+
+    // Expose auth + provider for upgrade flow
+    window._fbAuth = auth;
+    window._fbGoogleProvider = new GoogleAuthProvider();
   }
 } catch(e) {
-  console.warn('Firebase init skipped:', e.message);
+  console.warn('Firebase init error:', e.message);
 }
 
-// Save a single trade to Firestore
-window.firestoreSaveTrade = async function(uid, trade) {
+// ══════════════════════════════════════════════════
+// COLLECTION 1A: USER PROFILE
+// Path: users/{uid}/profile/main
+// Stores: name, email, joinedAt, lastActive, plan, broker, capitalSize
+// Does NOT store: passwords, API keys, financial account numbers
+// ══════════════════════════════════════════════════
+
+window.db_saveProfile = async function(uid, profile) {
+  if (!db || !uid) return;
+  try {
+    const profileRef = doc(db, 'users', uid, 'profile', 'main');
+    const existing = await getDoc(profileRef);
+    const data = {
+      name: profile.name || 'Trader',
+      email: profile.email || null,
+      photoURL: profile.photo || null,
+      loginMethod: profile.loginMethod || 'google',
+      lastActive: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+    if (!existing.exists()) {
+      // First time — set joined date
+      data.joinedAt = serverTimestamp();
+      data.plan = 'free';
+      data.broker = 'zerodha';
+      data.capitalSize = null;
+      data.totalTrades = 0;
+      data.streakDays = 0;
+      // Increment global user counter
+      window.db_incrementStat('totalUsers');
+    }
+    await setDoc(profileRef, data, { merge: true });
+    setSyncStatus('saved');
+  } catch(e) {
+    console.error('Profile save error:', e);
+    setSyncStatus('error');
+  }
+};
+
+// Update just the last active time (called on every session)
+window.db_updateLastActive = async function(uid) {
+  if (!db || !uid) return;
+  try {
+    await setDoc(doc(db, 'users', uid, 'profile', 'main'),
+      { lastActive: serverTimestamp() }, { merge: true });
+  } catch(e) {}
+};
+
+// Update user preferences (broker, capital size etc.)
+window.db_saveSettings = async function(uid, settings) {
+  if (!db || !uid) return;
+  try {
+    await setDoc(doc(db, 'users', uid, 'settings', 'main'), {
+      broker: settings.broker || 'zerodha',
+      capitalSize: settings.capitalSize || null,
+      dailyLossLimit: settings.dailyLossLimit || null,
+      stopAfterLosses: settings.stopAfterLosses || 2,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  } catch(e) { console.error('Settings save error:', e); }
+};
+
+// ══════════════════════════════════════════════════
+// COLLECTION 1B: TRADES
+// Path: users/{uid}/trades/{tradeId}
+// Stores: behavioral trade data — emotion, rules, P&L, setup
+// Does NOT store: broker passwords, API keys, account numbers
+// ══════════════════════════════════════════════════
+
+window.db_saveTrade = async function(uid, trade) {
   if (!db || !uid) return;
   try {
     setSyncStatus('syncing');
     const tradeRef = doc(db, 'users', uid, 'trades', String(trade.id));
-    // NEVER store: passwords, broker credentials, financial account numbers
-    const safeTradeData = {
+    // Only safe behavioral data — never financial credentials
+    await setDoc(tradeRef, {
       id: trade.id,
       date: trade.date,
       symbol: trade.symbol,
@@ -1014,68 +1109,201 @@ window.firestoreSaveTrade = async function(uid, trade) {
       notes: trade.notes || '',
       lesson: trade.lesson || '',
       imported: trade.imported || false,
-      createdAt: serverTimestamp()
-    };
-    await setDoc(tradeRef, safeTradeData);
+      savedAt: serverTimestamp()
+    });
+    // Update trade count in profile
+    await setDoc(doc(db, 'users', uid, 'profile', 'main'),
+      { totalTrades: increment(1), lastActive: serverTimestamp() }, { merge: true });
+    // Increment global trades counter
+    window.db_incrementStat('totalTrades');
     setSyncStatus('saved');
   } catch(e) {
     setSyncStatus('error');
-    console.error('Firestore save error:', e);
+    console.error('Trade save error:', e);
   }
 };
 
-// Delete a trade from Firestore
-window.firestoreDeleteTrade = async function(uid, tradeId) {
+window.db_deleteTrade = async function(uid, tradeId) {
   if (!db || !uid) return;
   try {
     await deleteDoc(doc(db, 'users', uid, 'trades', String(tradeId)));
-  } catch(e) {
-    console.error('Firestore delete error:', e);
-  }
+    await setDoc(doc(db, 'users', uid, 'profile', 'main'),
+      { totalTrades: increment(-1) }, { merge: true });
+  } catch(e) { console.error('Trade delete error:', e); }
 };
 
-// Load all trades from Firestore
-window.firestoreLoadTrades = async function(uid) {
-  if (!db || !uid) return;
+window.db_loadTrades = async function(uid) {
+  if (!db || !uid) return [];
   try {
     setSyncStatus('syncing');
     const q = query(collection(db, 'users', uid, 'trades'), orderBy('date', 'desc'));
     const snapshot = await getDocs(q);
-    const firestoreTrades = [];
-    snapshot.forEach(docSnap => {
-      const d = docSnap.data();
-      if (d.createdAt) delete d.createdAt; // Remove server timestamp before use
-      firestoreTrades.push(d);
+    const result = [];
+    snapshot.forEach(d => {
+      const data = d.data();
+      delete data.savedAt; // Remove server timestamp
+      result.push(data);
     });
-    if (firestoreTrades.length > 0) {
-      // Merge: Firestore trades take priority, merge with any local-only
-      const localIds = new Set(firestoreTrades.map(t => t.id));
-      const localOnly = (window.localTrades || []).filter(t => !localIds.has(t.id));
-      window.trades = [...firestoreTrades, ...localOnly];
-      renderTradeTable(window.trades);
-      renderDNA();
-      setSyncStatus('saved');
-      showToast('☁️ Trades loaded from cloud (' + firestoreTrades.length + ')');
-    } else {
-      setSyncStatus('saved');
-    }
+    setSyncStatus('saved');
+    return result;
   } catch(e) {
     setSyncStatus('offline');
-    console.error('Firestore load error:', e);
+    console.error('Trades load error:', e);
+    return [];
   }
 };
 
-// Save user profile to Firestore (non-sensitive only)
-window.firestoreSaveProfile = async function(uid, profile) {
+// ══════════════════════════════════════════════════
+// COLLECTION 1C: DNA REPORTS
+// Path: users/{uid}/dna_reports/{weekId}
+// Stores: weekly behavioral snapshots for tracking progress over time
+// weekId format: "2026-W12" (year-week number)
+// ══════════════════════════════════════════════════
+
+window.db_saveDNAReport = async function(uid, dnaData) {
   if (!db || !uid) return;
   try {
-    await setDoc(doc(db, 'users', uid, 'profile', 'main'), {
-      name: profile.name,
-      joinedAt: serverTimestamp(),
-      lastActive: serverTimestamp()
+    // Create week ID like "2026-W12"
+    const now = new Date();
+    const weekNum = Math.ceil((now - new Date(now.getFullYear(), 0, 1)) / 604800000);
+    const weekId = now.getFullYear() + '-W' + String(weekNum).padStart(2, '0');
+    await setDoc(doc(db, 'users', uid, 'dna_reports', weekId), {
+      weekId,
+      weekOf: now.toISOString().split('T')[0],
+      disciplineScore: dnaData.disciplineScore,
+      winRate: dnaData.winRate,
+      totalPnl: dnaData.totalPnl,
+      ruleBreaks: dnaData.ruleBreaks,
+      archetype: dnaData.archetype,
+      totalTrades: dnaData.totalTrades,
+      calmTrades: dnaData.calmTrades,
+      revengeTrades: dnaData.revengeTrades,
+      fomoTrades: dnaData.fomoTrades,
+      savedAt: serverTimestamp()
     }, { merge: true });
-  } catch(e) { console.error('Profile save error:', e); }
+  } catch(e) { console.error('DNA report save error:', e); }
 };
+
+window.db_loadDNAHistory = async function(uid) {
+  if (!db || !uid) return [];
+  try {
+    const q = query(collection(db, 'users', uid, 'dna_reports'), orderBy('weekOf', 'desc'), limit(12));
+    const snapshot = await getDocs(q);
+    const result = [];
+    snapshot.forEach(d => result.push(d.data()));
+    return result;
+  } catch(e) { return []; }
+};
+
+// ══════════════════════════════════════════════════
+// COLLECTION 1D: AI ANALYSIS
+// Path: users/{uid}/ai_analysis/latest
+// Also: users/{uid}/ai_analysis/{date} for history
+// Stores: AI analysis results — scores, mistakes, insights
+// ══════════════════════════════════════════════════
+
+window.db_saveAIAnalysis = async function(uid, analysis) {
+  if (!db || !uid) return;
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    // Save as latest
+    await setDoc(doc(db, 'users', uid, 'ai_analysis', 'latest'), {
+      ...analysis,
+      analyzedAt: serverTimestamp(),
+      tradeCount: window.trades ? window.trades.length : 0,
+      date: today
+    });
+    // Also save dated copy for history
+    await setDoc(doc(db, 'users', uid, 'ai_analysis', today), {
+      overallScore: analysis.scores?.overall || 0,
+      disciplineScore: analysis.scores?.discipline || 0,
+      emotionScore: analysis.scores?.emotional_stability || 0,
+      topMistake: analysis.top_mistakes?.[0]?.title || '',
+      analyzedAt: serverTimestamp()
+    });
+  } catch(e) { console.error('AI analysis save error:', e); }
+};
+
+window.db_loadLatestAnalysis = async function(uid) {
+  if (!db || !uid) return null;
+  try {
+    const snap = await getDoc(doc(db, 'users', uid, 'ai_analysis', 'latest'));
+    return snap.exists() ? snap.data() : null;
+  } catch(e) { return null; }
+};
+
+// ══════════════════════════════════════════════════
+// COLLECTION 2: WAITLIST
+// Path: waitlist/{docId}
+// Stores: email + joined timestamp for Pro waitlist
+// Anyone can write, only admin reads
+// ══════════════════════════════════════════════════
+
+window.db_addToWaitlist = async function(email) {
+  if (!db || !email) return false;
+  try {
+    const emailKey = email.replace(/[.@]/g, '_');
+    await setDoc(doc(db, 'waitlist', emailKey), {
+      email: email,
+      joinedAt: serverTimestamp(),
+      source: 'app',
+      plan: 'pro_waitlist'
+    }, { merge: true });
+    return true;
+  } catch(e) {
+    console.error('Waitlist error:', e);
+    return false;
+  }
+};
+
+// ══════════════════════════════════════════════════
+// COLLECTION 3: APP STATS (global counters)
+// Path: app_stats/global
+// Stores: totalUsers, totalTrades (anonymized counts only)
+// ══════════════════════════════════════════════════
+
+window.db_incrementStat = async function(field) {
+  if (!db) return;
+  try {
+    await setDoc(doc(db, 'app_stats', 'global'),
+      { [field]: increment(1), lastUpdated: serverTimestamp() }, { merge: true });
+  } catch(e) {}
+};
+
+// ══════════════════════════════════════════════════
+// MASTER LOAD — loads everything on login
+// ══════════════════════════════════════════════════
+
+window.db_loadAllUserData = async function(uid) {
+  if (!db || !uid) return;
+  setSyncStatus('syncing');
+  try {
+    // Load trades
+    const firestoreTrades = await window.db_loadTrades(uid);
+    if (firestoreTrades.length > 0) {
+      const localIds = new Set(firestoreTrades.map(t => t.id));
+      const localOnly = (window.localTrades || []).filter(t => !localIds.has(t.id));
+      window.trades = [...firestoreTrades, ...localOnly];
+      if (typeof trades !== 'undefined') trades = window.trades;
+      if (typeof renderTradeTable === 'function') renderTradeTable(window.trades);
+      if (typeof renderDNA === 'function') renderDNA();
+      showToast('☁️ ' + firestoreTrades.length + ' trades loaded from cloud');
+    }
+    // Load latest AI analysis if exists
+    const latestAnalysis = await window.db_loadLatestAnalysis(uid);
+    if (latestAnalysis) {
+      window.lastAIAnalysis = latestAnalysis;
+    }
+    setSyncStatus('saved');
+  } catch(e) {
+    setSyncStatus('offline');
+    console.error('Load all data error:', e);
+  }
+};
+
+// ══════════════════════════════════════════════════
+// SYNC STATUS UI
+// ══════════════════════════════════════════════════
 
 function setSyncStatus(status) {
   const bar = document.getElementById('sync-bar');
@@ -1083,13 +1311,20 @@ function setSyncStatus(status) {
   if (!bar || !dot) return;
   bar.className = status;
   dot.className = 'nav-sync-dot ' + (status === 'saved' ? '' : status);
-  if (status === 'syncing') bar.textContent = '⟳ Syncing to cloud...';
-  else if (status === 'saved') { bar.textContent = '✓ All changes saved'; setTimeout(() => { bar.className = ''; }, 2500); }
-  else if (status === 'error') bar.textContent = '⚠ Sync error — saved locally';
-  else if (status === 'offline') bar.textContent = '◎ Offline — changes saved locally';
+  const msgs = {
+    syncing: '⟳ Syncing to cloud...',
+    saved: '✓ All changes saved',
+    error: '⚠ Sync error — saved locally',
+    offline: '◎ Offline — changes saved locally'
+  };
+  bar.textContent = msgs[status] || '';
+  if (status === 'saved') setTimeout(() => { bar.className = ''; }, 2500);
 }
 window.setSyncStatus = setSyncStatus;
 window.firebaseReady = firebaseReady;
+
+// Expose db + auth for upgrade flow
+window._db = db;
 </script>
 
 <script>
@@ -1218,8 +1453,8 @@ function setupUser(user){
   else{badge.textContent='Guest Mode';badge.className='um-badge guest';}
 
   // Save profile to Firestore if Google
-  if(user.loginMethod==='google'&&user.uid&&window.firestoreSaveProfile){
-    window.firestoreSaveProfile(user.uid,user);
+  if(user.loginMethod==='google'&&user.uid&&window.db_saveProfile){
+    window.db_saveProfile(user.uid,user);
   }
 }
 
@@ -1459,8 +1694,8 @@ function submitTrade(){
   trades.unshift(trade);
   saveTrades();
   // Save to Firestore if logged in
-  if(currentUserProfile&&currentUserProfile.uid&&currentUserProfile.loginMethod==='google'&&window.firestoreSaveTrade){
-    window.firestoreSaveTrade(currentUserProfile.uid,trade);
+  if(currentUserProfile&&currentUserProfile.uid&&currentUserProfile.loginMethod==='google'&&window.db_saveTrade){
+    window.db_saveTrade(currentUserProfile.uid,trade);
   }
   renderTradeTable(trades);
   showToast(pnl>=0?`✓ Trade saved — +${fmtINR(pnl)}`:`Trade saved — -${fmtINR(Math.abs(pnl))}`);
@@ -1489,8 +1724,8 @@ function deleteTrade(id){
   if(!confirm('Delete this trade?'))return;
   trades=trades.filter(t=>t.id!==id);
   saveTrades();
-  if(currentUserProfile&&currentUserProfile.loginMethod==='google'&&window.firestoreDeleteTrade){
-    window.firestoreDeleteTrade(currentUserProfile.uid,id);
+  if(currentUserProfile&&currentUserProfile.loginMethod==='google'&&window.db_deleteTrade){
+    window.db_deleteTrade(currentUserProfile.uid,id);
   }
   renderTradeTable(trades);renderDNA();showToast('Trade deleted');
 }
@@ -1584,8 +1819,8 @@ function parseCSV(text,filename){
   document.getElementById('ip-title').textContent=`✓ ${imported} trades imported from ${filename}`;
   trades=[...newTrades,...trades];saveTrades();
   // Batch save to Firestore if logged in
-  if(currentUserProfile&&currentUserProfile.loginMethod==='google'&&window.firestoreSaveTrade){
-    newTrades.forEach(t=>window.firestoreSaveTrade(currentUserProfile.uid,t));
+  if(currentUserProfile&&currentUserProfile.loginMethod==='google'&&window.db_saveTrade){
+    newTrades.forEach(t=>window.db_saveTrade(currentUserProfile.uid,t));
   }
   renderTradeTable(trades);renderDNA();
   showImportedTable(newTrades);
@@ -1619,8 +1854,8 @@ function loadSampleData(e){
     {id:112,date:'2026-03-15',symbol:'NIFTY',strike:'24300 PE',action:'BUY PE',lots:1,entry:145,exit:95,sl:0,target:220,setup:'Trend Pullback',emotion:'revenge',rules:[1,1,0,1,0,0,1],pnl:-3750,broken:true,imported:true},
   ];
   trades=[...sampleTrades,...trades.filter(t=>!t.imported)];saveTrades();
-  if(currentUserProfile&&currentUserProfile.loginMethod==='google'&&window.firestoreSaveTrade){
-    sampleTrades.forEach(t=>window.firestoreSaveTrade(currentUserProfile.uid,t));
+  if(currentUserProfile&&currentUserProfile.loginMethod==='google'&&window.db_saveTrade){
+    sampleTrades.forEach(t=>window.db_saveTrade(currentUserProfile.uid,t));
   }
   renderTradeTable(trades);showImportedTable(sampleTrades);
   showToast('✓ 12 sample trades loaded! Running AI...');
@@ -1761,6 +1996,17 @@ function renderDNA(){
   document.getElementById('dna-arch-desc').textContent=arch.desc;
   const ring=document.getElementById('dna-ring-fill');
   setTimeout(()=>{ring.style.strokeDashoffset=220-(disc/100)*220;},300);
+  // Auto-save weekly DNA snapshot to Firestore
+  if(currentUserProfile&&currentUserProfile.loginMethod==='google'&&window.db_saveDNAReport){
+    window.db_saveDNAReport(currentUserProfile.uid,{
+      disciplineScore:disc,winRate:wr,totalPnl:pnl,ruleBreaks:brk,
+      archetype:document.getElementById('dna-arch').textContent,
+      totalTrades:trades.length,
+      calmTrades:trades.filter(t=>['calm','focused'].includes(t.emotion)).length,
+      revengeTrades:trades.filter(t=>t.emotion==='revenge').length,
+      fomoTrades:trades.filter(t=>t.emotion==='fomo').length
+    });
+  }
   const cWR=trades.length?Math.round((trades.filter(t=>['calm','focused'].includes(t.emotion)&&t.pnl>0).length/Math.max(1,trades.filter(t=>['calm','focused'].includes(t.emotion)).length))*100):74;
   document.getElementById('dna-ins-list').innerHTML=[
     {icon:'📈',text:`<strong>Calm state wins ${cWR}%</strong> — this is your real trading edge. Protect it.`},
@@ -2108,11 +2354,11 @@ async function startUpgradeToGoogle(){
   barEl.style.width='15%';
   try{
     // Trigger Google sign-in via Firebase
-    const {getAuth,signInWithPopup,GoogleAuthProvider}=await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
-    const auth=getAuth();
-    const provider=new GoogleAuthProvider();
-    provider.addScope('email');provider.addScope('profile');
+    if(!window._fbAuth){showToast('Firebase not ready. Please refresh.');return;}
+    const auth=window._fbAuth;
+    const provider=window._fbGoogleProvider||{};
     statusEl.textContent='Waiting for Google sign-in...';barEl.style.width='30%';
+    const {signInWithPopup}=await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
     const result=await signInWithPopup(auth,provider);
     const user=result.user;
     statusEl.textContent='Signed in as '+user.displayName.split(' ')[0]+'! Migrating trades...';barEl.style.width='50%';
@@ -2123,9 +2369,9 @@ async function startUpgradeToGoogle(){
     // Migrate all local trades to Firestore
     const total=trades.length;
     let migrated=0;
-    if(total>0&&window.firestoreSaveTrade){
+    if(total>0&&window.db_saveTrade){
       for(const t of trades){
-        await window.firestoreSaveTrade(user.uid,t);
+        await window.db_saveTrade(user.uid,t);
         migrated++;
         const pct=50+Math.round((migrated/total)*45);
         barEl.style.width=pct+'%';
@@ -2135,7 +2381,7 @@ async function startUpgradeToGoogle(){
     barEl.style.width='100%';
     statusEl.textContent='Done!';
     // Save profile to Firestore
-    if(window.firestoreSaveProfile)await window.firestoreSaveProfile(user.uid,newProfile);
+    if(window.db_saveProfile)await window.db_saveProfile(user.uid,newProfile);
     // Show success
     setTimeout(()=>{
       document.getElementById('upgrade-progress').className='upgrade-progress';
