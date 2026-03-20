@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindOfTrader — Admin Panel</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060910;--surface:#0b1018;--card:#0f1820;--card2:#131e2a;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --green:#00e676;--green-bg:rgba(0,230,118,0.07);--green-bd:rgba(0,230,118,0.2);
+  --red:#ff4560;--red-bg:rgba(255,69,96,0.07);--red-bd:rgba(255,69,96,0.2);
+  --amber:#ffab00;--amber-bg:rgba(255,171,0,0.07);--amber-bd:rgba(255,171,0,0.2);
+  --blue:#2979ff;--blue-bg:rgba(41,121,255,0.07);--blue-bd:rgba(41,121,255,0.2);
+  --purple:#9c27b0;--purple-bg:rgba(156,39,176,0.07);--purple-bd:rgba(156,39,176,0.2);
+  --white:#eef2f7;--text:#a8bccf;--muted:rgba(168,188,207,0.5);--dim:rgba(168,188,207,0.25);--label:#7a96aa;
+  --font:'Plus Jakarta Sans',sans-serif;--mono:'Space Grotesk',monospace;
+  --r:10px;--r2:16px;--r3:22px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:16px;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-thumb{background:rgba(0,230,118,0.2);border-radius:3px;}
+
+/* LOGIN SCREEN */
+#login-screen{position:fixed;inset:0;z-index:9000;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;}
+.login-box{background:var(--card);border:1px solid var(--border2);border-radius:var(--r3);padding:40px 36px;max-width:380px;width:100%;position:relative;overflow:hidden;}
+.login-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--red),var(--amber),var(--green));}
+.lb-brand{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:0.9rem;font-weight:700;color:var(--white);margin-bottom:6px;}
+.lb-dot{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 10px var(--red);}
+.lb-sub{font-size:0.75rem;color:var(--muted);margin-bottom:28px;}
+.lb-label{font-size:0.62rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--label);margin-bottom:6px;display:block;}
+.lb-input{width:100%;background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);padding:12px 14px;font-family:var(--font);font-size:0.88rem;color:var(--white);outline:none;margin-bottom:12px;transition:all 0.2s;}
+.lb-input:focus{border-color:var(--green-bd);box-shadow:0 0 0 3px rgba(0,230,118,0.07);}
+.lb-input::placeholder{color:var(--dim);}
+.lb-btn{width:100%;background:var(--green);border:none;border-radius:var(--r);padding:13px;font-family:var(--font);font-size:0.9rem;font-weight:700;color:#080c10;cursor:pointer;transition:all 0.2s;margin-bottom:10px;}
+.lb-btn:hover{box-shadow:0 4px 20px rgba(0,230,118,0.35);}
+.lb-error{font-size:0.75rem;color:var(--red);text-align:center;min-height:18px;}
+.lb-note{font-size:0.67rem;color:var(--dim);text-align:center;margin-top:14px;line-height:1.5;}
+
+/* MAIN LAYOUT */
+#admin-app{display:none;}
+#admin-app.show{display:block;}
+
+/* TOP BAR */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:500;height:56px;background:rgba(6,9,16,0.96);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);display:flex;align-items:center;padding:0 24px;gap:16px;}
+.tb-brand{font-family:var(--mono);font-size:0.85rem;font-weight:700;color:var(--white);display:flex;align-items:center;gap:8px;}
+.tb-dot{width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 8px var(--red);}
+.tb-badge{background:var(--red-bg);border:1px solid var(--red-bd);border-radius:20px;padding:3px 10px;font-size:0.62rem;font-weight:700;color:var(--red);letter-spacing:0.1em;text-transform:uppercase;}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+.tb-refresh{background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);padding:6px 14px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text);cursor:pointer;transition:all 0.2s;}
+.tb-refresh:hover{border-color:var(--green-bd);color:var(--green);}
+.tb-logout{background:none;border:none;cursor:pointer;color:var(--muted);font-size:0.75rem;font-family:var(--font);transition:color 0.2s;}
+.tb-logout:hover{color:var(--red);}
+.tb-last{font-size:0.68rem;color:var(--dim);}
+.tb-status{display:flex;align-items:center;gap:5px;font-size:0.68rem;color:var(--green);}
+.tb-status-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,230,118,0.4);}50%{box-shadow:0 0 0 6px rgba(0,230,118,0);}}
+
+/* MAIN */
+.main{padding:72px 24px 32px;max-width:1200px;margin:0 auto;}
+
+/* STAT CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:24px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:20px;position:relative;overflow:hidden;transition:all 0.2s;}
+.stat-card:hover{border-color:var(--border2);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ac,var(--green));}
+.sc-icon{font-size:1.4rem;margin-bottom:10px;}
+.sc-val{font-family:var(--mono);font-size:2.2rem;font-weight:800;color:var(--ac,var(--green));line-height:1;margin-bottom:4px;}
+.sc-label{font-size:0.65rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--label);}
+.sc-sub{font-size:0.7rem;color:var(--muted);margin-top:4px;}
+.sc-trend{font-size:0.68rem;font-weight:700;margin-top:6px;}
+.sc-trend.up{color:var(--green);}
+.sc-trend.down{color:var(--red);}
+
+/* PANELS */
+.panels-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+@media(max-width:900px){.panels-grid{grid-template-columns:1fr;}}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;}
+.panel.full{grid-column:1/-1;}
+.panel-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.ph-title{font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--white);display:flex;align-items:center;gap:8px;}
+.pdot{width:6px;height:6px;border-radius:50%;}
+.pdot.g{background:var(--green);box-shadow:0 0 6px var(--green);}
+.pdot.r{background:var(--red);box-shadow:0 0 6px var(--red);}
+.pdot.a{background:var(--amber);box-shadow:0 0 6px var(--amber);}
+.pdot.b{background:var(--blue);box-shadow:0 0 6px var(--blue);}
+.pdot.p{background:var(--purple);box-shadow:0 0 6px var(--purple);}
+.ph-tag{font-size:0.6rem;color:var(--dim);letter-spacing:0.08em;text-transform:uppercase;}
+.ph-btn{background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:4px 12px;font-size:0.68rem;font-weight:600;color:var(--text);cursor:pointer;font-family:var(--font);transition:all 0.2s;}
+.ph-btn:hover{border-color:var(--green-bd);color:var(--green);}
+.panel-body{padding:16px;}
+
+/* USER TABLE */
+.user-table{width:100%;border-collapse:collapse;}
+.user-table th{font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--label);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);}
+.user-table td{padding:11px 12px;font-size:0.79rem;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--text);}
+.user-table tr:hover td{background:rgba(255,255,255,0.02);}
+.user-table tr:last-child td{border-bottom:none;}
+.u-name{font-weight:600;color:var(--white);}
+.u-email{font-size:0.72rem;color:var(--muted);}
+.u-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:0.6rem;font-weight:700;}
+.u-badge.google{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);}
+.u-badge.guest{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);}
+.u-count{font-family:var(--mono);font-size:0.78rem;font-weight:700;color:var(--green);}
+.u-date{font-size:0.7rem;color:var(--muted);}
+
+/* WAITLIST TABLE */
+.wl-table{width:100%;border-collapse:collapse;}
+.wl-table th{font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--label);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);}
+.wl-table td{padding:10px 12px;font-size:0.79rem;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--text);}
+.wl-table tr:hover td{background:rgba(255,255,255,0.02);}
+.wl-table tr:last-child td{border-bottom:none;}
+
+/* ACTIVITY FEED */
+.activity-feed{display:flex;flex-direction:column;gap:8px;}
+.af-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r);transition:all 0.15s;}
+.af-item:hover{border-color:var(--border2);}
+.af-icon{font-size:0.9rem;flex-shrink:0;margin-top:1px;}
+.af-body{flex:1;}
+.af-text{font-size:0.78rem;color:var(--text);line-height:1.4;}
+.af-text strong{color:var(--white);}
+.af-time{font-size:0.65rem;color:var(--dim);margin-top:2px;}
+
+/* DAILY CHART */
+.daily-bars{display:flex;align-items:flex-end;gap:4px;height:80px;padding:0 4px;}
+.db-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;}
+.db-bar{width:100%;border-radius:3px 3px 0 0;min-height:3px;transition:height 0.6s ease;}
+.db-label{font-size:0.55rem;color:var(--dim);font-family:var(--mono);}
+.db-val{font-size:0.6rem;color:var(--muted);font-family:var(--mono);}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:32px;color:var(--muted);font-size:0.82rem;}
+.empty-icon{font-size:1.8rem;margin-bottom:8px;}
+
+/* LOADING */
+.loading-state{text-align:center;padding:24px;color:var(--muted);font-size:0.78rem;}
+.spinner{width:20px;height:20px;border-radius:50%;border:2px solid var(--border2);border-top-color:var(--green);animation:spin 0.8s linear infinite;margin:0 auto 8px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* SEARCH */
+.search-bar{background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);padding:8px 12px;font-family:var(--font);font-size:0.82rem;color:var(--white);outline:none;width:200px;transition:all 0.2s;}
+.search-bar:focus{border-color:var(--green-bd);}
+.search-bar::placeholder{color:var(--dim);}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:10px 22px;font-size:0.78rem;color:var(--text);z-index:9500;opacity:0;transition:all 0.3s;white-space:nowrap;pointer-events:none;}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* SECTION LABEL */
+.section-label{font-size:0.62rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--label);margin-bottom:12px;margin-top:8px;}
+
+/* OVERVIEW NUMBERS */
+.overview-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.03);}
+.overview-row:last-child{border-bottom:none;}
+.or-label{font-size:0.78rem;color:var(--text);flex:1;}
+.or-val{font-family:var(--mono);font-size:0.82rem;font-weight:700;color:var(--white);}
+.or-bar{width:80px;height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-left:8px;}
+.or-fill{height:100%;border-radius:2px;background:var(--green);}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="lb-brand"><div class="lb-dot"></div>MindOfTrader</div>
+    <div class="lb-sub">Admin Panel — Restricted Access</div>
+    <label class="lb-label">Admin Password</label>
+    <input class="lb-input" type="password" id="admin-pwd" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')checkLogin()">
+    <button class="lb-btn" onclick="checkLogin()">Access Dashboard →</button>
+    <div class="lb-error" id="lb-error"></div>
+    <div class="lb-note">This panel is private. Only the founder has access.</div>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="admin-app">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="tb-brand"><div class="tb-dot"></div>MindOfTrader</div>
+    <div class="tb-badge">Admin</div>
+    <div class="tb-status"><div class="tb-status-dot"></div>Live</div>
+    <div class="tb-right">
+      <span class="tb-last" id="tb-last">—</span>
+      <button class="tb-refresh" onclick="loadAllData()">⟳ Refresh</button>
+      <button class="tb-logout" onclick="logout()">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- STAT CARDS -->
+    <div class="stats-grid">
+      <div class="stat-card" style="--ac:var(--green)">
+        <div class="sc-icon">👥</div>
+        <div class="sc-val" id="stat-users">—</div>
+        <div class="sc-label">Total Users</div>
+        <div class="sc-sub">Registered accounts</div>
+        <div class="sc-trend up" id="stat-users-today">Loading...</div>
+      </div>
+      <div class="stat-card" style="--ac:var(--blue)">
+        <div class="sc-icon">📊</div>
+        <div class="sc-val" id="stat-trades">—</div>
+        <div class="sc-label">Trades Logged</div>
+        <div class="sc-sub">Total across all users</div>
+        <div class="sc-trend up" id="stat-trades-trend">Loading...</div>
+      </div>
+      <div class="stat-card" style="--ac:var(--amber)">
+        <div class="sc-icon">📧</div>
+        <div class="sc-val" id="stat-waitlist">—</div>
+        <div class="sc-label">Waitlist Signups</div>
+        <div class="sc-sub">Pro waitlist emails</div>
+        <div class="sc-trend up" id="stat-waitlist-trend">Loading...</div>
+      </div>
+      <div class="stat-card" style="--ac:var(--purple)">
+        <div class="sc-icon">🔥</div>
+        <div class="sc-val" id="stat-active">—</div>
+        <div class="sc-label">Active Today</div>
+        <div class="sc-sub">Logged in last 24h</div>
+        <div class="sc-trend" id="stat-active-trend">Loading...</div>
+      </div>
+      <div class="stat-card" style="--ac:var(--green)">
+        <div class="sc-icon">🧬</div>
+        <div class="sc-val" id="stat-dna">—</div>
+        <div class="sc-label">DNA Reports</div>
+        <div class="sc-sub">Generated this week</div>
+        <div class="sc-trend" id="stat-dna-trend">Loading...</div>
+      </div>
+      <div class="stat-card" style="--ac:var(--red)">
+        <div class="sc-icon">🤖</div>
+        <div class="sc-val" id="stat-ai">—</div>
+        <div class="sc-label">AI Analyses Run</div>
+        <div class="sc-sub">Total AI coach uses</div>
+        <div class="sc-trend" id="stat-ai-trend">Loading...</div>
+      </div>
+    </div>
+
+    <!-- PANELS ROW 1 -->
+    <div class="panels-grid">
+
+      <!-- USERS LIST -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="ph-title"><div class="pdot g"></div>All Users</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input class="search-bar" type="text" placeholder="Search..." id="user-search" oninput="filterUsers()">
+            <button class="ph-btn" onclick="exportUsers()">↓ Export</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;max-height:360px;overflow-y:auto">
+          <table class="user-table">
+            <thead><tr><th>User</th><th>Type</th><th>Trades</th><th>Joined</th><th>Last Active</th></tr></thead>
+            <tbody id="users-tbody">
+              <tr><td colspan="5"><div class="loading-state"><div class="spinner"></div>Loading users...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- WAITLIST -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="ph-title"><div class="pdot a"></div>Pro Waitlist</div>
+          <button class="ph-btn" onclick="exportWaitlist()">↓ Export CSV</button>
+        </div>
+        <div style="overflow-x:auto;max-height:360px;overflow-y:auto">
+          <table class="wl-table">
+            <thead><tr><th>#</th><th>Email</th><th>Source</th><th>Joined</th></tr></thead>
+            <tbody id="waitlist-tbody">
+              <tr><td colspan="4"><div class="loading-state"><div class="spinner"></div>Loading waitlist...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANELS ROW 2 -->
+    <div class="panels-grid">
+
+      <!-- DAILY SIGNUPS CHART -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="ph-title"><div class="pdot g"></div>Daily Signups</div>
+          <div class="ph-tag">Last 14 days</div>
+        </div>
+        <div class="panel-body">
+          <div class="daily-bars" id="daily-chart"></div>
+        </div>
+      </div>
+
+      <!-- PLATFORM OVERVIEW -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="ph-title"><div class="pdot b"></div>Platform Overview</div>
+          <div class="ph-tag">Key metrics</div>
+        </div>
+        <div class="panel-body">
+          <div id="overview-list">
+            <div class="loading-state"><div class="spinner"></div>Loading...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANELS ROW 3 -->
+    <div class="panels-grid">
+
+      <!-- RECENT ACTIVITY -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="ph-title"><div class="pdot p"></div>Recent Activity</div>
+          <div class="ph-tag">Live feed</div>
+        </div>
+        <div class="panel-body">
+          <div class="activity-feed" id="activity-feed">
+            <div class="loading-state"><div class="spinner"></div>Loading activity...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOP USERS BY TRADES -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="ph-title"><div class="pdot r"></div>Most Active Traders</div>
+          <div class="ph-tag">By trade count</div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="user-table">
+            <thead><tr><th>Rank</th><th>User</th><th>Trades</th><th>Last Active</th></tr></thead>
+            <tbody id="top-users-tbody">
+              <tr><td colspan="4"><div class="loading-state"><div class="spinner"></div>Loading...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import {
+  getFirestore, collection, doc, getDoc, getDocs,
+  query, orderBy, limit, where, Timestamp
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SAME FIREBASE CONFIG AS YOUR APP
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const firebaseConfig = {
+  apiKey: "AIzaSyCShSzP5z6wqQ6smiBryZR8J-CQ4drOnLc",
+  authDomain: "mindoftrader-bb4ea.firebaseapp.com",
+  projectId: "mindoftrader-bb4ea",
+  storageBucket: "mindoftrader-bb4ea.firebasestorage.app",
+  messagingSenderId: "1046482320403",
+  appId: "1:1046482320403:web:a7b78f64528bbad87e53e6"
+};
+
+let db;
+try {
+  const app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  window._adminDb = db;
+} catch(e) { console.error('Firebase init error:', e); }
+
+// ── LOAD ALL USERS ────────────────────────────────────────
+window.adminLoadUsers = async function() {
+  if (!db) return [];
+  try {
+    const usersSnap = await getDocs(collection(db, 'users'));
+    const users = [];
+    const now = Date.now();
+    const oneDayAgo = now - 86400000;
+    let activeToday = 0;
+
+    for (const userDoc of usersSnap.docs) {
+      const uid = userDoc.id;
+      try {
+        // Get profile
+        const profileSnap = await getDoc(doc(db, 'users', uid, 'profile', 'main'));
+        const profile = profileSnap.exists() ? profileSnap.data() : {};
+        // Get trade count
+        const tradesSnap = await getDocs(collection(db, 'users', uid, 'trades'));
+        const tradeCount = tradesSnap.size;
+        // Get DNA count
+        const dnaSnap = await getDocs(collection(db, 'users', uid, 'dna_reports'));
+        const dnaCount = dnaSnap.size;
+        // Get AI analysis count
+        const aiSnap = await getDocs(collection(db, 'users', uid, 'ai_analysis'));
+        const aiCount = Math.max(0, aiSnap.size - 1); // exclude 'latest'
+
+        const lastActive = profile.lastActive?.toDate?.() || null;
+        if (lastActive && lastActive.getTime() > oneDayAgo) activeToday++;
+
+        users.push({
+          uid,
+          name: profile.name || 'Unknown',
+          email: profile.email || '—',
+          loginMethod: profile.loginMethod || 'unknown',
+          tradeCount,
+          dnaCount,
+          aiCount,
+          plan: profile.plan || 'free',
+          joinedAt: profile.joinedAt?.toDate?.() || null,
+          lastActive
+        });
+      } catch(e) {
+        users.push({ uid, name: '—', email: '—', loginMethod: 'unknown', tradeCount: 0, dnaCount: 0, aiCount: 0, plan: 'free', joinedAt: null, lastActive: null });
+      }
+    }
+
+    window._adminUsers = users;
+    window._adminActiveToday = activeToday;
+    return users;
+  } catch(e) {
+    console.error('Load users error:', e);
+    return [];
+  }
+};
+
+// ── LOAD WAITLIST ─────────────────────────────────────────
+window.adminLoadWaitlist = async function() {
+  if (!db) return [];
+  try {
+    const snap = await getDocs(collection(db, 'waitlist'));
+    const list = [];
+    snap.forEach(d => {
+      const data = d.data();
+      list.push({
+        email: data.email,
+        source: data.source || 'homepage',
+        joinedAt: data.joinedAt?.toDate?.() || null
+      });
+    });
+    list.sort((a,b) => (b.joinedAt||0) - (a.joinedAt||0));
+    window._adminWaitlist = list;
+    return list;
+  } catch(e) { console.error('Waitlist error:', e); return []; }
+};
+
+// ── LOAD APP STATS ────────────────────────────────────────
+window.adminLoadStats = async function() {
+  if (!db) return {};
+  try {
+    const snap = await getDoc(doc(db, 'app_stats', 'global'));
+    return snap.exists() ? snap.data() : {};
+  } catch(e) { return {}; }
+};
+
+// ── LOAD DAILY SIGNUPS ────────────────────────────────────
+window.adminLoadDailySignups = async function(users) {
+  // Build signup frequency from user join dates
+  const days = {};
+  const now = new Date();
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().split('T')[0];
+    days[key] = 0;
+  }
+  (users || []).forEach(u => {
+    if (u.joinedAt) {
+      const key = u.joinedAt.toISOString().split('T')[0];
+      if (days[key] !== undefined) days[key]++;
+    }
+  });
+  return days;
+};
+</script>
+
+<script>
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ADMIN PASSWORD
+// Change this to something only you know!
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const ADMIN_PASSWORD = 'Prishu@2026';
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+let allUsers = [];
+let allWaitlist = [];
+
+// ── LOGIN ─────────────────────────────────────────────────
+function checkLogin() {
+  const pwd = document.getElementById('admin-pwd').value;
+  const errEl = document.getElementById('lb-error');
+  if (pwd === ADMIN_PASSWORD) {
+    sessionStorage.setItem('mot_admin', '1');
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-app').classList.add('show');
+    loadAllData();
+  } else {
+    errEl.textContent = 'Incorrect password. Try again.';
+    document.getElementById('admin-pwd').value = '';
+    setTimeout(() => errEl.textContent = '', 3000);
+  }
+}
+
+function logout() {
+  sessionStorage.removeItem('mot_admin');
+  location.reload();
+}
+
+// Auto-login if session exists
+window.addEventListener('load', () => {
+  if (sessionStorage.getItem('mot_admin') === '1') {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-app').classList.add('show');
+    loadAllData();
+  }
+  document.getElementById('admin-pwd').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkLogin();
+  });
+});
+
+// ── LOAD ALL DATA ─────────────────────────────────────────
+async function loadAllData() {
+  document.getElementById('tb-last').textContent = 'Refreshing...';
+  try {
+    // Load in parallel
+    const [users, waitlist, stats] = await Promise.all([
+      window.adminLoadUsers ? window.adminLoadUsers() : [],
+      window.adminLoadWaitlist ? window.adminLoadWaitlist() : [],
+      window.adminLoadStats ? window.adminLoadStats() : {}
+    ]);
+
+    allUsers = users;
+    allWaitlist = waitlist;
+
+    renderStats(users, waitlist, stats);
+    renderUsersTable(users);
+    renderWaitlist(waitlist);
+    renderTopUsers(users);
+    await renderDailyChart(users);
+    renderOverview(users, waitlist, stats);
+    renderActivityFeed(users, waitlist);
+
+    const now = new Date();
+    document.getElementById('tb-last').textContent = 'Updated ' + now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+    showToast('✓ Dashboard refreshed');
+  } catch(e) {
+    console.error('Load error:', e);
+    showToast('⚠ Error loading data — check Firebase');
+  }
+}
+
+// ── RENDER STATS ──────────────────────────────────────────
+function renderStats(users, waitlist, stats) {
+  const totalUsers = users.length;
+  const totalTrades = users.reduce((s,u) => s + (u.tradeCount||0), 0);
+  const totalWaitlist = waitlist.length;
+  const activeToday = window._adminActiveToday || 0;
+  const totalDNA = users.reduce((s,u) => s + (u.dnaCount||0), 0);
+  const totalAI = users.reduce((s,u) => s + (u.aiCount||0), 0);
+
+  // Google vs guest
+  const googleUsers = users.filter(u => u.loginMethod === 'google').length;
+  const guestUsers = users.filter(u => u.loginMethod === 'guest').length;
+
+  // Joined today
+  const today = new Date().toISOString().split('T')[0];
+  const joinedToday = users.filter(u => u.joinedAt && u.joinedAt.toISOString().split('T')[0] === today).length;
+
+  setText('stat-users', totalUsers);
+  setText('stat-trades', totalTrades.toLocaleString('en-IN'));
+  setText('stat-waitlist', totalWaitlist);
+  setText('stat-active', activeToday);
+  setText('stat-dna', totalDNA);
+  setText('stat-ai', totalAI);
+
+  const ut = document.getElementById('stat-users-today');
+  if (ut) {
+    ut.textContent = '+' + joinedToday + ' joined today · ' + googleUsers + ' Google · ' + guestUsers + ' Guest';
+    ut.className = 'sc-trend ' + (joinedToday > 0 ? 'up' : '');
+  }
+  setText('stat-trades-trend', 'Avg ' + (totalUsers ? Math.round(totalTrades/totalUsers) : 0) + ' trades/user');
+  setText('stat-waitlist-trend', waitlist.length ? '+' + waitlist.filter(w => w.joinedAt && (Date.now() - w.joinedAt.getTime()) < 86400000).length + ' today' : 'No signups yet');
+  const at = document.getElementById('stat-active-trend');
+  if (at) { at.textContent = activeToday > 0 ? 'Active right now' : 'No activity today'; at.className = 'sc-trend ' + (activeToday > 0 ? 'up' : ''); }
+  const dt = document.getElementById('stat-dna-trend');
+  if (dt) { dt.textContent = 'Across ' + users.filter(u=>u.dnaCount>0).length + ' users'; dt.className = 'sc-trend'; }
+  const ait = document.getElementById('stat-ai-trend');
+  if (ait) { ait.textContent = 'By ' + users.filter(u=>u.aiCount>0).length + ' users'; ait.className = 'sc-trend'; }
+}
+
+// ── RENDER USERS TABLE ────────────────────────────────────
+function renderUsersTable(users) {
+  const tbody = document.getElementById('users-tbody');
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">👥</div>No users yet</div></td></tr>';
+    return;
+  }
+  const sorted = [...users].sort((a,b) => (b.joinedAt||0) - (a.joinedAt||0));
+  tbody.innerHTML = sorted.map(u => `
+    <tr>
+      <td>
+        <div class="u-name">${esc(u.name)}</div>
+        <div class="u-email">${esc(u.email)}</div>
+      </td>
+      <td><span class="u-badge ${u.loginMethod === 'google' ? 'google' : 'guest'}">${u.loginMethod === 'google' ? 'Google' : 'Guest'}</span></td>
+      <td><span class="u-count">${u.tradeCount}</span></td>
+      <td class="u-date">${fmtDate(u.joinedAt)}</td>
+      <td class="u-date">${fmtDate(u.lastActive)}</td>
+    </tr>`).join('');
+}
+
+// ── FILTER USERS ──────────────────────────────────────────
+function filterUsers() {
+  const q = document.getElementById('user-search').value.toLowerCase();
+  const filtered = q ? allUsers.filter(u =>
+    u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+  ) : allUsers;
+  renderUsersTable(filtered);
+}
+
+// ── RENDER WAITLIST ───────────────────────────────────────
+function renderWaitlist(list) {
+  const tbody = document.getElementById('waitlist-tbody');
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📧</div>No waitlist signups yet</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map((w, i) => `
+    <tr>
+      <td style="color:var(--muted);font-size:0.7rem">${i+1}</td>
+      <td style="color:var(--white);font-weight:600">${esc(w.email)}</td>
+      <td style="color:var(--muted);font-size:0.72rem">${esc(w.source)}</td>
+      <td class="u-date">${fmtDate(w.joinedAt)}</td>
+    </tr>`).join('');
+}
+
+// ── RENDER TOP USERS ──────────────────────────────────────
+function renderTopUsers(users) {
+  const tbody = document.getElementById('top-users-tbody');
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state">No users yet</div></td></tr>';
+    return;
+  }
+  const sorted = [...users].sort((a,b) => (b.tradeCount||0) - (a.tradeCount||0)).slice(0,8);
+  const rankEmoji = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'];
+  tbody.innerHTML = sorted.map((u, i) => `
+    <tr>
+      <td style="font-size:1rem">${rankEmoji[i]||i+1}</td>
+      <td>
+        <div class="u-name">${esc(u.name)}</div>
+        <div class="u-email">${esc(u.email)}</div>
+      </td>
+      <td><span class="u-count">${u.tradeCount} trades</span></td>
+      <td class="u-date">${fmtDate(u.lastActive)}</td>
+    </tr>`).join('');
+}
+
+// ── RENDER DAILY CHART ────────────────────────────────────
+async function renderDailyChart(users) {
+  const data = await window.adminLoadDailySignups(users);
+  const container = document.getElementById('daily-chart');
+  if (!data) return;
+  const entries = Object.entries(data);
+  const max = Math.max(1, ...Object.values(data));
+  container.innerHTML = entries.map(([date, count]) => {
+    const pct = Math.round((count/max)*100);
+    const label = date.slice(5); // MM-DD
+    const col = count > 0 ? 'var(--green)' : 'var(--border2)';
+    return `<div class="db-wrap">
+      <div class="db-val">${count > 0 ? count : ''}</div>
+      <div class="db-bar" style="height:${Math.max(4, pct*0.7)}px;background:${col}"></div>
+      <div class="db-label">${label}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── RENDER OVERVIEW ───────────────────────────────────────
+function renderOverview(users, waitlist, stats) {
+  const totalUsers = users.length;
+  const totalTrades = users.reduce((s,u) => s + (u.tradeCount||0), 0);
+  const googleUsers = users.filter(u => u.loginMethod === 'google').length;
+  const usersWithTrades = users.filter(u => u.tradeCount > 0).length;
+  const avgTrades = totalUsers ? Math.round(totalTrades/totalUsers) : 0;
+  const retention = totalUsers ? Math.round((usersWithTrades/totalUsers)*100) : 0;
+
+  const el = document.getElementById('overview-list');
+  const items = [
+    ['Google Accounts', googleUsers + ' / ' + totalUsers, googleUsers/Math.max(1,totalUsers)*100],
+    ['Users with Trades', usersWithTrades + ' / ' + totalUsers, usersWithTrades/Math.max(1,totalUsers)*100],
+    ['Avg Trades / User', avgTrades, Math.min(100, avgTrades*5)],
+    ['Retention Rate', retention + '%', retention],
+    ['Waitlist Signups', waitlist.length, Math.min(100, waitlist.length*5)],
+    ['Total AI Analyses', users.reduce((s,u)=>s+(u.aiCount||0),0), 100],
+  ];
+  el.innerHTML = items.map(([label, val, pct]) => `
+    <div class="overview-row">
+      <span class="or-label">${label}</span>
+      <span class="or-val">${val}</span>
+      <div class="or-bar"><div class="or-fill" style="width:${pct||0}%"></div></div>
+    </div>`).join('');
+}
+
+// ── RENDER ACTIVITY FEED ──────────────────────────────────
+function renderActivityFeed(users, waitlist) {
+  const activities = [];
+  // Recent signups
+  users.slice(0,5).forEach(u => {
+    if (u.joinedAt) activities.push({
+      icon: u.loginMethod === 'google' ? '🔐' : '👤',
+      text: `<strong>${esc(u.name)}</strong> joined as ${u.loginMethod === 'google' ? 'Google user' : 'guest'}`,
+      time: u.joinedAt,
+      type: 'join'
+    });
+  });
+  // Recent waitlist
+  waitlist.slice(0,3).forEach(w => {
+    if (w.joinedAt) activities.push({
+      icon: '📧',
+      text: `<strong>${esc(w.email)}</strong> joined the Pro waitlist`,
+      time: w.joinedAt,
+      type: 'waitlist'
+    });
+  });
+  // Recent trades
+  users.filter(u=>u.tradeCount>0).slice(0,3).forEach(u => {
+    if (u.lastActive) activities.push({
+      icon: '📊',
+      text: `<strong>${esc(u.name)}</strong> has logged ${u.tradeCount} trades total`,
+      time: u.lastActive,
+      type: 'trade'
+    });
+  });
+  activities.sort((a,b) => (b.time||0) - (a.time||0));
+  const el = document.getElementById('activity-feed');
+  if (!activities.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div>No activity yet</div>';
+    return;
+  }
+  el.innerHTML = activities.slice(0,8).map(a => `
+    <div class="af-item">
+      <div class="af-icon">${a.icon}</div>
+      <div class="af-body">
+        <div class="af-text">${a.text}</div>
+        <div class="af-time">${fmtDate(a.time)}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── EXPORT FUNCTIONS ──────────────────────────────────────
+function exportUsers() {
+  if (!allUsers.length) { showToast('No users to export'); return; }
+  const headers = ['Name', 'Email', 'Login Method', 'Trades', 'DNA Reports', 'AI Analyses', 'Plan', 'Joined', 'Last Active'];
+  const rows = allUsers.map(u => [
+    u.name, u.email, u.loginMethod, u.tradeCount, u.dnaCount, u.aiCount,
+    u.plan, fmtDate(u.joinedAt), fmtDate(u.lastActive)
+  ].join(','));
+  downloadCSV([headers.join(','), ...rows].join('\n'), 'mindoftrader_users_' + new Date().toISOString().split('T')[0] + '.csv');
+  showToast('✓ Users exported');
+}
+
+function exportWaitlist() {
+  if (!allWaitlist.length) { showToast('No waitlist entries to export'); return; }
+  const headers = ['Email', 'Source', 'Joined'];
+  const rows = allWaitlist.map(w => [w.email, w.source, fmtDate(w.joinedAt)].join(','));
+  downloadCSV([headers.join(','), ...rows].join('\n'), 'mindoftrader_waitlist_' + new Date().toISOString().split('T')[0] + '.csv');
+  showToast('✓ Waitlist exported');
+}
+
+function downloadCSV(csv, filename) {
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+// ── UTILS ─────────────────────────────────────────────────
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  try {
+    const date = d instanceof Date ? d : new Date(d);
+    const diff = Date.now() - date.getTime();
+    if (diff < 60000) return 'just now';
+    if (diff < 3600000) return Math.floor(diff/60000) + 'm ago';
+    if (diff < 86400000) return Math.floor(diff/3600000) + 'h ago';
+    if (diff < 604800000) return Math.floor(diff/86400000) + 'd ago';
+    return date.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+  } catch(e) { return '—'; }
+}
+
+function esc(str) {
+  if (!str) return '—';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+let toastT;
+function showToast(m) {
+  const el = document.getElementById('toast');
+  el.textContent = m; el.classList.add('on');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('on'), 3000);
+}
+
+// Auto refresh every 5 minutes
+setInterval(() => {
+  if (sessionStorage.getItem('mot_admin') === '1') loadAllData();
+}, 300000);
+</script>
+</body>
+</html>
