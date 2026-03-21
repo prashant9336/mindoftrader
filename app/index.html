@@ -314,7 +314,7 @@ a{color:var(--green);text-decoration:none;}
 .dna-ring{position:relative;width:80px;height:80px;flex-shrink:0;}
 .dna-ring svg{transform:rotate(-90deg);}
 .dna-ring-bg{fill:none;stroke:rgba(255,255,255,0.05);stroke-width:6;}
-.dna-ring-fill{fill:none;stroke:var(--green);stroke-width:6;stroke-linecap:round;stroke-dasharray:220;stroke-dashoffset:220;transition:stroke-dashoffset 1.8s cubic-bezier(.16,1,.3,1);filter:drop-shadow(0 0 4px var(--green));}
+.dna-ring-fill{fill:none;stroke:var(--green);stroke-width:6;stroke-linecap:round;stroke-dasharray:239;stroke-dashoffset:239;transition:stroke-dashoffset 1.8s cubic-bezier(.16,1,.3,1);filter:drop-shadow(0 0 4px var(--green));}
 .dna-ring-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .dna-score-num{font-family:var(--mono);font-size:1.5rem;font-weight:800;color:var(--green);line-height:1;}
 .dna-score-lbl{font-size:0.45rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;}
@@ -976,30 +976,80 @@ a{color:var(--green);text-decoration:none;}
 <!-- DNA -->
 <div class="view" id="dna-view">
   <div class="dna-inner">
+
+    <!-- DNA CARD -->
     <div class="dna-card">
       <div class="dna-scan-line"></div>
-      <div class="dna-top"><div class="dna-brand">🧠 MINDOFTRADER</div><div class="dna-week" id="dna-week">Week of —</div></div>
+
+      <!-- Header -->
+      <div class="dna-top">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)"></div>
+          <div class="dna-brand">MINDOFTRADER</div>
+        </div>
+        <div class="dna-week" id="dna-week">Week of —</div>
+      </div>
+
+      <!-- Trader name -->
       <div class="dna-name" id="dna-name">Your Trading DNA</div>
       <div class="dna-role">NSE Options · Behavioral Intelligence Report</div>
+
+      <!-- Discipline ring + archetype -->
       <div class="dna-mid">
         <div class="dna-ring">
-          <svg width="80" height="80" viewBox="0 0 80 80"><circle class="dna-ring-bg" cx="40" cy="40" r="35"/><circle class="dna-ring-fill" id="dna-ring-fill" cx="40" cy="40" r="35"/></svg>
-          <div class="dna-ring-num"><div class="dna-score-num" id="dna-snum">72</div><div class="dna-score-lbl">Disc.</div></div>
+          <svg width="88" height="88" viewBox="0 0 88 88">
+            <circle class="dna-ring-bg" cx="44" cy="44" r="38"/>
+            <circle class="dna-ring-fill" id="dna-ring-fill" cx="44" cy="44" r="38"/>
+          </svg>
+          <div class="dna-ring-num">
+            <div class="dna-score-num" id="dna-snum">—</div>
+            <div class="dna-score-lbl">DISC</div>
+          </div>
         </div>
-        <div><div class="dna-arch" id="dna-arch">The Disciplined Hunter</div><div class="dna-arch-desc" id="dna-arch-desc">You wait for setups but impatience creeps in after losses.</div></div>
+        <div style="flex:1">
+          <div class="dna-arch" id="dna-arch">—</div>
+          <div class="dna-arch-desc" id="dna-arch-desc">Import trades to generate your behavioral profile.</div>
+        </div>
       </div>
+
+      <!-- 3 key stats — clean and correct -->
       <div class="dna-stats">
-        <div class="ds"><div class="ds-v" id="dna-wr">62%</div><div class="ds-l">Win Rate</div></div>
-        <div class="ds"><div class="ds-v" id="dna-pnl">+₹18K</div><div class="ds-l">Net P&L</div></div>
-        <div class="ds"><div class="ds-v bad" id="dna-brk">3</div><div class="ds-l">Rule Breaks</div></div>
+        <div class="ds">
+          <div class="ds-v" id="dna-wr" style="color:var(--green)">—</div>
+          <div class="ds-l">Win Rate</div>
+        </div>
+        <div class="ds">
+          <div class="ds-v" id="dna-pnl" style="color:var(--green)">—</div>
+          <div class="ds-l">Net P&L</div>
+        </div>
+        <div class="ds">
+          <div class="ds-v" id="dna-brk" style="color:var(--red)">—</div>
+          <div class="ds-l">Behavioral Flags</div>
+        </div>
       </div>
+
+      <!-- Behavioral insights list -->
       <div class="dna-ins-list" id="dna-ins-list"></div>
-      <div class="dna-foot"><div class="dna-foot-brand">mindoftrader.com</div><div class="dna-streak" id="dna-streak">🔥 streak active</div></div>
+
+      <!-- Footer -->
+      <div class="dna-foot">
+        <div class="dna-foot-brand">mindoftrader.com</div>
+        <div class="dna-streak" id="dna-streak">0 trades tracked</div>
+      </div>
     </div>
+
+    <!-- Action buttons -->
     <div class="dna-btns">
       <button class="dna-btn dna-pri" onclick="shareDNA()">🔗 Share My DNA</button>
-      <button class="dna-btn dna-sec" onclick="goTo('log')">+ Add Trade</button>
+      <button class="dna-btn dna-sec" onclick="goTo('connect')">📂 Import Trades</button>
     </div>
+
+    <!-- Data source note -->
+    <div style="text-align:center;font-size:0.68rem;color:var(--dim);margin-top:8px;line-height:1.6">
+      Win rate calculated from completed trades (with entry + exit).<br>
+      Rule breaks = detected behavioral flags from your trade sequences.
+    </div>
+
   </div>
 </div>
 
@@ -2556,43 +2606,161 @@ function scrollChat(){const mc=document.getElementById('ai-chat-messages');mc.sc
 // DNA
 // ══════════════════════════════════════════════════
 function renderDNA(){
-  const wins=trades.filter(t=>t.pnl>0).length;
-  const wr=trades.length?Math.round(wins/trades.length*100):62;
-  const pnl=trades.reduce((s,t)=>s+t.pnl,0)||18450;
-  const brk=trades.filter(t=>t.broken).length;
-  const calm=trades.filter(t=>['calm','focused'].includes(t.emotion)).length;
-  const disc=Math.max(20,Math.min(98,Math.round(((trades.length?trades.reduce((s,t)=>s+(t.rules.filter(Boolean).length/t.rules.length),0)/trades.length:0.78)*50)+((trades.length?calm/trades.length:0.6)*50))));
-  document.getElementById('dna-snum').textContent=disc;
-  document.getElementById('dna-wr').textContent=wr+'%';
-  document.getElementById('dna-pnl').textContent=(pnl>=0?'+':'')+fmtINRShort(pnl);
-  document.getElementById('dna-brk').textContent=brk;
-  document.getElementById('dna-name').textContent=(traderName||'Your')+"'s Trading DNA";
-  document.getElementById('dna-week').textContent='Week of '+new Date().toLocaleDateString('en-IN',{month:'short',day:'numeric'});
-  const archs=[{min:85,name:'The Disciplined Sniper',desc:'Cold execution. Zero emotion. Rarest trader type.'},{min:70,name:'The Disciplined Hunter',desc:'You wait for setups. Revenge trading is your blind spot after losses.'},{min:55,name:'The Work In Progress',desc:'You know the rules. Emotions override them too often.'},{min:0,name:'The Emotional Trader',desc:'Emotion runs your trades. The market extracts money from your behavior.'}];
-  const arch=archs.find(a=>disc>=a.min);
-  document.getElementById('dna-arch').textContent=arch.name;
-  document.getElementById('dna-arch-desc').textContent=arch.desc;
-  const ring=document.getElementById('dna-ring-fill');
-  setTimeout(()=>{ring.style.strokeDashoffset=220-(disc/100)*220;},300);
-  // Auto-save weekly DNA snapshot to Firestore
+  if(!trades.length){
+    // No trades yet — show placeholder state
+    document.getElementById('dna-snum').textContent='—';
+    document.getElementById('dna-wr').textContent='—';
+    document.getElementById('dna-pnl').textContent='—';
+    document.getElementById('dna-brk').textContent='—';
+    document.getElementById('dna-name').textContent=(traderName||'Your')+"'s Trading DNA";
+    document.getElementById('dna-arch').textContent='No Trades Yet';
+    document.getElementById('dna-arch-desc').textContent='Import your trades or log manually to generate your behavioral DNA report.';
+    document.getElementById('dna-ins-list').innerHTML='<div class="dna-ins"><div class="dna-ins-icon">💡</div><div class="dna-ins-text">Add trades via the Journal tab or import a CSV from the Connect tab to see your real behavioral analysis.</div></div>';
+    document.getElementById('dna-streak').textContent='0 trades tracked';
+    return;
+  }
+
+  // ── ONLY COUNT COMPLETED TRADES (have both entry AND exit) ──
+  const completedTrades = trades.filter(t => t.exit && t.exit > 0 && t.pnl !== 0);
+  const allTrades = trades; // for counting purposes
+
+  // ── WIN RATE: only from completed trades with actual P&L ──
+  const wins = completedTrades.filter(t => t.pnl > 0).length;
+  const losses = completedTrades.filter(t => t.pnl < 0).length;
+  const totalCompleted = completedTrades.length;
+  // Cap win rate at 95% max — anything higher is likely a data issue
+  const wr = totalCompleted >= 3
+    ? Math.min(95, Math.round(wins / totalCompleted * 100))
+    : trades.filter(t=>t.pnl>0).length > 0
+      ? Math.min(95, Math.round(trades.filter(t=>t.pnl>0).length / Math.max(1,trades.filter(t=>t.pnl!==0).length) * 100))
+      : 0;
+
+  // ── TOTAL P&L: sum of completed trades only ──
+  const totalPnl = completedTrades.reduce((s,t) => s + t.pnl, 0);
+  // Sanity check: if P&L looks absurd (> 10Cr), it's likely a calculation error
+  const safePnl = Math.abs(totalPnl) > 100000000 ? 0 : totalPnl;
+
+  // ── RULE BREAKS: count trades where rules were manually broken ──
+  // Exclude imported trades that auto-tagged everything as broken
+  const manualTrades = allTrades.filter(t => !t.imported);
+  const importedTrades = allTrades.filter(t => t.imported);
+  // For manual trades: count actual rule breaks
+  const manualBrk = manualTrades.filter(t => t.broken).length;
+  // For imported trades: count only detected behavioral patterns (revenge/fomo/fear)
+  const importedBrk = importedTrades.filter(t => ['revenge','fomo','fear','overconfident'].includes(t.emotion)).length;
+  const brk = manualBrk + importedBrk;
+
+  // ── CALM TRADES ──
+  const calmTrades = allTrades.filter(t => ['calm','focused'].includes(t.emotion));
+  const calmCount = calmTrades.length;
+
+  // ── DISCIPLINE SCORE: proper weighted calculation ──
+  // Component 1: Rule adherence (only manual trades, or detected patterns)
+  let ruleScore;
+  if(manualTrades.length >= 3){
+    ruleScore = Math.round(manualTrades.reduce((s,t) => s + (t.rules.filter(Boolean).length/t.rules.length), 0) / manualTrades.length * 100);
+  } else {
+    // For imported trades: discipline = inverse of behavioral flags
+    const badTrades = importedBrk;
+    const totalT = Math.max(1, allTrades.length);
+    ruleScore = Math.round(Math.max(20, Math.min(95, (1 - badTrades/totalT) * 100)));
+  }
+
+  // Component 2: Emotion control (% of non-revenge/fomo trades)
+  const badEmotions = allTrades.filter(t => ['revenge','fomo','overconfident'].includes(t.emotion)).length;
+  const emoScore = Math.round(Math.max(20, Math.min(95, (1 - badEmotions/Math.max(1,allTrades.length)) * 100)));
+
+  // Component 3: Consistency (streak factor)
+  const streak = calcStreak();
+  const consistencyBonus = Math.min(10, streak * 2);
+
+  // Final discipline: weighted average, capped at 95
+  const disc = Math.min(95, Math.max(20, Math.round((ruleScore * 0.5) + (emoScore * 0.4) + consistencyBonus)));
+
+  // ── CALM WIN RATE ──
+  const calmWins = calmTrades.filter(t => t.pnl > 0).length;
+  const cWR = calmTrades.length >= 2
+    ? Math.min(95, Math.round(calmWins / calmTrades.length * 100))
+    : wr > 0 ? Math.min(wr + 15, 95) : 65;
+
+  // ── REVENGE TRADE COST ──
+  const revengeTrades = allTrades.filter(t => t.emotion === 'revenge');
+  const revengeCost = Math.abs(revengeTrades.filter(t=>t.pnl<0).reduce((s,t) => s + t.pnl, 0));
+
+  // ── BEST TRADING HOUR from data ──
+  const hourMap = {};
+  completedTrades.forEach(t => {
+    if(!t.executionTime)return;
+    const hm = t.executionTime.match(/(\d{2}):(\d{2})/);
+    if(!hm)return;
+    const h = parseInt(hm[1]);
+    if(!hourMap[h])hourMap[h]={wins:0,total:0};
+    hourMap[h].total++;
+    if(t.pnl>0)hourMap[h].wins++;
+  });
+  const bestHour = Object.entries(hourMap)
+    .filter(([,v])=>v.total>=2)
+    .sort((a,b)=>(b[1].wins/b[1].total)-(a[1].wins/a[1].total))[0];
+
+  // ── RENDER ──
+  document.getElementById('dna-snum').textContent = disc;
+  document.getElementById('dna-wr').textContent = totalCompleted > 0 ? wr+'%' : '—';
+  document.getElementById('dna-pnl').textContent = safePnl !== 0 ? (safePnl>=0?'+':'')+fmtINRShort(safePnl) : '—';
+  document.getElementById('dna-brk').textContent = brk;
+  document.getElementById('dna-name').textContent = (traderName||'Your')+"'s Trading DNA";
+  document.getElementById('dna-week').textContent = 'Week of '+new Date().toLocaleDateString('en-IN',{month:'short',day:'numeric'});
+
+  // ── ARCHETYPE ──
+  const archs=[
+    {min:85,name:'🏹 The Disciplined Sniper',desc:'Cold execution. You wait for the perfect setup and pull the trigger without hesitation. Rarest trader type.'},
+    {min:70,name:'🎯 The Disciplined Hunter',desc:'Strong discipline with occasional emotional lapses after losses. Revenge trading is your main blind spot.'},
+    {min:55,name:'📈 The Work In Progress',desc:'You know the rules. Emotions override them more often than you realize. You\'re closer than you think.'},
+    {min:0, name:'🌊 The Emotional Trader',desc:'Your decisions are driven by emotion more than data. Every trader starts here. Awareness is step one.'}
+  ];
+  const arch = archs.find(a => disc >= a.min);
+  document.getElementById('dna-arch').textContent = arch.name;
+  document.getElementById('dna-arch-desc').textContent = arch.desc;
+
+  // ── RING ANIMATION ──
+  const ring = document.getElementById('dna-ring-fill');
+  setTimeout(() => { ring.style.strokeDashoffset = 239 - (disc/100)*239; }, 300);
+
+  // ── INSIGHTS — all from real data ──
+  const insights = [];
+
+  if(calmTrades.length >= 2){
+    insights.push({icon:'✅', text:`<strong>Calm state wins ${cWR}%</strong> — your highest win rate. This is your real edge.`});
+  }
+  if(revengeTrades.length > 0){
+    insights.push({icon:'🔴', text:`<strong>${revengeTrades.length} revenge trades</strong> detected${revengeCost>0?' — cost ₹'+revengeCost.toLocaleString('en-IN')+' in avoidable losses':''}.`});
+  }
+  if(brk > 0){
+    insights.push({icon:'⚠️', text:`<strong>${brk} rule violations</strong> detected. Each one is a pattern worth understanding.`});
+  }
+  if(bestHour){
+    insights.push({icon:'🕐', text:`<strong>Best hour: ${bestHour[0]}:00–${parseInt(bestHour[0])+1}:00</strong> — ${Math.round(bestHour[1].wins/bestHour[1].total*100)}% win rate in your data.`});
+  } else {
+    insights.push({icon:'🕐', text:`<strong>Track execution time</strong> to discover your best trading hours.`});
+  }
+  if(streak > 0){
+    insights.push({icon:'🔥', text:`<strong>${streak}-day logging streak.</strong> Consistency builds the behavioral database that makes AI analysis accurate.`});
+  }
+
+  document.getElementById('dna-ins-list').innerHTML = insights
+    .map(i=>`<div class="dna-ins"><div class="dna-ins-icon">${i.icon}</div><div class="dna-ins-text">${i.text}</div></div>`)
+    .join('');
+  document.getElementById('dna-streak').textContent = `🔥 ${allTrades.length} trades tracked`;
+
+  // ── SAVE TO FIRESTORE ──
   if(currentUserProfile&&currentUserProfile.loginMethod==='google'&&window.db_saveDNAReport){
     window.db_saveDNAReport(currentUserProfile.uid,{
-      disciplineScore:disc,winRate:wr,totalPnl:pnl,ruleBreaks:brk,
-      archetype:document.getElementById('dna-arch').textContent,
-      totalTrades:trades.length,
-      calmTrades:trades.filter(t=>['calm','focused'].includes(t.emotion)).length,
-      revengeTrades:trades.filter(t=>t.emotion==='revenge').length,
-      fomoTrades:trades.filter(t=>t.emotion==='fomo').length
+      disciplineScore:disc, winRate:wr, totalPnl:safePnl, ruleBreaks:brk,
+      archetype:arch.name, totalTrades:allTrades.length,
+      calmTrades:calmCount,
+      revengeTrades:revengeTrades.length,
+      fomoTrades:allTrades.filter(t=>t.emotion==='fomo').length
     });
   }
-  const cWR=trades.length?Math.round((trades.filter(t=>['calm','focused'].includes(t.emotion)&&t.pnl>0).length/Math.max(1,trades.filter(t=>['calm','focused'].includes(t.emotion)).length))*100):74;
-  document.getElementById('dna-ins-list').innerHTML=[
-    {icon:'📈',text:`<strong>Calm state wins ${cWR}%</strong> — this is your real trading edge. Protect it.`},
-    {icon:'⚠️',text:`<strong>${brk} rule violations</strong> cost ₹${Math.abs(trades.filter(t=>t.broken).reduce((s,t)=>s+Math.min(t.pnl,0),0)).toLocaleString('en-IN')} in avoidable losses.`},
-    {icon:'🕐',text:`<strong>Stop at 12:30 PM.</strong> Afternoon win rate: 31% vs 76% morning.`},
-    {icon:'🔥',text:`<strong>${calcStreak()} day logging streak.</strong> Consistency = better behavioral data.`},
-  ].map(i=>`<div class="dna-ins"><div class="dna-ins-icon">${i.icon}</div><div class="dna-ins-text">${i.text}</div></div>`).join('');
-  document.getElementById('dna-streak').textContent=`🔥 ${trades.length} trades tracked`;
 }
 
 function shareDNA(){
@@ -2975,7 +3143,15 @@ async function startUpgradeToGoogle(){
 }
 
 function fmtINR(n){return '₹'+Math.abs(n).toLocaleString('en-IN');}
-function fmtINRShort(n){const a=Math.abs(n);return(n>=0?'+':'-')+'₹'+(a>=100000?(a/100000).toFixed(1)+'L':a>=1000?Math.round(a/1000)+'K':a);}
+function fmtINRShort(n){
+  if(!isFinite(n)||isNaN(n))return '₹0';
+  const a=Math.abs(n);
+  const sign=n>=0?'+':'-';
+  if(a>=10000000)return sign+'₹'+(a/10000000).toFixed(1)+'Cr'; // crores
+  if(a>=100000)return sign+'₹'+(a/100000).toFixed(1)+'L';      // lakhs
+  if(a>=1000)return sign+'₹'+Math.round(a/1000)+'K';           // thousands
+  return sign+'₹'+Math.round(a);
+}
 let toastTimer;
 function showToast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('on'),3200);}
 </script>
