@@ -17,7 +17,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="dns-prefetch" href="https://api.anthropic.com" />
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 :root{
   --bg:#080c10;--surface:#0d1218;--card:#101820;--card2:#141e2a;
@@ -2042,6 +2041,7 @@ window.firebaseReady = firebaseReady;
 window._db = db;
 </script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
 // ══════════════════════════════════════════════════
 // STORAGE KEY CONSTANTS — consistent naming
@@ -2089,50 +2089,86 @@ function loadTrades(){
 }
 
 // ══════════════════════════════════════════════════
-// BG CANVAS
+// BG CANVAS — pauses when tab hidden, won't block loader
 // ══════════════════════════════════════════════════
 (function(){
-  const cv=document.getElementById('bg-canvas'),ctx=cv.getContext('2d');
-  let W=0,H=0,nodes=[],t=0;
-  function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;if(!nodes.length)for(let i=0;i<18;i++)nodes.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*0.18,vy:(Math.random()-.5)*0.18});}
-  resize();window.addEventListener('resize',resize);
-  (function frame(){
-    if(!W||!H){requestAnimationFrame(frame);return;}
-    ctx.clearRect(0,0,W,H);t+=0.005;
-    const gx=W/2+Math.sin(t)*80,gy=H*0.4+Math.cos(t*0.7)*60;
-    if(isFinite(gx)&&isFinite(gy)){const g=ctx.createRadialGradient(gx,gy,0,W/2,H/2,Math.max(W,H)*0.7);g.addColorStop(0,'rgba(0,230,118,0.03)');g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
-    nodes.forEach(n=>{n.x+=n.vx;n.y+=n.vy;if(n.x<0||n.x>W)n.vx*=-1;if(n.y<0||n.y>H)n.vy*=-1;});
-    for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){const dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<220){ctx.beginPath();ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);ctx.strokeStyle=`rgba(0,230,118,${(0.04*(1-d/220)).toFixed(3)})`;ctx.lineWidth=0.6;ctx.stroke();}}
-    nodes.forEach(n=>{ctx.beginPath();ctx.arc(n.x,n.y,1.2,0,Math.PI*2);ctx.fillStyle='rgba(0,230,118,0.15)';ctx.fill();});
+  const cv=document.getElementById('bg-canvas');
+  if(!cv)return;
+  const ctx=cv.getContext('2d');
+  let W=0,H=0,nodes=[],t=0,active=true;
+  function resize(){
+    W=cv.width=window.innerWidth;
+    H=cv.height=window.innerHeight;
+    if(!nodes.length)for(let i=0;i<14;i++) // 14 nodes lighter on mobile
+      nodes.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*0.15,vy:(Math.random()-.5)*0.15});
+  }
+  let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(resize,200);});
+  resize();
+  // Pause when tab not visible
+  document.addEventListener('visibilitychange',()=>{active=!document.hidden;});
+  function frame(){
     requestAnimationFrame(frame);
-  })();
+    if(!active||!W||!H)return; // skip draw but keep rAF alive
+    ctx.clearRect(0,0,W,H);t+=0.004;
+    const gx=W/2+Math.sin(t)*80,gy=H*0.4+Math.cos(t*0.7)*60;
+    if(isFinite(gx)&&isFinite(gy)){
+      const g=ctx.createRadialGradient(gx,gy,0,W/2,H/2,Math.max(W,H)*0.7);
+      g.addColorStop(0,'rgba(0,230,118,0.025)');g.addColorStop(1,'transparent');
+      ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    }
+    nodes.forEach(n=>{n.x+=n.vx;n.y+=n.vy;if(n.x<0||n.x>W)n.vx*=-1;if(n.y<0||n.y>H)n.vy*=-1;});
+    for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
+      const dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<180){ctx.beginPath();ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);
+        ctx.strokeStyle=`rgba(0,230,118,${(0.035*(1-d/180)).toFixed(3)})`;ctx.lineWidth=0.5;ctx.stroke();}
+    }
+    nodes.forEach(n=>{ctx.beginPath();ctx.arc(n.x,n.y,1,0,Math.PI*2);ctx.fillStyle='rgba(0,230,118,0.12)';ctx.fill();});
+  }
+  requestAnimationFrame(frame);
 })();
 
 // ══════════════════════════════════════════════════
-// LOADER
+// LOADER — setTimeout based (never throttled)
 // ══════════════════════════════════════════════════
 (function(){
-  const msgs=['INITIALIZING...','LOADING ENGINE...','SYNCING ACCOUNT...','MIND SCAN READY ✓'];
-  let p=0,mi=0;
-  const bar=document.getElementById('ld-bar'),msg=document.getElementById('ld-msg'),ldr=document.getElementById('loader');
-  msg.textContent=msgs[0];
-  function tick(){
-    p+=1.2;if(p>100)p=100;bar.style.width=p+'%';
-    const threshold=(mi+1)*(100/msgs.length);
-    if(p>=threshold&&mi<msgs.length-1){mi++;msg.textContent=msgs[mi];}
-    if(p<100){requestAnimationFrame(tick);}
-    else{setTimeout(()=>{ldr.style.opacity='0';setTimeout(()=>{
-      ldr.style.display='none';
-      try{init();}catch(e){
-        console.error('MindOfTrader init error:',e);
-        // Force hide loader even on error so user isn't stuck
+  const ldr=document.getElementById('loader');
+  const bar=document.getElementById('ld-bar');
+  const msg=document.getElementById('ld-msg');
+  if(!ldr||!bar||!msg){ try{init();}catch(e){} return; }
+
+  const steps=[
+    {pct:30, text:'LOADING ENGINE...'},
+    {pct:60, text:'SYNCING ACCOUNT...'},
+    {pct:90, text:'ALMOST READY...'},
+    {pct:100,text:'MIND SCAN READY ✓'},
+  ];
+  let step=0;
+
+  function advance(){
+    if(step>=steps.length){
+      // Done — hide loader and run app
+      ldr.style.opacity='0';
+      ldr.style.transition='opacity 0.4s';
+      setTimeout(()=>{
         ldr.style.display='none';
-        const landing=document.getElementById('landing-view');
-        if(landing)landing.classList.add('on');
-      }
-    },700);},600);}
+        try{init();}catch(e){
+          console.error('Init error:',e);
+          ldr.style.display='none';
+          const l=document.getElementById('landing-view');
+          if(l)l.classList.add('on');
+        }
+      },450);
+      return;
+    }
+    const s=steps[step];
+    bar.style.width=s.pct+'%';
+    msg.textContent=s.text;
+    step++;
+    setTimeout(advance, step===steps.length?200:180);
   }
-  requestAnimationFrame(tick);
+
+  // Start after tiny delay to ensure DOM is ready
+  setTimeout(advance, 80);
 })();
 
 // ══════════════════════════════════════════════════
