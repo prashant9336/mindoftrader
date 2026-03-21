@@ -5235,8 +5235,8 @@ function parseCSV(text,filename){
 
     const symbolRaw = get(iSym).toUpperCase().trim();
     const typeRaw   = get(iType).toUpperCase().trim();
-    const priceRaw  = parseFloat(get(iPrice).replace(/[^0-9.]/g,''))||0;
-    const qtyRaw    = parseInt(get(iQty).replace(/[^0-9]/g,''))||0;
+    const priceRaw  = parseFloat(get(iPrice).replace(/[₹, ]/g,''))||0;
+    const qtyRaw    = Math.round(parseFloat(get(iQty).replace(/[₹,]/g,''))||0); // fix: parseFloat preserves decimals like 65.000000
     const dateRaw   = get(iDate)||'';
 
     // Skip invalid rows
