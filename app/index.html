@@ -549,7 +549,7 @@ a{color:var(--green);text-decoration:none;}
 
 <!-- DASHBOARD -->
 <div class="view" id="dashboard-view">
-  <div class="firebase-notice" id="firebase-notice">
+  <div class="firebase-notice" id="firebase-notice" style="display:none">
     <strong>⚡ Firebase not configured yet.</strong> Trades are being saved locally only. To enable cloud sync across devices,
     add your Firebase config to <code>login.html</code> and <code>app/index.html</code>.
     <a href="https://console.firebase.google.com" target="_blank" style="color:var(--amber)">Set up Firebase →</a>
@@ -1417,13 +1417,8 @@ function init(){
     landing.classList.add('on');
   }
 
-  // Show Firebase notice if not configured
-  setTimeout(()=>{
-    if(!window.firebaseReady){
-      const notice=document.getElementById('firebase-notice');
-      if(notice)notice.classList.add('show');
-    }
-  },2000);
+  // Firebase is configured — notice stays hidden
+  // (Remove this block entirely when deploying to production)
 }
 
 function getStoredUser(){
@@ -1768,60 +1763,236 @@ function processCSVFile(file){const reader=new FileReader();reader.onload=e=>par
 
 function parseCSV(text,filename){
   const prog=document.getElementById('import-progress');prog.classList.add('on');
-  document.getElementById('ip-bar').style.width='10%';document.getElementById('ip-status').textContent='Reading file...';
+  document.getElementById('ip-bar').style.width='10%';
+  document.getElementById('ip-status').textContent='Detecting CSV format...';
+
   const lines=text.trim().split(/\r?\n/).filter(l=>l.trim());
   if(lines.length<2){showToast('CSV appears empty');prog.classList.remove('on');return;}
-  const rawHeaders=lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,'').toLowerCase());
-  const col=names=>{for(const n of names){const i=rawHeaders.findIndex(h=>h.includes(n));if(i>=0)return i;}return -1;};
-  const iSym=col(['tradingsymbol','symbol','instrument','scrip']);
-  const iType=col(['transaction type','trade type','buy/sell','side','type']);
-  const iPrice=col(['average price','price','avg price','rate','trade price']);
-  const iQty=col(['quantity','qty','filled qty']);
-  const iDate=col(['trade date','order date','date','time']);
-  const newTrades=[];let found=0,imported=0,optionCount=0;
+
+  // Parse headers — handle quoted headers
+  const rawHeaders=lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,'').toLowerCase().trim());
+
+  // Universal column finder — tries multiple possible names
+  const col=names=>{
+    for(const n of names){
+      const i=rawHeaders.findIndex(h=>h===n||h.includes(n));
+      if(i>=0)return i;
+    }
+    return -1;
+  };
+
+  // ── DETECT CSV FORMAT ─────────────────────────────────────────
+  // Zerodha Trade Book: symbol, trade_date, trade_type, quantity, price
+  // Zerodha Order Book: tradingsymbol, transaction_type, average_price, quantity, order_timestamp
+  // Dhan / Angel / Generic: various
+  const isZerodhaTradeBook = rawHeaders.includes('trade_type') && rawHeaders.includes('trade_date');
+  const isZerodhaOrderBook = rawHeaders.includes('tradingsymbol') || rawHeaders.includes('transaction_type');
+
+  let iSym, iType, iPrice, iQty, iDate;
+
+  if(isZerodhaTradeBook){
+    // Zerodha Trade Book (what you uploaded): symbol, trade_type, price, quantity, trade_date
+    iSym   = col(['symbol']);
+    iType  = col(['trade_type']);
+    iPrice = col(['price']);
+    iQty   = col(['quantity']);
+    iDate  = col(['trade_date']);
+    document.getElementById('ip-status').textContent='Zerodha Trade Book detected ✓';
+  } else if(isZerodhaOrderBook){
+    // Zerodha Order Book
+    iSym   = col(['tradingsymbol','symbol']);
+    iType  = col(['transaction_type','transaction type','trade_type','trade type','buy/sell','side']);
+    iPrice = col(['average_price','average price','price','avg price']);
+    iQty   = col(['quantity','qty','filled qty']);
+    iDate  = col(['order_timestamp','order timestamp','trade_date','trade date','date']);
+    document.getElementById('ip-status').textContent='Zerodha Order Book detected ✓';
+  } else {
+    // Generic fallback — try everything
+    iSym   = col(['symbol','tradingsymbol','instrument','scrip','trading symbol']);
+    iType  = col(['trade_type','transaction_type','transaction type','trade type','buy/sell','side','type','action']);
+    iPrice = col(['price','average_price','average price','avg price','rate','trade price','execution price']);
+    iQty   = col(['quantity','qty','filled qty','fill qty','executed qty']);
+    iDate  = col(['trade_date','order_timestamp','date','trade date','order date','time','execution time']);
+    document.getElementById('ip-status').textContent='Generic CSV format detected';
+  }
+
+  // Validate we found the key columns
+  if(iSym<0||iType<0||iPrice<0){
+    showToast('⚠ Could not detect CSV format. Try Zerodha Trade Book CSV.');
+    prog.classList.remove('on');
+    console.log('Headers found:', rawHeaders);
+    return;
+  }
+
+  const newTrades=[];
+  let found=0, optionCount=0, imported=0;
+
+  // Group rows by symbol+date to pair BUY/SELL into complete trades
+  // Key = symbol_date (e.g. NIFTY2610626200PE_2026-01-06)
   const groups={};
+
   lines.slice(1).forEach((row,idx)=>{
-    found++;document.getElementById('ip-bar').style.width=(30+Math.round(idx/lines.length*50))+'%';document.getElementById('ip-status').textContent=`Parsing row ${idx+1}...`;document.getElementById('ip-found').textContent=found;
-    const cols=row.match(/(".*?"|[^,]+)(?=,|$)/g)||row.split(',');
-    const get=i=>i>=0?(cols[i]||'').replace(/^"|"$/g,'').trim():'';
-    const symbol=get(iSym).toUpperCase();const typeRaw=get(iType).toUpperCase();
-    const priceRaw=parseFloat(get(iPrice).replace(/[^0-9.]/g,''))||0;
-    const qtyRaw=parseInt(get(iQty).replace(/[^0-9]/g,''))||0;
-    const dateRaw=get(iDate);
-    if(priceRaw<=0)return;
-    const isBuy=typeRaw.includes('BUY')||typeRaw==='B';
-    const isSell=typeRaw.includes('SELL')||typeRaw==='S';
+    found++;
+    const pct=30+Math.round((idx/lines.length)*50);
+    if(idx%50===0){
+      document.getElementById('ip-bar').style.width=pct+'%';
+      document.getElementById('ip-status').textContent=`Processing row ${idx+1} of ${lines.length-1}...`;
+      document.getElementById('ip-found').textContent=found;
+    }
+
+    // Parse row — handle quoted values with commas inside
+    const cols=[];
+    let cur='',inQ=false;
+    for(let ci=0;ci<row.length;ci++){
+      const ch=row[ci];
+      if(ch==='"'){inQ=!inQ;}
+      else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}
+      else{cur+=ch;}
+    }
+    cols.push(cur.trim());
+
+    const get=i=>{
+      if(i<0||i>=cols.length)return '';
+      return cols[i].replace(/^"|"$/g,'').trim();
+    };
+
+    const symbolRaw = get(iSym).toUpperCase().trim();
+    const typeRaw   = get(iType).toUpperCase().trim();
+    const priceRaw  = parseFloat(get(iPrice).replace(/[^0-9.]/g,''))||0;
+    const qtyRaw    = parseInt(get(iQty).replace(/[^0-9]/g,''))||0;
+    const dateRaw   = get(iDate)||'';
+
+    // Skip invalid rows
+    if(!symbolRaw||priceRaw<=0||qtyRaw<=0)return;
+
+    // Determine buy/sell
+    const isBuy  = typeRaw==='BUY'||typeRaw==='B'||typeRaw.includes('BUY');
+    const isSell = typeRaw==='SELL'||typeRaw==='S'||typeRaw.includes('SELL');
     if(!isBuy&&!isSell)return;
-    const match=symbol.match(/^(NIFTY|BANKNIFTY|FINNIFTY|MIDCPNIFTY)/i);
-    const indexName=match?match[1].toUpperCase():'OTHER';
-    const optType=symbol.endsWith('CE')?'CE':symbol.endsWith('PE')?'PE':'';
-    const strikeMatch=symbol.match(/(\d{4,6})(CE|PE)$/);
-    const strike=strikeMatch?strikeMatch[1]+' '+strikeMatch[2]:'';
-    const ls=LOT_SIZES[indexName]||1;const lots=Math.max(1,Math.round(qtyRaw/ls));
-    const dateStr=dateRaw.split(' ')[0]||new Date().toISOString().split('T')[0];
+
+    // Extract index name from symbol
+    // Zerodha format: NIFTY2610626200PE = NIFTY + expiry(261062) + strike(6200) + type(PE)
+    const indexMatch = symbolRaw.match(/^(NIFTY(?!TY)|BANKNIFTY|FINNIFTY|MIDCPNIFTY)/i);
+    const indexName  = indexMatch ? indexMatch[1].toUpperCase() : 'OTHER';
+
+    // Extract option type
+    const optType = symbolRaw.endsWith('CE')?'CE':symbolRaw.endsWith('PE')?'PE':'';
+
+    // Extract strike price
+    // Pattern: INDEX + 6 digit expiry + 4-5 digit strike + CE/PE
+    const strikeMatch = symbolRaw.match(/[A-Z]+\d{5,6}(\d{4,5})(CE|PE)$/);
+    const strike = strikeMatch ? strikeMatch[1]+' '+strikeMatch[2] : '';
+
+    // Parse date — handle multiple formats
+    let dateStr = new Date().toISOString().split('T')[0];
+    if(dateRaw){
+      // Try YYYY-MM-DD first
+      const d1 = dateRaw.match(/^(\d{4}-\d{2}-\d{2})/);
+      if(d1)dateStr=d1[1];
+      else{
+        // Try DD-MM-YYYY or DD/MM/YYYY
+        const d2=dateRaw.match(/^(\d{2})[\-\/](\d{2})[\-\/](\d{4})/);
+        if(d2)dateStr=`${d2[3]}-${d2[2]}-${d2[1]}`;
+        else dateStr=dateRaw.split(' ')[0]||dateStr;
+      }
+    }
+
+    // Calculate lots
+    const ls = LOT_SIZES[indexName]||1;
+    const lots = Math.max(1,Math.round(qtyRaw/ls));
+
     if(optType)optionCount++;
     document.getElementById('ip-options').textContent=optionCount;
-    const gk=`${symbol}_${dateStr}`;
-    if(!groups[gk])groups[gk]={symbol,indexName,optType,strike,dateStr,ls,lots,buys:[],sells:[]};
-    if(isBuy)groups[gk].buys.push(priceRaw);else groups[gk].sells.push(priceRaw);
+
+    // Group key: symbol + date to pair buys/sells
+    const gk=`${symbolRaw}_${dateStr}`;
+    if(!groups[gk])groups[gk]={
+      symbol:symbolRaw, indexName, optType, strike,
+      dateStr, ls, lots:0, totalQty:0,
+      buyQty:0, sellQty:0,
+      buyTotal:0, sellTotal:0
+    };
+
+    // Accumulate weighted average price
+    if(isBuy){
+      groups[gk].buyQty+=qtyRaw;
+      groups[gk].buyTotal+=priceRaw*qtyRaw;
+    } else {
+      groups[gk].sellQty+=qtyRaw;
+      groups[gk].sellTotal+=priceRaw*qtyRaw;
+    }
+    // Use max qty seen for lots calculation
+    groups[gk].totalQty=Math.max(groups[gk].totalQty,qtyRaw);
   });
+
+  // Build trades from groups
   Object.values(groups).forEach(g=>{
-    const buyAvg=g.buys.length?g.buys.reduce((a,b)=>a+b,0)/g.buys.length:0;
-    const sellAvg=g.sells.length?g.sells.reduce((a,b)=>a+b,0)/g.sells.length:0;
-    const entry=buyAvg||sellAvg;const exit=buyAvg&&sellAvg?(buyAvg<sellAvg?sellAvg:buyAvg):0;
-    const action=(buyAvg?'BUY':'SELL')+(g.optType?' '+g.optType:'');
-    const pnl=exit?Math.round((exit-entry)*(buyAvg?1:-1)*g.lots*g.ls):0;
-    newTrades.push({id:Date.now()+Math.random(),date:g.dateStr,symbol:g.indexName,strike:g.strike,action,lots:g.lots,entry:Math.round(entry*100)/100,exit:Math.round(exit*100)/100,sl:0,target:0,setup:'Imported',emotion:'calm',rules:[1,1,1,1,1,1,1],pnl,broken:false,imported:true});
-    imported++;document.getElementById('ip-imported').textContent=imported;
+    const buyAvg  = g.buyQty  > 0 ? g.buyTotal/g.buyQty   : 0;
+    const sellAvg = g.sellQty > 0 ? g.sellTotal/g.sellQty : 0;
+
+    // Need at least one side to make a trade
+    if(buyAvg===0&&sellAvg===0)return;
+
+    const entry = buyAvg||sellAvg;
+    const exit  = (buyAvg>0&&sellAvg>0) ? (buyAvg<sellAvg?sellAvg:buyAvg) : 0;
+
+    // Determine action from majority side
+    const action = (buyAvg>0?'BUY':'SELL')+(g.optType?' '+g.optType:'');
+
+    // Calculate lots from actual quantity
+    const maxQty = Math.max(g.buyQty, g.sellQty);
+    const lots   = Math.max(1, Math.round(maxQty/g.ls));
+
+    // P&L: only calculate if we have both entry and exit
+    let pnl = 0;
+    if(buyAvg>0&&sellAvg>0){
+      // Long trade: bought then sold
+      if(buyAvg<sellAvg){
+        pnl = Math.round((sellAvg-buyAvg)*Math.min(g.buyQty,g.sellQty));
+      } else {
+        // Short trade: sold then bought back
+        pnl = Math.round((buyAvg-sellAvg)*Math.min(g.buyQty,g.sellQty));
+      }
+    }
+
+    newTrades.push({
+      id: Date.now()+Math.random(),
+      date: g.dateStr,
+      symbol: g.indexName,
+      strike: g.strike,
+      action,
+      lots,
+      entry: Math.round(entry*100)/100,
+      exit: Math.round(exit*100)/100,
+      sl:0, target:0,
+      setup:'Imported',
+      emotion:'calm',
+      rules:[1,1,1,1,1,1,1],
+      pnl,
+      broken:false,
+      imported:true
+    });
+
+    imported++;
+    document.getElementById('ip-imported').textContent=imported;
   });
+
   document.getElementById('ip-bar').style.width='100%';
-  document.getElementById('ip-status').textContent=`✓ ${imported} trades processed.`;
+  document.getElementById('ip-status').textContent=`✓ ${imported} trades processed from ${found} rows.`;
   document.getElementById('ip-title').textContent=`✓ ${imported} trades imported from ${filename}`;
+
+  if(imported===0){
+    showToast('⚠ No trades found. Check CSV format — try Zerodha Trade Book.');
+    return;
+  }
+
   trades=[...newTrades,...trades];saveTrades();
+
   // Batch save to Firestore if logged in
   if(currentUserProfile&&currentUserProfile.loginMethod==='google'&&window.db_saveTrade){
     newTrades.forEach(t=>window.db_saveTrade(currentUserProfile.uid,t));
   }
+
   renderTradeTable(trades);renderDNA();
   showImportedTable(newTrades);
   showToast(`✓ ${imported} trades imported! Running AI analysis...`);
