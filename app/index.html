@@ -2,12 +2,22 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>MindOfTrader — Know Your Trading Mind</title>
-<meta name="description" content="Behavioral trading intelligence for Indian options traders.">
+<meta name="description" content="Behavioral trading intelligence for Indian options traders. Track emotions, detect revenge trading, and improve discipline with AI.">
 <link rel="canonical" href="https://mindoftrader.com/app">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#080c10" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="MindOfTrader" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="apple-touch-icon" href="/icons/icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="dns-prefetch" href="https://api.anthropic.com" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js" defer></script>
 <style>
 :root{
   --bg:#080c10;--surface:#0d1218;--card:#101820;--card2:#141e2a;
@@ -895,7 +905,7 @@ a{color:var(--green);text-decoration:none;}
 </div>
 
 <!-- DASHBOARD -->
-<div class="view" id="dashboard-view">
+<div class="view" id="dashboard-view" data-anchor="dashboard">
   <div class="firebase-notice" id="firebase-notice" style="display:none">
     <strong>⚡ Firebase not configured yet.</strong> Trades are being saved locally only. To enable cloud sync across devices,
     add your Firebase config to <code>login.html</code> and <code>app/index.html</code>.
@@ -1020,7 +1030,7 @@ a{color:var(--green);text-decoration:none;}
 </div>
 
 <!-- JOURNAL -->
-<div class="view" id="log-view">
+<div class="view" id="log-view" data-anchor="journal">
   <div class="log-inner">
     <div class="log-card">
       <div class="sec-head">Trade Details</div>
@@ -1272,7 +1282,7 @@ a{color:var(--green);text-decoration:none;}
 </div>
 
 <!-- AI COACH -->
-<div class="view" id="ai-view">
+<div class="view" id="ai-view" data-anchor="ai">
   <div class="ai-inner">
     <div class="ai-hero">
       <div class="ai-hero-top">
@@ -1317,7 +1327,7 @@ a{color:var(--green);text-decoration:none;}
 </div>
 
 <!-- DNA -->
-<div class="view" id="dna-view">
+<div class="view" id="dna-view" data-anchor="dna">
   <div class="dna-inner">
 
     <!-- DNA CARD -->
@@ -1521,8 +1531,8 @@ try {
 
     // Expose sign out
     window.firebaseSignOut = () => signOut(auth).then(() => {
-      localStorage.removeItem('mot_user');
-      localStorage.removeItem('mot_trades');
+      localStorage.removeItem(KEYS.USER);
+      localStorage.removeItem(KEYS.TRADES);
       window.location.href = '/login';
     });
 
@@ -1848,6 +1858,21 @@ window._db = db;
 
 <script>
 // ══════════════════════════════════════════════════
+// STORAGE KEY CONSTANTS — consistent naming
+// ══════════════════════════════════════════════════
+const KEYS = {
+  USER:       'mot_user',
+  TRADES:     'mot_trades',
+  GAMEPLAN:   'mot_gameplan',
+  XP:         'mot_xp',
+  ACHIEVEMENTS:'mot_achievements',
+  REVIEWS:    'mot_reviews',
+  WAITLIST:   'mot_waitlist',
+  RITUAL_PFX: 'mot_ritual_',
+  RITUAL_DAYS:'mot_ritual_days',
+};
+
+// ══════════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════════
 let traderName='', trades=[], selectedEmo='', eqChart=null, emoChart=null;
@@ -1870,11 +1895,11 @@ const PATTERNS=[{name:'Revenge Trade',freq:5,max:15,pnl:-4200,col:'var(--red)'},
 // PERSISTENCE
 // ══════════════════════════════════════════════════
 function saveTrades(){
-  try{localStorage.setItem('mot_trades',JSON.stringify(trades));}catch(e){}
+  try{localStorage.setItem(KEYS.TRADES,JSON.stringify(trades));}catch(e){}
   window.trades=trades;
 }
 function loadTrades(){
-  try{const d=localStorage.getItem('mot_trades');if(d){trades=JSON.parse(d);window.trades=trades;window.localTrades=trades;}}catch(e){trades=[];}
+  try{const d=localStorage.getItem(KEYS.TRADES);if(d){trades=JSON.parse(d);window.trades=trades;window.localTrades=trades;}}catch(e){trades=[];}
 }
 
 // ══════════════════════════════════════════════════
@@ -1941,8 +1966,29 @@ function init(){
   // (Remove this block entirely when deploying to production)
 }
 
+// Service Worker Registration
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  });
+}
+
+// Deep link handler — /app#dashboard → open that tab
+(function(){
+  const hash=window.location.hash.replace('#','');
+  const validTabs=['ritual','dashboard','log','ai','dna','connect'];
+  if(hash&&validTabs.includes(hash)){
+    window.addEventListener('load',()=>{
+      setTimeout(()=>{
+        const storedUser=localStorage.getItem(KEYS.USER);
+        if(storedUser)goTo(hash);
+      },100);
+    });
+  }
+})();
+
 function getStoredUser(){
-  try{const d=localStorage.getItem('mot_user');return d?JSON.parse(d):null;}catch(e){return null;}
+  try{const d=localStorage.getItem(KEYS.USER);return d?JSON.parse(d):null;}catch(e){return null;}
 }
 
 function setupUser(user){
@@ -1975,7 +2021,7 @@ function setupUser(user){
 
 function guestMode(){
   const profile={uid:'guest_'+Date.now(),name:localStorage.getItem('mot_name')||'Trader',email:null,photo:null,loginMethod:'guest',lastLogin:new Date().toISOString()};
-  localStorage.setItem('mot_user',JSON.stringify(profile));
+  localStorage.setItem(KEYS.USER,JSON.stringify(profile));
   setupUser(profile);
   goTo('dashboard');
 }
@@ -2029,10 +2075,10 @@ function getTodayTrades(){
 }
 
 // ── XP SYSTEM ──────────────────────────────────────────────
-function getXP(){return parseInt(localStorage.getItem('mot_xp')||'0');}
+function getXP(){return parseInt(localStorage.getItem(KEYS.XP)||'0');}
 function addXP(amount){
   const xp=getXP()+amount;
-  localStorage.setItem('mot_xp',xp);
+  localStorage.setItem(KEYS.XP,xp);
   renderXPBar();
   showToast('+'+amount+' XP earned! 🎯');
   checkLevelUp(xp);
@@ -2168,7 +2214,7 @@ function completePreMarket(){
   const stopTime=document.getElementById('gp-stoptime').value||'12:30';
   const setup=document.getElementById('gp-setup').value||'Any';
   ritualState.gameplan={maxLoss,maxTrades,stopTime,setup};
-  localStorage.setItem('mot_gameplan',JSON.stringify(ritualState.gameplan));
+  localStorage.setItem(KEYS.GAMEPLAN,JSON.stringify(ritualState.gameplan));
   // Mark pre-market done
   const todayKey='mot_ritual_'+new Date().toISOString().split('T')[0];
   const state=JSON.parse(localStorage.getItem(todayKey)||'{}');
@@ -2192,7 +2238,7 @@ function updateSessionPulse(){
   const todayTrades=getTodayTrades();
   const todayPnl=todayTrades.reduce((s,t)=>s+t.pnl,0);
   const wins=todayTrades.filter(t=>t.pnl>0).length;
-  const gameplan=JSON.parse(localStorage.getItem('mot_gameplan')||'{}');
+  const gameplan=JSON.parse(localStorage.getItem(KEYS.GAMEPLAN)||'{}');
   const maxLoss=gameplan.maxLoss||5000;
   // Update stats
   const psT=document.getElementById('ps-trades');if(psT)psT.textContent=todayTrades.length;
@@ -2281,7 +2327,7 @@ function checkBehavioralGuard(){
   if(consecLosses>=2){
     showToast('⚠️ 2 losses today. Revenge trade risk HIGH. Consider stopping.');
   }
-  const maxTrades=JSON.parse(localStorage.getItem('mot_gameplan')||'{}').maxTrades||3;
+  const maxTrades=JSON.parse(localStorage.getItem(KEYS.GAMEPLAN)||'{}').maxTrades||3;
   if(todayT.length>=maxTrades){
     showToast('🛑 You hit your '+maxTrades+'-trade limit for today!');
   }
@@ -2316,7 +2362,7 @@ function completePostMarket(){
 
 // ── ACHIEVEMENTS ────────────────────────────────────────────
 function checkAchievements(){
-  const unlocked=JSON.parse(localStorage.getItem('mot_achievements')||'[]');
+  const unlocked=JSON.parse(localStorage.getItem(KEYS.ACHIEVEMENTS)||'[]');
   let newUnlocks=[];
   ACHIEVEMENTS_DEF.forEach(a=>{
     if(!unlocked.includes(a.id)&&a.check()){
@@ -2324,7 +2370,7 @@ function checkAchievements(){
     }
   });
   if(newUnlocks.length){
-    localStorage.setItem('mot_achievements',JSON.stringify(unlocked));
+    localStorage.setItem(KEYS.ACHIEVEMENTS,JSON.stringify(unlocked));
     newUnlocks.forEach(a=>setTimeout(()=>showToast(a.icon+' Achievement unlocked: '+a.name),1000));
     addXP(newUnlocks.length*20);
     renderAchievements();
@@ -2332,7 +2378,7 @@ function checkAchievements(){
 }
 
 function renderAchievements(){
-  const unlocked=JSON.parse(localStorage.getItem('mot_achievements')||'[]');
+  const unlocked=JSON.parse(localStorage.getItem(KEYS.ACHIEVEMENTS)||'[]');
   const grid=document.getElementById('achievements-grid');
   if(!grid)return;
   grid.innerHTML=ACHIEVEMENTS_DEF.map(a=>{
@@ -2394,7 +2440,7 @@ function confirmLogout(){
   closeUserMenu();
   if(confirm('Sign out of MindOfTrader?')){
     if(window.firebaseSignOut){window.firebaseSignOut();}
-    else{localStorage.removeItem('mot_user');window.location.href='/';}
+    else{localStorage.removeItem(KEYS.USER);window.location.href='/';}
   }
 }
 
@@ -3836,7 +3882,7 @@ async function startUpgradeToGoogle(){
     statusEl.textContent='Signed in as '+user.displayName.split(' ')[0]+'! Migrating trades...';barEl.style.width='50%';
     // Save new profile
     const newProfile={uid:user.uid,name:user.displayName,email:user.email,photo:user.photoURL,loginMethod:'google',lastLogin:new Date().toISOString()};
-    localStorage.setItem('mot_user',JSON.stringify(newProfile));
+    localStorage.setItem(KEYS.USER,JSON.stringify(newProfile));
     currentUserProfile=newProfile;
     // Migrate all local trades to Firestore
     const total=trades.length;
