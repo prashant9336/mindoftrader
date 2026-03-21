@@ -443,6 +443,173 @@ a{color:var(--green);text-decoration:none;}
 .bae-date-btn.on{background:var(--green-bg);border-color:var(--green-bd);color:var(--green);}
 .bae-date-btn:hover{color:var(--text);}
 
+
+/* ══════════════════════════════════════════════════
+   ONBOARDING FLOW — 5 screens
+   ══════════════════════════════════════════════════ */
+#onboarding{
+  position:fixed;inset:0;z-index:8000;
+  background:var(--bg);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:24px 20px 40px;
+  overflow:hidden;
+}
+#onboarding.hidden{display:none;}
+
+/* Progress dots */
+.ob-dots{display:flex;gap:6px;margin-bottom:32px;}
+.ob-dot{width:6px;height:6px;border-radius:3px;background:var(--border2);transition:all 0.4s;}
+.ob-dot.on{width:20px;background:var(--green);}
+.ob-dot.done{background:rgba(0,230,118,0.35);}
+
+/* Each screen */
+.ob-screen{
+  display:none;flex-direction:column;align-items:center;
+  text-align:center;max-width:420px;width:100%;
+  animation:obIn 0.45s cubic-bezier(.16,1,.3,1) both;
+}
+.ob-screen.on{display:flex;}
+@keyframes obIn{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── SCREEN 1: HOOK ── */
+.ob-hook-icon{font-size:3.5rem;margin-bottom:20px;animation:obPulse 2s ease-in-out infinite;}
+@keyframes obPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+.ob-hook-line{font-size:clamp(1.6rem,6vw,2.4rem);font-weight:800;color:var(--white);line-height:1.15;letter-spacing:-0.02em;margin-bottom:12px;}
+.ob-hook-line .red{color:var(--red);}
+.ob-hook-line .green{color:var(--green);}
+.ob-hook-sub{font-size:0.95rem;color:var(--text);line-height:1.65;margin-bottom:32px;max-width:340px;}
+.ob-hook-sub strong{color:var(--white);}
+
+/* ── SCREEN 2: INTENT ── */
+.ob-q{font-size:1.3rem;font-weight:800;color:var(--white);line-height:1.3;margin-bottom:8px;}
+.ob-q-sub{font-size:0.82rem;color:var(--muted);margin-bottom:28px;}
+.ob-choices{display:flex;flex-direction:column;gap:10px;width:100%;}
+.ob-choice{
+  display:flex;align-items:center;gap:14px;
+  padding:16px 18px;
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:var(--r2);cursor:pointer;
+  transition:all 0.2s;text-align:left;
+  font-family:var(--font);width:100%;
+}
+.ob-choice:hover,.ob-choice.sel{
+  border-color:var(--green-bd);
+  background:var(--green-bg);
+}
+.ob-choice-icon{font-size:1.4rem;flex-shrink:0;}
+.ob-choice-body{}
+.ob-choice-title{font-size:0.88rem;font-weight:700;color:var(--white);margin-bottom:2px;}
+.ob-choice-sub{font-size:0.72rem;color:var(--muted);}
+.ob-choice.sel .ob-choice-sub{color:rgba(0,230,118,0.7);}
+
+/* ── SCREEN 3: ANALYSIS ── */
+.ob-scan-wrap{position:relative;width:120px;height:120px;margin-bottom:24px;}
+.ob-scan-ring{
+  width:120px;height:120px;border-radius:50%;
+  border:2px solid rgba(0,230,118,0.1);
+  position:absolute;top:0;left:0;
+}
+.ob-scan-arc{
+  width:120px;height:120px;border-radius:50%;
+  border:2px solid transparent;
+  border-top-color:var(--green);
+  border-right-color:rgba(0,230,118,0.3);
+  position:absolute;top:0;left:0;
+  animation:obSpin 1s linear infinite;
+}
+@keyframes obSpin{to{transform:rotate(360deg);}}
+.ob-scan-inner{
+  position:absolute;inset:14px;border-radius:50%;
+  background:var(--green-bg);border:1px solid var(--green-bd);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.6rem;
+}
+.ob-scan-title{font-size:1.1rem;font-weight:800;color:var(--white);margin-bottom:8px;}
+.ob-scan-steps{display:flex;flex-direction:column;gap:6px;width:100%;max-width:280px;}
+.ob-scan-step{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 12px;border-radius:var(--r);
+  font-size:0.78rem;color:var(--muted);
+  background:var(--card2);border:1px solid var(--border);
+  transition:all 0.4s;
+}
+.ob-scan-step.done{color:var(--green);border-color:var(--green-bd);background:var(--green-bg);}
+.ob-scan-step.active{color:var(--white);border-color:var(--border2);}
+.ob-scan-step-icon{font-size:0.8rem;width:16px;text-align:center;}
+
+/* ── SCREEN 4: WOW ── */
+.ob-identity-badge{
+  display:inline-flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,rgba(255,69,96,0.1),rgba(255,171,0,0.08));
+  border:1px solid rgba(255,69,96,0.3);border-radius:var(--r2);
+  padding:12px 20px;margin-bottom:20px;
+}
+.ob-identity-icon{font-size:1.6rem;}
+.ob-identity-label{font-size:0.65rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--red);margin-bottom:2px;}
+.ob-identity-name{font-size:1rem;font-weight:800;color:var(--white);}
+
+.ob-wow-title{font-size:1.2rem;font-weight:800;color:var(--white);line-height:1.3;margin-bottom:12px;}
+.ob-wow-gap{
+  display:flex;align-items:center;justify-content:center;
+  gap:0;margin-bottom:20px;width:100%;
+}
+.ob-gap-side{flex:1;padding:16px 10px;border-radius:var(--r2);}
+.ob-gap-side.bad{background:rgba(255,69,96,0.08);border:1px solid var(--red-bd);}
+.ob-gap-side.good{background:rgba(0,230,118,0.06);border:1px solid var(--green-bd);}
+.ob-gap-num{font-family:var(--mono);font-size:2rem;font-weight:800;line-height:1;margin-bottom:4px;}
+.ob-gap-lbl{font-size:0.65rem;color:var(--muted);font-weight:600;}
+.ob-gap-vs{
+  font-size:0.72rem;font-weight:800;color:var(--dim);
+  padding:0 12px;flex-shrink:0;
+}
+.ob-patterns{display:flex;flex-direction:column;gap:6px;width:100%;margin-bottom:20px;}
+.ob-pattern{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 13px;border-radius:var(--r);
+  font-size:0.78rem;color:var(--text);
+  background:var(--card);border:1px solid var(--border);
+  text-align:left;
+}
+.ob-pattern-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.ob-pattern strong{color:var(--white);}
+
+/* ── SCREEN 5: SIGNUP ── */
+.ob-save-icon{font-size:2.4rem;margin-bottom:16px;}
+.ob-save-title{font-size:1.3rem;font-weight:800;color:var(--white);line-height:1.3;margin-bottom:8px;}
+.ob-save-sub{font-size:0.85rem;color:var(--text);line-height:1.6;margin-bottom:24px;max-width:320px;}
+.ob-save-sub strong{color:var(--green);}
+.ob-google-btn{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:12px;
+  background:var(--white);border:none;border-radius:var(--r2);
+  padding:15px 24px;font-family:var(--font);font-size:0.95rem;font-weight:700;
+  color:#1a1a1a;cursor:pointer;margin-bottom:10px;
+  transition:all 0.2s;box-shadow:0 4px 20px rgba(0,0,0,0.3);
+}
+.ob-google-btn:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(0,0,0,0.4);}
+.ob-google-icon{width:20px;height:20px;}
+.ob-guest-btn{
+  width:100%;background:transparent;border:1px solid var(--border2);
+  border-radius:var(--r2);padding:14px;font-family:var(--font);
+  font-size:0.85rem;font-weight:600;color:var(--muted);cursor:pointer;
+  transition:all 0.2s;margin-bottom:14px;
+}
+.ob-guest-btn:hover{border-color:var(--green-bd);color:var(--text);}
+.ob-save-note{font-size:0.68rem;color:var(--dim);line-height:1.6;}
+
+/* Primary CTA button (reused across screens) */
+.ob-btn{
+  width:100%;background:var(--green);border:none;border-radius:var(--r2);
+  padding:16px;font-family:var(--font);font-size:0.95rem;font-weight:800;
+  color:#080c10;cursor:pointer;transition:all 0.25s;
+  box-shadow:0 4px 20px rgba(0,230,118,0.25);
+}
+.ob-btn:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(0,230,118,0.4);}
+.ob-btn:active{transform:translateY(0);}
+.ob-skip{font-size:0.72rem;color:var(--dim);cursor:pointer;margin-top:14px;
+  transition:color 0.2s;background:none;border:none;font-family:var(--font);}
+.ob-skip:hover{color:var(--muted);}
+
 /* JOURNAL */
 #log-view{padding:68px 16px 24px;}
 .log-inner{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:14px;}
@@ -912,6 +1079,173 @@ a{color:var(--green);text-decoration:none;}
 .bae-date-btn.on{background:var(--green-bg);border-color:var(--green-bd);color:var(--green);}
 .bae-date-btn:hover{color:var(--text);}
 
+
+/* ══════════════════════════════════════════════════
+   ONBOARDING FLOW — 5 screens
+   ══════════════════════════════════════════════════ */
+#onboarding{
+  position:fixed;inset:0;z-index:8000;
+  background:var(--bg);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:24px 20px 40px;
+  overflow:hidden;
+}
+#onboarding.hidden{display:none;}
+
+/* Progress dots */
+.ob-dots{display:flex;gap:6px;margin-bottom:32px;}
+.ob-dot{width:6px;height:6px;border-radius:3px;background:var(--border2);transition:all 0.4s;}
+.ob-dot.on{width:20px;background:var(--green);}
+.ob-dot.done{background:rgba(0,230,118,0.35);}
+
+/* Each screen */
+.ob-screen{
+  display:none;flex-direction:column;align-items:center;
+  text-align:center;max-width:420px;width:100%;
+  animation:obIn 0.45s cubic-bezier(.16,1,.3,1) both;
+}
+.ob-screen.on{display:flex;}
+@keyframes obIn{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── SCREEN 1: HOOK ── */
+.ob-hook-icon{font-size:3.5rem;margin-bottom:20px;animation:obPulse 2s ease-in-out infinite;}
+@keyframes obPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+.ob-hook-line{font-size:clamp(1.6rem,6vw,2.4rem);font-weight:800;color:var(--white);line-height:1.15;letter-spacing:-0.02em;margin-bottom:12px;}
+.ob-hook-line .red{color:var(--red);}
+.ob-hook-line .green{color:var(--green);}
+.ob-hook-sub{font-size:0.95rem;color:var(--text);line-height:1.65;margin-bottom:32px;max-width:340px;}
+.ob-hook-sub strong{color:var(--white);}
+
+/* ── SCREEN 2: INTENT ── */
+.ob-q{font-size:1.3rem;font-weight:800;color:var(--white);line-height:1.3;margin-bottom:8px;}
+.ob-q-sub{font-size:0.82rem;color:var(--muted);margin-bottom:28px;}
+.ob-choices{display:flex;flex-direction:column;gap:10px;width:100%;}
+.ob-choice{
+  display:flex;align-items:center;gap:14px;
+  padding:16px 18px;
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:var(--r2);cursor:pointer;
+  transition:all 0.2s;text-align:left;
+  font-family:var(--font);width:100%;
+}
+.ob-choice:hover,.ob-choice.sel{
+  border-color:var(--green-bd);
+  background:var(--green-bg);
+}
+.ob-choice-icon{font-size:1.4rem;flex-shrink:0;}
+.ob-choice-body{}
+.ob-choice-title{font-size:0.88rem;font-weight:700;color:var(--white);margin-bottom:2px;}
+.ob-choice-sub{font-size:0.72rem;color:var(--muted);}
+.ob-choice.sel .ob-choice-sub{color:rgba(0,230,118,0.7);}
+
+/* ── SCREEN 3: ANALYSIS ── */
+.ob-scan-wrap{position:relative;width:120px;height:120px;margin-bottom:24px;}
+.ob-scan-ring{
+  width:120px;height:120px;border-radius:50%;
+  border:2px solid rgba(0,230,118,0.1);
+  position:absolute;top:0;left:0;
+}
+.ob-scan-arc{
+  width:120px;height:120px;border-radius:50%;
+  border:2px solid transparent;
+  border-top-color:var(--green);
+  border-right-color:rgba(0,230,118,0.3);
+  position:absolute;top:0;left:0;
+  animation:obSpin 1s linear infinite;
+}
+@keyframes obSpin{to{transform:rotate(360deg);}}
+.ob-scan-inner{
+  position:absolute;inset:14px;border-radius:50%;
+  background:var(--green-bg);border:1px solid var(--green-bd);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.6rem;
+}
+.ob-scan-title{font-size:1.1rem;font-weight:800;color:var(--white);margin-bottom:8px;}
+.ob-scan-steps{display:flex;flex-direction:column;gap:6px;width:100%;max-width:280px;}
+.ob-scan-step{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 12px;border-radius:var(--r);
+  font-size:0.78rem;color:var(--muted);
+  background:var(--card2);border:1px solid var(--border);
+  transition:all 0.4s;
+}
+.ob-scan-step.done{color:var(--green);border-color:var(--green-bd);background:var(--green-bg);}
+.ob-scan-step.active{color:var(--white);border-color:var(--border2);}
+.ob-scan-step-icon{font-size:0.8rem;width:16px;text-align:center;}
+
+/* ── SCREEN 4: WOW ── */
+.ob-identity-badge{
+  display:inline-flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,rgba(255,69,96,0.1),rgba(255,171,0,0.08));
+  border:1px solid rgba(255,69,96,0.3);border-radius:var(--r2);
+  padding:12px 20px;margin-bottom:20px;
+}
+.ob-identity-icon{font-size:1.6rem;}
+.ob-identity-label{font-size:0.65rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--red);margin-bottom:2px;}
+.ob-identity-name{font-size:1rem;font-weight:800;color:var(--white);}
+
+.ob-wow-title{font-size:1.2rem;font-weight:800;color:var(--white);line-height:1.3;margin-bottom:12px;}
+.ob-wow-gap{
+  display:flex;align-items:center;justify-content:center;
+  gap:0;margin-bottom:20px;width:100%;
+}
+.ob-gap-side{flex:1;padding:16px 10px;border-radius:var(--r2);}
+.ob-gap-side.bad{background:rgba(255,69,96,0.08);border:1px solid var(--red-bd);}
+.ob-gap-side.good{background:rgba(0,230,118,0.06);border:1px solid var(--green-bd);}
+.ob-gap-num{font-family:var(--mono);font-size:2rem;font-weight:800;line-height:1;margin-bottom:4px;}
+.ob-gap-lbl{font-size:0.65rem;color:var(--muted);font-weight:600;}
+.ob-gap-vs{
+  font-size:0.72rem;font-weight:800;color:var(--dim);
+  padding:0 12px;flex-shrink:0;
+}
+.ob-patterns{display:flex;flex-direction:column;gap:6px;width:100%;margin-bottom:20px;}
+.ob-pattern{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 13px;border-radius:var(--r);
+  font-size:0.78rem;color:var(--text);
+  background:var(--card);border:1px solid var(--border);
+  text-align:left;
+}
+.ob-pattern-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.ob-pattern strong{color:var(--white);}
+
+/* ── SCREEN 5: SIGNUP ── */
+.ob-save-icon{font-size:2.4rem;margin-bottom:16px;}
+.ob-save-title{font-size:1.3rem;font-weight:800;color:var(--white);line-height:1.3;margin-bottom:8px;}
+.ob-save-sub{font-size:0.85rem;color:var(--text);line-height:1.6;margin-bottom:24px;max-width:320px;}
+.ob-save-sub strong{color:var(--green);}
+.ob-google-btn{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:12px;
+  background:var(--white);border:none;border-radius:var(--r2);
+  padding:15px 24px;font-family:var(--font);font-size:0.95rem;font-weight:700;
+  color:#1a1a1a;cursor:pointer;margin-bottom:10px;
+  transition:all 0.2s;box-shadow:0 4px 20px rgba(0,0,0,0.3);
+}
+.ob-google-btn:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(0,0,0,0.4);}
+.ob-google-icon{width:20px;height:20px;}
+.ob-guest-btn{
+  width:100%;background:transparent;border:1px solid var(--border2);
+  border-radius:var(--r2);padding:14px;font-family:var(--font);
+  font-size:0.85rem;font-weight:600;color:var(--muted);cursor:pointer;
+  transition:all 0.2s;margin-bottom:14px;
+}
+.ob-guest-btn:hover{border-color:var(--green-bd);color:var(--text);}
+.ob-save-note{font-size:0.68rem;color:var(--dim);line-height:1.6;}
+
+/* Primary CTA button (reused across screens) */
+.ob-btn{
+  width:100%;background:var(--green);border:none;border-radius:var(--r2);
+  padding:16px;font-family:var(--font);font-size:0.95rem;font-weight:800;
+  color:#080c10;cursor:pointer;transition:all 0.25s;
+  box-shadow:0 4px 20px rgba(0,230,118,0.25);
+}
+.ob-btn:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(0,230,118,0.4);}
+.ob-btn:active{transform:translateY(0);}
+.ob-skip{font-size:0.72rem;color:var(--dim);cursor:pointer;margin-top:14px;
+  transition:color 0.2s;background:none;border:none;font-family:var(--font);}
+.ob-skip:hover{color:var(--muted);}
+
 /* JOURNAL */
 #log-view{padding:68px 16px 24px;}
 .log-inner{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:14px;}
@@ -1235,41 +1569,153 @@ a{color:var(--green);text-decoration:none;}
   <div class="um-item danger" onclick="confirmLogout()">→ Sign Out</div>
 </div>
 
-<!-- LANDING -->
-<div class="view" id="landing-view">
+<!-- ONBOARDING FLOW (replaces old landing) -->
+<div id="onboarding">
 
-  <!-- Core truth — one sentence -->
-  <div class="land-tag">🧠 Mind vs Market</div>
-  <h1 class="land-h1">
-    <span class="hi">Your charts show</span>
-    <span class="accent">the market.</span>
-    <span class="lo">We show your mind.</span>
-  </h1>
-  <p class="land-sub">Your strategy is fine. Your behavior is the problem.<br>We show you exactly where your mind is costing you money.</p>
+  <!-- Progress dots -->
+  <div class="ob-dots">
+    <div class="ob-dot on"  id="obdot-1"></div>
+    <div class="ob-dot"     id="obdot-2"></div>
+    <div class="ob-dot"     id="obdot-3"></div>
+    <div class="ob-dot"     id="obdot-4"></div>
+    <div class="ob-dot"     id="obdot-5"></div>
+  </div>
 
-  <!-- DEMO MODE — instant insight, no login -->
-  <div class="demo-mode-card" id="demo-card">
-    <div class="dmc-label">⚡ See it work in 10 seconds — no login needed</div>
-    <div class="dmc-insight" id="dmc-insight">
-      <div class="dmc-loading">Scanning demo trader's behavioral patterns...</div>
+  <!-- ══ SCREEN 1: EMOTIONAL HOOK ══ -->
+  <div class="ob-screen on" id="ob-s1">
+    <div class="ob-hook-icon">🧠</div>
+    <div class="ob-hook-line">
+      Your strategy is fine.<br>
+      <span class="red">Your behavior</span> is the problem.
     </div>
-    <div class="dmc-stats" id="dmc-stats" style="display:none">
-      <div class="dmc-stat"><span class="dmc-val" style="color:var(--red)">28%</span><span class="dmc-lbl">Revenge trade WR</span></div>
-      <div class="dmc-div"></div>
-      <div class="dmc-stat"><span class="dmc-val" style="color:var(--green)">74%</span><span class="dmc-lbl">Calm trade WR</span></div>
-      <div class="dmc-div"></div>
-      <div class="dmc-stat"><span class="dmc-val" style="color:var(--amber)">₹21K</span><span class="dmc-lbl">Cost this month</span></div>
+    <p class="ob-hook-sub">
+      Every trader has two enemies — the market, and their own mind.<br>
+      <strong>The market you cannot control. Your mind you can.</strong>
+    </p>
+    <button class="ob-btn" onclick="obNext(2)">Show me how →</button>
+    <button class="ob-skip" onclick="obSkipAll()">Skip — take me to the app</button>
+  </div>
+
+  <!-- ══ SCREEN 2: INTENT (1-tap) ══ -->
+  <div class="ob-screen" id="ob-s2">
+    <div class="ob-q">What's your biggest problem right now?</div>
+    <div class="ob-q-sub">Be honest. This shapes your analysis.</div>
+    <div class="ob-choices">
+      <button class="ob-choice" onclick="obSelectIntent(this,'revenge')" id="intent-revenge">
+        <div class="ob-choice-icon">😤</div>
+        <div class="ob-choice-body">
+          <div class="ob-choice-title">I take revenge trades after losses</div>
+          <div class="ob-choice-sub">One bad trade leads to three more bad trades</div>
+        </div>
+      </button>
+      <button class="ob-choice" onclick="obSelectIntent(this,'fomo')" id="intent-fomo">
+        <div class="ob-choice-icon">🚀</div>
+        <div class="ob-choice-body">
+          <div class="ob-choice-title">I chase trades I miss</div>
+          <div class="ob-choice-sub">I see the move and jump in too late</div>
+        </div>
+      </button>
+      <button class="ob-choice" onclick="obSelectIntent(this,'discipline')" id="intent-discipline">
+        <div class="ob-choice-icon">📋</div>
+        <div class="ob-choice-body">
+          <div class="ob-choice-title">I don't follow my own rules</div>
+          <div class="ob-choice-sub">I know what to do, I just don't do it</div>
+        </div>
+      </button>
+      <button class="ob-choice" onclick="obSelectIntent(this,'understand')" id="intent-understand">
+        <div class="ob-choice-icon">🔍</div>
+        <div class="ob-choice-body">
+          <div class="ob-choice-title">I don't know why I keep losing</div>
+          <div class="ob-choice-sub">The losses feel random and I can't see the pattern</div>
+        </div>
+      </button>
     </div>
   </div>
 
-  <!-- CTAs -->
-  <div class="land-btns">
-    <a href="/login" class="land-btn-primary">Start Free — Sign in with Google</a>
-    <button class="land-btn-secondary" onclick="guestMode()">Try as Guest</button>
+  <!-- ══ SCREEN 3: ANALYSIS (animated) ══ -->
+  <div class="ob-screen" id="ob-s3">
+    <div class="ob-scan-wrap">
+      <div class="ob-scan-ring"></div>
+      <div class="ob-scan-arc" id="ob-arc"></div>
+      <div class="ob-scan-inner">🧠</div>
+    </div>
+    <div class="ob-scan-title">Analyzing your trader profile...</div>
+    <div class="ob-scan-steps">
+      <div class="ob-scan-step" id="obs-1">
+        <span class="ob-scan-step-icon">○</span>
+        Identifying behavioral pattern
+      </div>
+      <div class="ob-scan-step" id="obs-2">
+        <span class="ob-scan-step-icon">○</span>
+        Calculating cost of pattern
+      </div>
+      <div class="ob-scan-step" id="obs-3">
+        <span class="ob-scan-step-icon">○</span>
+        Building your trader identity
+      </div>
+    </div>
   </div>
-  <div class="land-note">Free forever · No credit card · Your data stays private</div>
+
+  <!-- ══ SCREEN 4: WOW MOMENT ══ -->
+  <div class="ob-screen" id="ob-s4">
+    <!-- Trader identity badge -->
+    <div class="ob-identity-badge" id="ob-identity-badge">
+      <div class="ob-identity-icon" id="ob-identity-icon">😤</div>
+      <div>
+        <div class="ob-identity-label">Your Trader Identity</div>
+        <div class="ob-identity-name" id="ob-identity-name">The Revenge Trader</div>
+      </div>
+    </div>
+
+    <div class="ob-wow-title" id="ob-wow-title">
+      Your calm trades win <span style="color:var(--green)">74%</span>.<br>
+      Your revenge trades win <span style="color:var(--red)">28%</span>.
+    </div>
+
+    <!-- The gap visual -->
+    <div class="ob-wow-gap">
+      <div class="ob-gap-side bad">
+        <div class="ob-gap-num" style="color:var(--red)" id="ob-bad-wr">28%</div>
+        <div class="ob-gap-lbl" id="ob-bad-lbl">Revenge WR</div>
+      </div>
+      <div class="ob-gap-vs">vs</div>
+      <div class="ob-gap-side good">
+        <div class="ob-gap-num" style="color:var(--green)" id="ob-good-wr">74%</div>
+        <div class="ob-gap-lbl" id="ob-good-lbl">Calm WR</div>
+      </div>
+    </div>
+
+    <!-- Pattern breakdown -->
+    <div class="ob-patterns" id="ob-patterns"></div>
+
+    <button class="ob-btn" onclick="obNext(5)" style="margin-bottom:0">Save my analysis →</button>
+  </div>
+
+  <!-- ══ SCREEN 5: SIGNUP ══ -->
+  <div class="ob-screen" id="ob-s5">
+    <div class="ob-save-icon">🔒</div>
+    <div class="ob-save-title" id="ob-save-title">Save your analysis.</div>
+    <div class="ob-save-sub" id="ob-save-sub">
+      You just saw your behavioral pattern.<br>
+      Sign in to <strong>track it daily</strong>, get AI coaching, and close the gap.
+    </div>
+    <button class="ob-google-btn" onclick="obMarkSeen();window.location.href='/login'">
+      <svg class="ob-google-icon" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      Continue with Google — Free
+    </button>
+    <button class="ob-guest-btn" onclick="obFinishGuest()">Continue without account</button>
+    <div class="ob-save-note">Free forever · No credit card · Your data stays private</div>
+  </div>
 
 </div>
+
+<!-- Keep old landing-view as hidden fallback -->
+<div class="view" id="landing-view" style="display:none !important"></div>
 
 <!-- DASHBOARD -->
 <div class="view" id="dashboard-view" data-anchor="dashboard">
@@ -2503,20 +2949,33 @@ function init(){
 
   const storedUser=getStoredUser();
   if(storedUser){
-    // User is signed in — hide landing, show app
+    // User is signed in — skip onboarding, show app
+    const ob=document.getElementById('onboarding');
+    if(ob)ob.classList.add('hidden');
     const landing=document.getElementById('landing-view');
     if(landing)landing.style.display='none';
+    const nav=document.getElementById('nav');
+    if(nav)nav.style.display='flex';
     try{setupUser(storedUser);}catch(e){console.warn('setupUser error',e);}
     try{goTo('dashboard');}catch(e){
-      try{goTo('dashboard');}catch(e2){
-        // Last resort: just show dashboard
-        const dv=document.getElementById('dashboard-view');
-        if(dv)dv.classList.add('on');
-      }
+      const dv=document.getElementById('dashboard-view');
+      if(dv)dv.classList.add('on');
     }
+  } else {
+    // No user — show onboarding for first-timers, landing for returning guests
+    const showOb = initOnboarding();
+    if(!showOb){
+      // Returning guest or has seen onboarding — show landing
+      const ob=document.getElementById('onboarding');
+      if(ob)ob.classList.add('hidden');
+      const landing=document.getElementById('landing-view');
+      if(landing){landing.style.display='flex';}
+      // Hide nav for landing
+      const nav=document.getElementById('nav');
+      if(nav)nav.style.display='none';
+    }
+    // else: onboarding is showing, nav is hidden
   }
-  // If no user: landing is already visible (display:flex by default)
-  // Nothing to do
 }
 
 // Boot — use setTimeout(0) to ensure DOM is fully parsed first
@@ -2598,399 +3057,284 @@ setInterval(()=>{const el=document.getElementById('live-clock');if(el)el.textCon
 // ══════════════════════════════════════════════════
 
 
-// ══════════════════════════════════════════════════
-// UX: DEMO MODE — landing page instant insight
-// ══════════════════════════════════════════════════
-function initDemoMode(){
-  const insights=[
-    {text:`Your <span class="highlight-red">revenge trades win 28%</span>. Your <span class="highlight-green">calm trades win 74%</span>. That gap is costing you Rs.47,000/month.`},
-    {text:`Traders who stop after 2 daily losses save an average of <span class="highlight-green">Rs.38,000/month</span>. One rule. Massive impact.`},
-    {text:`<span class="highlight-red">84% of losing trades</span> happen in emotional states. The market does not beat you — your behavior does.`},
-    {text:`FOMO entries have a <span class="highlight-red">31% win rate</span>. Waiting for your setup? <span class="highlight-green">68% win rate</span>. Same market.`},
-  ];
-  const pick=insights[Math.floor(Date.now()/3600000)%insights.length];
-  setTimeout(()=>{
-    const insEl=document.getElementById('dmc-insight');
-    const statsEl=document.getElementById('dmc-stats');
-    if(insEl){insEl.innerHTML='<div class="dmc-insight-text">'+pick.text+'</div>';}
-    if(statsEl){statsEl.style.display='flex';}
-  },1200);
-}
+// ══════════════════════════════════════════════════════════════
+// ONBOARDING ENGINE — 5-screen flow
+// Signup AFTER insight, not before
+// ══════════════════════════════════════════════════════════════
 
-// ══════════════════════════════════════════════════
-// UX: SETUP GUIDE — first-time user onboarding
-// ══════════════════════════════════════════════════
-function renderSetupGuide(){
-  const guide=document.getElementById('setup-guide');
-  const mvm=document.getElementById('mind-vs-market');
-  if(!guide||!mvm)return;
+let obCurrentScreen = 1;
+let obIntent = 'revenge'; // default
 
-  if(trades.length===0){
-    // Show setup guide, hide MvM
-    guide.style.display='block';
-    mvm.style.display='none';
-    // Mark step 1 done, step 2 active
-    document.getElementById('sgs-1')?.classList.add('completed');
-    document.getElementById('sgsn-1').textContent='✓';
-    document.getElementById('sgs-2')?.classList.add('active');
-    document.getElementById('sgsn-2')?.classList.add('active-num');
-  } else {
-    // Has trades — show Mind vs Market, hide guide
-    guide.style.display='none';
-    mvm.style.display='block';
-    renderMindVsMarket();
-    // Unlock AI button if has trades
-    const aiBtn=document.getElementById('sgs-ai-btn');
-    if(aiBtn)aiBtn.style.opacity='1';
+// Intent → identity map
+const OB_PROFILES = {
+  revenge: {
+    icon: '😤',
+    name: 'The Revenge Trader',
+    badgeColor: 'rgba(255,69,96,0.1)',
+    badgeBorder: 'rgba(255,69,96,0.3)',
+    labelColor: 'var(--red)',
+    badWR: '28%',
+    badLbl: 'Revenge trade WR',
+    goodWR: '74%',
+    goodLbl: 'Calm trade WR',
+    wowTitle: 'Your calm trades win <span style="color:var(--green)">74%</span>.<br>Your revenge trades win <span style="color:var(--red)">28%</span>.',
+    patterns: [
+      { dot:'var(--red)',   text:'<strong>After a loss</strong>, you enter again immediately — and lose again' },
+      { dot:'var(--amber)', text:'<strong>Trade count spikes</strong> on your worst P&L days' },
+      { dot:'var(--green)', text:'<strong>Your first trade of the day</strong> wins significantly more often' },
+    ],
+    saveTitle: 'Your analysis is ready.',
+    saveSub: `You're a Revenge Trader. The fix is one rule: <strong>15-minute pause after every loss.</strong> Sign in to track it daily.`,
+  },
+  fomo: {
+    icon: '🚀',
+    name: 'The FOMO Chaser',
+    badgeColor: 'rgba(255,171,0,0.1)',
+    badgeBorder: 'rgba(255,171,0,0.3)',
+    labelColor: 'var(--amber)',
+    badWR: '31%',
+    badLbl: 'FOMO entry WR',
+    goodWR: '71%',
+    goodLbl: 'Planned entry WR',
+    wowTitle: 'Your planned entries win <span style="color:var(--green)">71%</span>.<br>Your FOMO entries win <span style="color:var(--red)">31%</span>.',
+    patterns: [
+      { dot:'var(--red)',   text:'<strong>You enter after a big candle</strong> — already chasing the move' },
+      { dot:'var(--amber)', text:'<strong>Entries between 12–2 PM</strong> are your weakest — peak FOMO hours' },
+      { dot:'var(--green)', text:'<strong>When you wait for a pullback</strong>, your win rate doubles' },
+    ],
+    saveTitle: 'Your pattern is clear.',
+    saveSub: `You're a FOMO Chaser. The fix: <strong>only enter on pullbacks, never on breakouts.</strong> Sign in to track it daily.`,
+  },
+  discipline: {
+    icon: '📋',
+    name: 'The Rule Breaker',
+    badgeColor: 'rgba(41,121,255,0.1)',
+    badgeBorder: 'rgba(41,121,255,0.3)',
+    labelColor: 'var(--blue)',
+    badWR: '34%',
+    badLbl: 'Rule-broken trade WR',
+    goodWR: '69%',
+    goodLbl: 'Rule-followed WR',
+    wowTitle: 'When you follow your rules, you win <span style="color:var(--green)">69%</span>.<br>When you break them, <span style="color:var(--red)">34%</span>.',
+    patterns: [
+      { dot:'var(--red)',   text:'<strong>Rule breaks happen most</strong> on days you start with a loss' },
+      { dot:'var(--amber)', text:'<strong>Stop loss placement</strong> is skipped on 60% of losing trades' },
+      { dot:'var(--green)', text:'<strong>Your strategy actually works</strong> — execution is the only problem' },
+    ],
+    saveTitle: 'The data is simple.',
+    saveSub: `You're a Rule Breaker. Your strategy works — your execution doesn't. Sign in to <strong>track rule compliance</strong> on every trade.`,
+  },
+  understand: {
+    icon: '🔍',
+    name: 'The Lost Trader',
+    badgeColor: 'rgba(156,39,176,0.1)',
+    badgeBorder: 'rgba(156,39,176,0.3)',
+    labelColor: '#9c27b0',
+    badWR: '38%',
+    badLbl: 'Overall win rate',
+    goodWR: '67%',
+    goodLbl: 'Morning session WR',
+    wowTitle: 'You win <span style="color:var(--green)">67%</span> in the morning.<br>You lose <span style="color:var(--red)">58%</span> in the afternoon.',
+    patterns: [
+      { dot:'var(--red)',   text:'<strong>Most losses happen after 12:30 PM</strong> — low liquidity, high noise' },
+      { dot:'var(--amber)', text:'<strong>Trade count increases</strong> as P&L goes negative — classic loss-chasing' },
+      { dot:'var(--green)', text:'<strong>Your morning setups</strong> are solid — protect them by stopping earlier' },
+    ],
+    saveTitle: 'Now you know why.',
+    saveSub: `The pattern was there all along — you just needed the data. Sign in to <strong>track and break it</strong> daily.`,
+  },
+};
+
+// ── NAVIGATION ─────────────────────────────────────────────────
+function obNext(screen) {
+  // Animate out current
+  const cur = document.getElementById('ob-s' + obCurrentScreen);
+  if (cur) { cur.classList.remove('on'); }
+
+  obCurrentScreen = screen;
+
+  // Update dots
+  for (let i = 1; i <= 5; i++) {
+    const dot = document.getElementById('obdot-' + i);
+    if (!dot) continue;
+    dot.classList.remove('on','done');
+    if (i === screen) dot.classList.add('on');
+    else if (i < screen) dot.classList.add('done');
   }
+
+  // Animate in next
+  const next = document.getElementById('ob-s' + screen);
+  if (next) {
+    next.style.animation = 'none';
+    requestAnimationFrame(() => {
+      next.style.animation = '';
+      next.classList.add('on');
+    });
+  }
+
+  // Special: screen 3 = run analysis animation
+  if (screen === 3) obRunAnalysis();
 }
 
-// ══════════════════════════════════════════════════
-// UX: MIND VS MARKET — the core daily engagement card
-// ══════════════════════════════════════════════════
-function renderMindVsMarket(){
-  const today=new Date().toISOString().split('T')[0];
-  const todayTrades=trades.filter(t=>t.date===today);
-  const todayPnl=todayTrades.reduce((s,t)=>s+t.pnl,0);
+function obSelectIntent(btn, intent) {
+  // Clear all selections
+  document.querySelectorAll('.ob-choice').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  obIntent = intent;
+  // Auto-advance after 400ms
+  setTimeout(() => obNext(3), 400);
+}
 
-  // Calm vs revenge win rates
-  const calmT=trades.filter(t=>['calm','focused'].includes(t.emotion)&&t.exit&&t.pnl!==0);
-  const revengeT=trades.filter(t=>t.emotion==='revenge'&&t.exit&&t.pnl!==0);
-  const calmWR=calmT.length>=2?Math.min(95,Math.round(calmT.filter(t=>t.pnl>0).length/calmT.length*100)):null;
-  const revengeWR=revengeT.length>=1?Math.round(revengeT.filter(t=>t.pnl>0).length/revengeT.length*100):null;
+// ── ANALYSIS ANIMATION (Screen 3) ──────────────────────────────
+function obRunAnalysis() {
+  const steps = ['obs-1', 'obs-2', 'obs-3'];
+  const icons = ['🔍', '💰', '🧬'];
+  let i = 0;
 
-  // Render win rates
-  const calmEl=document.getElementById('mvm-calm-wr');
-  const revEl=document.getElementById('mvm-revenge-wr');
-  if(calmEl)calmEl.textContent=calmWR!==null?calmWR+'%':'—';
-  if(revEl)revEl.textContent=revengeWR!==null?revengeWR+'%':'—';
-
-  // Gap insight text
-  const gapEl=document.getElementById('mvm-gap-text');
-  if(gapEl){
-    if(calmWR!==null&&revengeWR!==null){
-      const gap=calmWR-revengeWR;
-      const revCost=Math.abs(revengeT.filter(t=>t.pnl<0).reduce((s,t)=>s+t.pnl,0));
-      gapEl.innerHTML=`Your calm trades win <strong>${gap} points more</strong> than revenge trades.`
-        +(revCost>0?` Revenge trading has cost you <span class="gap-number">₹${revCost.toLocaleString('en-IN')}</span> so far.`:'');
-    } else if(trades.length>0){
-      gapEl.textContent='Keep logging with emotions — your Mind vs Market gap will appear here.';
-    } else {
-      gapEl.textContent='Import trades or log manually to see your behavioral gap.';
+  // Reset all steps
+  steps.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.classList.remove('done','active');
+      el.querySelector('.ob-scan-step-icon').textContent = '○';
     }
-  }
+  });
 
-  // Metrics
-  const streak=calcStreak();
-  const stEl=document.getElementById('mvm-streak');
-  if(stEl)stEl.textContent=(streak>0?'🔥 ':'')+streak;
+  // Also reset scan inner icon
+  const inner = document.querySelector('.ob-scan-inner');
 
-  // Discipline score
-  const completedT=trades.filter(t=>t.exit&&t.pnl!==0);
-  const badEmo=trades.filter(t=>['revenge','fomo','overconfident'].includes(t.emotion)).length;
-  const disc=trades.length?Math.min(95,Math.max(20,Math.round((1-badEmo/Math.max(1,trades.length))*100))):null;
-  const discEl=document.getElementById('mvm-disc-score');
-  if(discEl){discEl.textContent=disc!==null?disc:('—');discEl.style.color=disc>=70?'var(--green)':disc>=50?'var(--amber)':'var(--red)';}
-
-  // Today P&L
-  const pnlEl=document.getElementById('mvm-today-pnl');
-  if(pnlEl){
-    pnlEl.textContent=todayPnl!==0?(todayPnl>=0?'+':'')+fmtINRShort(todayPnl):'₹0';
-    pnlEl.style.color=todayPnl>0?'var(--green)':todayPnl<0?'var(--red)':'var(--muted)';
-  }
-  const tcEl=document.getElementById('mvm-trades-count');
-  if(tcEl)tcEl.textContent=trades.length;
-
-  // Date
-  const dtEl=document.getElementById('mvm-date');
-  if(dtEl)dtEl.textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
-
-  // Daily insight
-  renderDailyInsight(calmWR,revengeWR,streak,disc,todayTrades.length);
-}
-
-// ══════════════════════════════════════════════════
-// UX: DAILY INSIGHT — one sentence, changes per session
-// ══════════════════════════════════════════════════
-function renderDailyInsight(calmWR,revengeWR,streak,disc,todayCount){
-  const el=document.getElementById('mdi-text');
-  if(!el)return;
-
-  const now=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
-  const h=now.getHours();
-  const dayOfWeek=now.getDay(); // 0=Sun
-
-  // Context-aware insights based on real data + time
-  let insight='';
-
-  if(trades.length===0){
-    insight='<strong>Start here:</strong> Import your Zerodha CSV in the Connect tab. Your behavioral analysis will be ready in seconds.';
-  } else if(h<9){
-    // Pre-market
-    const score=disc||70;
-    if(score>=75)insight='<strong>Good discipline score.</strong> Stay with your system today. Do not let a good day turn into overtrading.';
-    else insight='<strong>Pre-market tip:</strong> Set your max loss limit before the first trade. One rule saves ₹47K/month on average.';
-  } else if(h>=9&&h<12){
-    // Morning session
-    if(revengeWR!==null&&revengeWR<35)insight=`<strong>Watch out:</strong> Your revenge trades win only ${revengeWR}%. If you take a loss in the next hour — wait 15 minutes before the next entry.`;
-    else if(calmWR!==null)insight=`<strong>Morning edge:</strong> You win ${calmWR}% of calm trades. Protect that state — no FOMO entries before 11 AM.`;
-    else insight='<strong>Log emotions</strong> on every trade. After 5 trades, your calm vs revenge gap appears — it will change how you trade.';
-  } else if(h>=12&&h<14){
-    // Lunch
-    insight='<strong>Lunch hour warning:</strong> Win rates drop 30–40% between 12:30–2 PM for most traders. Consider pausing now.';
-  } else if(h>=14){
-    // Afternoon
-    if(todayCount>=3)insight=`<strong>You've had ${todayCount} trades today.</strong> Most behavioral mistakes happen after trade #3. Ask yourself: am I still following my system?`;
-    else insight='<strong>Afternoon caution:</strong> Revenge and FOMO trades peak after 2 PM. Your setup matters more — not the P&L.';
-  } else if(dayOfWeek===1){
-    insight=`<strong>Monday:</strong> Studies show Monday is the highest revenge-trade day. Start slow. Your week depends on today's discipline.`;
-  } else if(streak>=7){
-    insight=`<strong>🔥 ${streak}-day streak!</strong> You're in the top 5% for consistency. Consistency builds the data that makes AI analysis accurate.`;
-  } else if(streak===0){
-    insight=`<strong>No streak yet.</strong> Log today's trades — even one trade starts your streak. 7-day streaks unlock better AI insights.`;
-  } else {
-    // Generic rotating
-    const tips=[
-      '<strong>Key insight:</strong> The gap between your calm win rate and revenge win rate is your behavioral cost. Close that gap = more profit.',
-      '<strong>One rule:</strong> Stop trading after 2 losses per day. This single change saves ₹47,000/month on average.',
-      `<strong>Pattern to watch:</strong> Most traders' worst trades happen 10-30 minutes after a loss. Set a timer before re-entering.`,
-      `<strong>Your real edge</strong> is not your strategy — it is executing it consistently. MindOfTrader tracks that execution.`,
-    ];
-    insight=tips[new Date().getDate()%tips.length];
-  }
-
-  el.innerHTML=insight;
-}
-
-// ══════════════════════════════════════════════════
-// UX: GREETING — time-aware, personal
-// ══════════════════════════════════════════════════
-function updateDashGreeting(){
-  const now=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
-  const h=now.getHours();
-  const greetEl=document.getElementById('dash-greet-txt');
-  const sessionEl=document.getElementById('dash-session-lbl');
-  if(greetEl){
-    if(h<6)greetEl.textContent='Still up? Early start.';
-    else if(h<9)greetEl.textContent='Good morning — pre-market time';
-    else if(h<9.5)greetEl.textContent='Market opens soon';
-    else if(h<12)greetEl.textContent='Morning session live';
-    else if(h<14)greetEl.textContent='Lunch hour — trade carefully';
-    else if(h<15.5)greetEl.textContent='Afternoon session';
-    else if(h<16)greetEl.textContent='Market closing';
-    else greetEl.textContent='Post-market — time to review';
-  }
-  if(sessionEl){
-    const mins=h*60+now.getMinutes();
-    if(mins>=570&&mins<930)sessionEl.textContent='NSE Open 🟢';
-    else if(mins>=555&&mins<570)sessionEl.textContent='Pre-Open ⏰';
-    else sessionEl.textContent='Market Closed';
-  }
-}
-
-// ══════════════════════════════════════════════════
-// UX: DEMO MODE — landing page instant insight
-// ══════════════════════════════════════════════════
-function initDemoMode(){
-  const insights=[
-    {text:`Your <span class="highlight-red">revenge trades win 28%</span>. Your <span class="highlight-green">calm trades win 74%</span>. That gap is costing you Rs.47,000/month.`},
-    {text:`Traders who stop after 2 daily losses save an average of <span class="highlight-green">Rs.38,000/month</span>. One rule. Massive impact.`},
-    {text:`<span class="highlight-red">84% of losing trades</span> happen in emotional states. The market does not beat you — your behavior does.`},
-    {text:`FOMO entries have a <span class="highlight-red">31% win rate</span>. Waiting for your setup? <span class="highlight-green">68% win rate</span>. Same market.`},
-  ];
-  const pick=insights[Math.floor(Date.now()/3600000)%insights.length];
-  setTimeout(()=>{
-    const insEl=document.getElementById('dmc-insight');
-    const statsEl=document.getElementById('dmc-stats');
-    if(insEl){insEl.innerHTML='<div class="dmc-insight-text">'+pick.text+'</div>';}
-    if(statsEl){statsEl.style.display='flex';}
-  },1200);
-}
-
-// ══════════════════════════════════════════════════
-// UX: SETUP GUIDE — first-time user onboarding
-// ══════════════════════════════════════════════════
-function renderSetupGuide(){
-  const guide=document.getElementById('setup-guide');
-  const mvm=document.getElementById('mind-vs-market');
-  if(!guide||!mvm)return;
-
-  if(trades.length===0){
-    // Show setup guide, hide MvM
-    guide.style.display='block';
-    mvm.style.display='none';
-    // Mark step 1 done, step 2 active
-    document.getElementById('sgs-1')?.classList.add('completed');
-    document.getElementById('sgsn-1').textContent='✓';
-    document.getElementById('sgs-2')?.classList.add('active');
-    document.getElementById('sgsn-2')?.classList.add('active-num');
-  } else {
-    // Has trades — show Mind vs Market, hide guide
-    guide.style.display='none';
-    mvm.style.display='block';
-    renderMindVsMarket();
-    // Unlock AI button if has trades
-    const aiBtn=document.getElementById('sgs-ai-btn');
-    if(aiBtn)aiBtn.style.opacity='1';
-  }
-}
-
-// ══════════════════════════════════════════════════
-// UX: MIND VS MARKET — the core daily engagement card
-// ══════════════════════════════════════════════════
-function renderMindVsMarket(){
-  const today=new Date().toISOString().split('T')[0];
-  const todayTrades=trades.filter(t=>t.date===today);
-  const todayPnl=todayTrades.reduce((s,t)=>s+t.pnl,0);
-
-  // Calm vs revenge win rates
-  const calmT=trades.filter(t=>['calm','focused'].includes(t.emotion)&&t.exit&&t.pnl!==0);
-  const revengeT=trades.filter(t=>t.emotion==='revenge'&&t.exit&&t.pnl!==0);
-  const calmWR=calmT.length>=2?Math.min(95,Math.round(calmT.filter(t=>t.pnl>0).length/calmT.length*100)):null;
-  const revengeWR=revengeT.length>=1?Math.round(revengeT.filter(t=>t.pnl>0).length/revengeT.length*100):null;
-
-  // Render win rates
-  const calmEl=document.getElementById('mvm-calm-wr');
-  const revEl=document.getElementById('mvm-revenge-wr');
-  if(calmEl)calmEl.textContent=calmWR!==null?calmWR+'%':'—';
-  if(revEl)revEl.textContent=revengeWR!==null?revengeWR+'%':'—';
-
-  // Gap insight text
-  const gapEl=document.getElementById('mvm-gap-text');
-  if(gapEl){
-    if(calmWR!==null&&revengeWR!==null){
-      const gap=calmWR-revengeWR;
-      const revCost=Math.abs(revengeT.filter(t=>t.pnl<0).reduce((s,t)=>s+t.pnl,0));
-      gapEl.innerHTML=`Your calm trades win <strong>${gap} points more</strong> than revenge trades.`
-        +(revCost>0?` Revenge trading has cost you <span class="gap-number">₹${revCost.toLocaleString('en-IN')}</span> so far.`:'');
-    } else if(trades.length>0){
-      gapEl.textContent='Keep logging with emotions — your Mind vs Market gap will appear here.';
-    } else {
-      gapEl.textContent='Import trades or log manually to see your behavioral gap.';
+  function advance() {
+    if (i >= steps.length) {
+      // All done — populate wow screen then advance
+      obBuildWow();
+      setTimeout(() => obNext(4), 300);
+      return;
     }
+    const el = document.getElementById(steps[i]);
+    if (el) {
+      el.classList.add('active');
+      el.querySelector('.ob-scan-step-icon').textContent = '●';
+      if (inner) inner.textContent = icons[i];
+    }
+    // Complete after delay
+    setTimeout(() => {
+      if (el) {
+        el.classList.remove('active');
+        el.classList.add('done');
+        el.querySelector('.ob-scan-step-icon').textContent = '✓';
+      }
+      i++;
+      setTimeout(advance, 200);
+    }, 700);
   }
 
-  // Metrics
-  const streak=calcStreak();
-  const stEl=document.getElementById('mvm-streak');
-  if(stEl)stEl.textContent=(streak>0?'🔥 ':'')+streak;
-
-  // Discipline score
-  const completedT=trades.filter(t=>t.exit&&t.pnl!==0);
-  const badEmo=trades.filter(t=>['revenge','fomo','overconfident'].includes(t.emotion)).length;
-  const disc=trades.length?Math.min(95,Math.max(20,Math.round((1-badEmo/Math.max(1,trades.length))*100))):null;
-  const discEl=document.getElementById('mvm-disc-score');
-  if(discEl){discEl.textContent=disc!==null?disc:('—');discEl.style.color=disc>=70?'var(--green)':disc>=50?'var(--amber)':'var(--red)';}
-
-  // Today P&L
-  const pnlEl=document.getElementById('mvm-today-pnl');
-  if(pnlEl){
-    pnlEl.textContent=todayPnl!==0?(todayPnl>=0?'+':'')+fmtINRShort(todayPnl):'₹0';
-    pnlEl.style.color=todayPnl>0?'var(--green)':todayPnl<0?'var(--red)':'var(--muted)';
-  }
-  const tcEl=document.getElementById('mvm-trades-count');
-  if(tcEl)tcEl.textContent=trades.length;
-
-  // Date
-  const dtEl=document.getElementById('mvm-date');
-  if(dtEl)dtEl.textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
-
-  // Daily insight
-  renderDailyInsight(calmWR,revengeWR,streak,disc,todayTrades.length);
+  setTimeout(advance, 400);
 }
 
-// ══════════════════════════════════════════════════
-// UX: DAILY INSIGHT — one sentence, changes per session
-// ══════════════════════════════════════════════════
-function renderDailyInsight(calmWR,revengeWR,streak,disc,todayCount){
-  const el=document.getElementById('mdi-text');
-  if(!el)return;
+// ── BUILD WOW SCREEN from intent ───────────────────────────────
+function obBuildWow() {
+  const p = OB_PROFILES[obIntent] || OB_PROFILES.revenge;
 
-  const now=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
-  const h=now.getHours();
-  const dayOfWeek=now.getDay(); // 0=Sun
+  // Identity badge
+  const badge = document.getElementById('ob-identity-badge');
+  if (badge) {
+    badge.style.background = `linear-gradient(135deg,${p.badgeColor},rgba(0,0,0,0))`;
+    badge.style.borderColor = p.badgeBorder;
+  }
+  const icon = document.getElementById('ob-identity-icon');
+  if (icon) icon.textContent = p.icon;
+  const name = document.getElementById('ob-identity-name');
+  if (name) name.textContent = p.name;
 
-  // Context-aware insights based on real data + time
-  let insight='';
+  // Label color
+  const label = badge ? badge.querySelector('.ob-identity-label') : null;
+  if (label) label.style.color = p.labelColor;
 
-  if(trades.length===0){
-    insight='<strong>Start here:</strong> Import your Zerodha CSV in the Connect tab. Your behavioral analysis will be ready in seconds.';
-  } else if(h<9){
-    // Pre-market
-    const score=disc||70;
-    if(score>=75)insight='<strong>Good discipline score.</strong> Stay with your system today. Do not let a good day turn into overtrading.';
-    else insight='<strong>Pre-market tip:</strong> Set your max loss limit before the first trade. One rule saves ₹47K/month on average.';
-  } else if(h>=9&&h<12){
-    // Morning session
-    if(revengeWR!==null&&revengeWR<35)insight=`<strong>Watch out:</strong> Your revenge trades win only ${revengeWR}%. If you take a loss in the next hour — wait 15 minutes before the next entry.`;
-    else if(calmWR!==null)insight=`<strong>Morning edge:</strong> You win ${calmWR}% of calm trades. Protect that state — no FOMO entries before 11 AM.`;
-    else insight='<strong>Log emotions</strong> on every trade. After 5 trades, your calm vs revenge gap appears — it will change how you trade.';
-  } else if(h>=12&&h<14){
-    // Lunch
-    insight='<strong>Lunch hour warning:</strong> Win rates drop 30–40% between 12:30–2 PM for most traders. Consider pausing now.';
-  } else if(h>=14){
-    // Afternoon
-    if(todayCount>=3)insight=`<strong>You've had ${todayCount} trades today.</strong> Most behavioral mistakes happen after trade #3. Ask yourself: am I still following my system?`;
-    else insight='<strong>Afternoon caution:</strong> Revenge and FOMO trades peak after 2 PM. Your setup matters more — not the P&L.';
-  } else if(dayOfWeek===1){
-    insight=`<strong>Monday:</strong> Studies show Monday is the highest revenge-trade day. Start slow. Your week depends on today's discipline.`;
-  } else if(streak>=7){
-    insight=`<strong>🔥 ${streak}-day streak!</strong> You're in the top 5% for consistency. Consistency builds the data that makes AI analysis accurate.`;
-  } else if(streak===0){
-    insight=`<strong>No streak yet.</strong> Log today's trades — even one trade starts your streak. 7-day streaks unlock better AI insights.`;
-  } else {
-    // Generic rotating
-    const tips=[
-      '<strong>Key insight:</strong> The gap between your calm win rate and revenge win rate is your behavioral cost. Close that gap = more profit.',
-      '<strong>One rule:</strong> Stop trading after 2 losses per day. This single change saves ₹47,000/month on average.',
-      `<strong>Pattern to watch:</strong> Most traders' worst trades happen 10-30 minutes after a loss. Set a timer before re-entering.`,
-      `<strong>Your real edge</strong> is not your strategy — it is executing it consistently. MindOfTrader tracks that execution.`,
-    ];
-    insight=tips[new Date().getDate()%tips.length];
+  // WOW title
+  const wt = document.getElementById('ob-wow-title');
+  if (wt) wt.innerHTML = p.wowTitle;
+
+  // Gap numbers
+  const badWR = document.getElementById('ob-bad-wr');
+  const badLbl = document.getElementById('ob-bad-lbl');
+  const goodWR = document.getElementById('ob-good-wr');
+  const goodLbl = document.getElementById('ob-good-lbl');
+  if (badWR) badWR.textContent = p.badWR;
+  if (badLbl) badLbl.textContent = p.badLbl;
+  if (goodWR) goodWR.textContent = p.goodWR;
+  if (goodLbl) goodLbl.textContent = p.goodLbl;
+
+  // Patterns
+  const patsEl = document.getElementById('ob-patterns');
+  if (patsEl) {
+    patsEl.innerHTML = p.patterns.map(pt => `
+      <div class="ob-pattern">
+        <div class="ob-pattern-dot" style="background:${pt.dot}"></div>
+        <span>${pt.text}</span>
+      </div>
+    `).join('');
   }
 
-  el.innerHTML=insight;
+  // Save screen text
+  const saveTitle = document.getElementById('ob-save-title');
+  const saveSub = document.getElementById('ob-save-sub');
+  if (saveTitle) saveTitle.textContent = p.saveTitle;
+  if (saveSub) saveSub.innerHTML = p.saveSub;
+
+  // Store for later use
+  window.obSelectedProfile = p;
 }
 
-// ══════════════════════════════════════════════════
-// UX: GREETING — time-aware, personal
-// ══════════════════════════════════════════════════
-function updateDashGreeting(){
-  const now=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
-  const h=now.getHours();
-  const greetEl=document.getElementById('dash-greet-txt');
-  const sessionEl=document.getElementById('dash-session-lbl');
-  if(greetEl){
-    if(h<6)greetEl.textContent='Still up? Early start.';
-    else if(h<9)greetEl.textContent='Good morning — pre-market time';
-    else if(h<9.5)greetEl.textContent='Market opens soon';
-    else if(h<12)greetEl.textContent='Morning session live';
-    else if(h<14)greetEl.textContent='Lunch hour — trade carefully';
-    else if(h<15.5)greetEl.textContent='Afternoon session';
-    else if(h<16)greetEl.textContent='Market closing';
-    else greetEl.textContent='Post-market — time to review';
-  }
-  if(sessionEl){
-    const mins=h*60+now.getMinutes();
-    if(mins>=570&&mins<930)sessionEl.textContent='NSE Open 🟢';
-    else if(mins>=555&&mins<570)sessionEl.textContent='Pre-Open ⏰';
-    else sessionEl.textContent='Market Closed';
-  }
+// ── FINISH — skip all, go to app ───────────────────────────────
+function obSkipAll() {
+  obMarkSeen();
+  const ob = document.getElementById('onboarding');
+  if (ob) ob.classList.add('hidden');
+  guestMode();
 }
 
-// ══════════════════════════════════════════════════
+function obFinishGuest() {
+  obMarkSeen();
+  const ob = document.getElementById('onboarding');
+  if (ob) ob.classList.add('hidden');
+  guestMode();
+}
 
-const ACHIEVEMENTS_DEF = [
-  {id:'first_trade',  icon:'🎯', name:'First Trade',   desc:'Log your first trade',        check:()=>trades.length>=1},
-  {id:'streak_3',     icon:'🔥', name:'3-Day Streak',  desc:'3 consecutive days logged',   check:()=>calcStreak()>=3},
-  {id:'streak_7',     icon:'⚡', name:'Week Warrior',  desc:'7-day streak',                check:()=>calcStreak()>=7},
-  {id:'streak_30',    icon:'💎', name:'30-Day Elite',  desc:'30-day streak',               check:()=>calcStreak()>=30},
-  {id:'no_revenge_week',icon:'🛡️',name:'Revenge Free',desc:'0 revenge trades this week',  check:()=>getThisWeekTrades().filter(t=>t.emotion==='revenge').length===0&&getThisWeekTrades().length>=5},
-  {id:'calm_trader',  icon:'🧘', name:'Calm Trader',   desc:'10+ calm trades',             check:()=>trades.filter(t=>['calm','focused'].includes(t.emotion)).length>=10},
-  {id:'hundred_trades',icon:'💯',name:'Century',       desc:'100 trades logged',           check:()=>trades.length>=100},
-  {id:'wr_70',        icon:'📈', name:'Sharp Shooter',  desc:'70%+ win rate (min 10 trades)',check:()=>{const c=trades.filter(t=>t.exit&&t.pnl!==0);return c.length>=10&&Math.round(c.filter(t=>t.pnl>0).length/c.length*100)>=70;}},
-  {id:'level_5',      icon:'🏆', name:'Level 5 Trader', desc:'Reach level 5',              check:()=>getXPLevel()>=5},
-];
+// ── INIT: Show onboarding to first-time users ──────────────────
+function initOnboarding() {
+  const seen = localStorage.getItem('mot_ob_seen');
+  const user = getStoredUser();
+
+  if (user) {
+    // Already has an account — skip onboarding
+    const ob = document.getElementById('onboarding');
+    if (ob) ob.classList.add('hidden');
+    return false; // don't show
+  }
+
+  if (seen) {
+    // Seen onboarding before — skip
+    const ob = document.getElementById('onboarding');
+    if (ob) ob.classList.add('hidden');
+    return false;
+  }
+
+  // First time — show onboarding
+  // Hide nav
+  const nav = document.getElementById('nav');
+  if (nav) nav.style.display = 'none';
+  // Hide landing view
+  const landing = document.getElementById('landing-view');
+  if (landing) landing.style.display = 'none';
+
+  return true; // show onboarding
+}
+
+// Mark onboarding as seen when finishing
+function obMarkSeen() {
+  localStorage.setItem('mot_ob_seen', '1');
+}
+
 
 // ══════════════════════════════════════════════════
 // UX: DEMO MODE — landing page instant insight
