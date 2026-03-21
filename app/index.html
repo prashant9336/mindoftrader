@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="dns-prefetch" href="https://api.anthropic.com" />
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 :root{
   --bg:#080c10;--surface:#0d1218;--card:#101820;--card2:#141e2a;
@@ -2121,7 +2121,16 @@ function loadTrades(){
     const threshold=(mi+1)*(100/msgs.length);
     if(p>=threshold&&mi<msgs.length-1){mi++;msg.textContent=msgs[mi];}
     if(p<100){requestAnimationFrame(tick);}
-    else{setTimeout(()=>{ldr.style.opacity='0';setTimeout(()=>{ldr.style.display='none';init();},700);},600);}
+    else{setTimeout(()=>{ldr.style.opacity='0';setTimeout(()=>{
+      ldr.style.display='none';
+      try{init();}catch(e){
+        console.error('MindOfTrader init error:',e);
+        // Force hide loader even on error so user isn't stuck
+        ldr.style.display='none';
+        const landing=document.getElementById('landing-view');
+        if(landing)landing.classList.add('on');
+      }
+    },700);},600);}
   }
   requestAnimationFrame(tick);
 })();
@@ -2130,29 +2139,26 @@ function loadTrades(){
 // INIT
 // ══════════════════════════════════════════════════
 function init(){
-  loadTrades();
-  buildRules();
-  document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
-  initRitual();
-  renderTradeTable(trades);
-  renderDNA();
+  try{loadTrades();}catch(e){trades=[];console.warn('loadTrades error',e);}
+  try{buildRules();}catch(e){console.warn('buildRules error',e);}
+  const dateEl=document.getElementById('f-date');
+  if(dateEl)dateEl.value=new Date().toISOString().split('T')[0];
+  try{initRitual();}catch(e){console.warn('initRitual error',e);}
+  try{renderTradeTable(trades);}catch(e){console.warn('renderTradeTable error',e);}
+  try{renderDNA();}catch(e){console.warn('renderDNA error',e);}
 
   // Init demo mode on landing
-  initDemoMode();
+  try{initDemoMode();}catch(e){console.warn('initDemoMode error',e);}
 
-  // Check auth: Firebase user, local Google session, guest, or no session
+  // Check auth
   const storedUser=getStoredUser();
   if(storedUser){
-    setupUser(storedUser);
-    goTo('ritual');
+    try{setupUser(storedUser);}catch(e){console.warn('setupUser error',e);}
+    try{goTo('ritual');}catch(e){goTo('dashboard');}
   } else {
-    // Check if came from login page
     const landing=document.getElementById('landing-view');
-    landing.classList.add('on');
+    if(landing)landing.classList.add('on');
   }
-
-  // Firebase is configured — notice stays hidden
-  // (Remove this block entirely when deploying to production)
 }
 
 // Service Worker Registration
@@ -2996,6 +3002,7 @@ function renderEqChart(range){
     const D={'1W':{l:['Mon','Tue','Wed','Thu','Fri','Today'],r:[0,12750,-3300,11250,-2625,18450]},'1M':{l:['Wk1','Wk2','Wk3','Wk4','Now'],r:[0,8000,-2000,15000,18450]},'3M':{l:['Jan','Feb','Mar'],r:[0,25000,40000,18450]}};
     const d=D[range];labels=d.l;cum=d.r.reduce((a,v,i)=>{a.push((a[i-1]||0)+v);return a;},[]);
   }
+  if(typeof Chart==='undefined'){console.warn('Chart.js not loaded');return;}
   eqChart=new Chart(canvas.getContext('2d'),{type:'line',data:{labels,datasets:[{data:cum,segment:{borderColor:c=>c.p0.parsed.y<=c.p1.parsed.y?'rgba(0,230,118,0.9)':'rgba(255,69,96,0.9)',backgroundColor:c=>c.p0.parsed.y<=c.p1.parsed.y?'rgba(0,230,118,0.06)':'rgba(255,69,96,0.06)'},fill:true,borderWidth:2.5,tension:0.4,pointRadius:4,pointBackgroundColor:c=>c.parsed.y>=0?'var(--green)':'var(--red)',pointBorderColor:'var(--card)',pointBorderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(13,18,24,0.97)',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleFont:{family:'Space Grotesk',size:11},bodyFont:{family:'Space Grotesk',size:11},padding:12,callbacks:{label:c=>'P&L: '+(c.parsed.y>=0?'+':'')+fmtINR(c.parsed.y)}}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(168,188,207,0.45)',font:{family:'Space Grotesk',size:10}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(168,188,207,0.45)',font:{family:'Space Grotesk',size:10},callback:v=>{
               const abs=Math.abs(v);
               if(abs>=100000)return(v>=0?'':'-')+'₹'+(abs/100000).toFixed(1)+'L';
@@ -3020,6 +3027,7 @@ function renderEmoChart(){
     const m={};trades.forEach(t=>{if(!m[t.emotion])m[t.emotion]={pnl:0,count:0};m[t.emotion].pnl+=t.pnl;m[t.emotion].count++;});
     labels=Object.keys(m);data=labels.map(e=>Math.round(m[e].pnl/m[e].count));
   }
+  if(typeof Chart==='undefined'){console.warn('Chart.js not loaded');return;}
   emoChart=new Chart(canvas.getContext('2d'),{type:'bar',data:{labels,datasets:[{data,backgroundColor:data.map(v=>v>=0?'rgba(0,230,118,0.5)':'rgba(255,69,96,0.5)'),borderRadius:4,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(13,18,24,0.97)',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleFont:{family:'Space Grotesk',size:11},bodyFont:{family:'Space Grotesk',size:11},padding:12,callbacks:{label:c=>'Avg: '+(c.parsed.x>=0?'+':'')+fmtINR(c.parsed.x)}}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(168,188,207,0.45)',font:{family:'Space Grotesk',size:9},callback:v=>{
               const abs=Math.abs(v);
               if(abs>=100000)return(v>=0?'':'-')+'₹'+(abs/100000).toFixed(1)+'L';
