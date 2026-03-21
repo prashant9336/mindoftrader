@@ -1,0 +1,51 @@
+{
+  "name": "MindOfTrader — Behavioral Trading Intelligence",
+  "short_name": "MindOfTrader",
+  "description": "India's #1 behavioral trading platform. Track your psychology, detect revenge trading, and improve discipline.",
+  "start_url": "/app",
+  "display": "standalone",
+  "background_color": "#080c10",
+  "theme_color": "#080c10",
+  "orientation": "portrait-primary",
+  "categories": ["finance", "productivity"],
+  "lang": "en-IN",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "label": "MindOfTrader Dashboard"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Log a Trade",
+      "url": "/app#journal",
+      "description": "Quickly log your latest trade"
+    },
+    {
+      "name": "Daily Ritual",
+      "url": "/app#ritual",
+      "description": "Start your pre-market ritual"
+    },
+    {
+      "name": "AI Coach",
+      "url": "/app#ai",
+      "description": "Get your daily behavioral insight"
+    }
+  ]
+}
