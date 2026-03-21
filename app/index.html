@@ -37,14 +37,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 a{color:var(--green);text-decoration:none;}
 #bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.5;}
 
-/* LOADER */
-#loader{position:fixed;inset:0;z-index:9000;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;opacity:1;transition:opacity 0.7s;}
-.ld-logo{font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--green);letter-spacing:0.15em;display:flex;align-items:center;gap:10px;}
-.ld-dot{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 16px var(--green);animation:ldP 1s infinite;}
-@keyframes ldP{0%,100%{transform:scale(1);}50%{transform:scale(1.5);opacity:0.5;}}
-.ld-bar-wrap{width:180px;height:2px;background:rgba(0,230,118,0.1);border-radius:2px;overflow:hidden;}
-.ld-bar{height:100%;width:0%;background:var(--green);box-shadow:0 0 8px var(--green);transition:width 0.05s linear;border-radius:2px;}
-.ld-msg{font-size:0.65rem;letter-spacing:0.2em;color:var(--muted);font-family:var(--mono);text-transform:uppercase;}
+
 
 /* VIEWS */
 .view{display:none;position:relative;z-index:10;}
@@ -54,7 +47,8 @@ a{color:var(--green);text-decoration:none;}
 /* NAV */
 #nav{display:none;position:fixed;top:0;left:0;right:0;z-index:500;height:56px;background:rgba(8,12,16,0.94);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);align-items:center;padding:0 16px;gap:8px;}
 .nav-brand{font-family:var(--mono);font-size:0.82rem;font-weight:700;color:var(--white);letter-spacing:0.04em;display:flex;align-items:center;gap:8px;margin-right:8px;white-space:nowrap;text-decoration:none;}
-.nav-brand-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:ldP 2s infinite;}
+.nav-brand-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:gPulse 2s infinite;}
+@keyframes gPulse{0%,100%{box-shadow:0 0 8px var(--green);}50%{box-shadow:0 0 18px var(--green),0 0 32px rgba(0,230,118,0.25);}}
 .nav-tabs{display:flex;gap:2px;flex:1;overflow-x:auto;scrollbar-width:none;}
 .nav-tabs::-webkit-scrollbar{display:none;}
 .nav-tab{padding:6px 14px;border-radius:8px;font-size:0.72rem;font-weight:600;letter-spacing:0.03em;color:var(--muted);background:transparent;border:none;cursor:pointer;white-space:nowrap;transition:all 0.2s;font-family:var(--font);}
@@ -226,7 +220,7 @@ a{color:var(--green);text-decoration:none;}
 .ms-chg.neutral{color:var(--muted);}
 .ms-session{display:flex;align-items:center;gap:5px;padding:0 18px;flex-shrink:0;}
 .ms-session-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-.ms-session-dot.open{background:var(--green);box-shadow:0 0 6px var(--green);animation:ldP 2s infinite;}
+.ms-session-dot.open{background:var(--green);box-shadow:0 0 6px var(--green);animation:gPulse 2s infinite;}
 .ms-session-dot.closed{background:var(--red);}
 .ms-session-dot.premarket{background:var(--amber);animation:ldP 1.5s infinite;}
 .ms-session-text{font-size:0.68rem;font-weight:700;letter-spacing:0.06em;}
@@ -686,13 +680,6 @@ a{color:var(--green);text-decoration:none;}
 
 <!-- SYNC STATUS BAR -->
 <div id="sync-bar"></div>
-
-<!-- LOADER -->
-<div id="loader">
-  <div class="ld-logo"><div class="ld-dot"></div>MINDOFTRADER</div>
-  <div class="ld-bar-wrap"><div class="ld-bar" id="ld-bar"></div></div>
-  <div class="ld-msg" id="ld-msg">INITIALIZING...</div>
-</div>
 
 <!-- NAV -->
 <nav id="nav">
@@ -2128,49 +2115,8 @@ function loadTrades(){
 })();
 
 // ══════════════════════════════════════════════════
-// LOADER — setTimeout based (never throttled)
+// BOOT — runs immediately, no loader
 // ══════════════════════════════════════════════════
-(function(){
-  const ldr=document.getElementById('loader');
-  const bar=document.getElementById('ld-bar');
-  const msg=document.getElementById('ld-msg');
-  if(!ldr||!bar||!msg){ try{init();}catch(e){} return; }
-
-  const steps=[
-    {pct:30, text:'LOADING ENGINE...'},
-    {pct:60, text:'SYNCING ACCOUNT...'},
-    {pct:90, text:'ALMOST READY...'},
-    {pct:100,text:'MIND SCAN READY ✓'},
-  ];
-  let step=0;
-
-  function advance(){
-    if(step>=steps.length){
-      // Done — hide loader and run app
-      ldr.style.opacity='0';
-      ldr.style.transition='opacity 0.4s';
-      setTimeout(()=>{
-        ldr.style.display='none';
-        try{init();}catch(e){
-          console.error('Init error:',e);
-          ldr.style.display='none';
-          const l=document.getElementById('landing-view');
-          if(l)l.classList.add('on');
-        }
-      },450);
-      return;
-    }
-    const s=steps[step];
-    bar.style.width=s.pct+'%';
-    msg.textContent=s.text;
-    step++;
-    setTimeout(advance, step===steps.length?200:180);
-  }
-
-  // Start after tiny delay to ensure DOM is ready
-  setTimeout(advance, 80);
-})();
-
 // ══════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════
@@ -2182,19 +2128,25 @@ function init(){
   try{initRitual();}catch(e){console.warn('initRitual error',e);}
   try{renderTradeTable(trades);}catch(e){console.warn('renderTradeTable error',e);}
   try{renderDNA();}catch(e){console.warn('renderDNA error',e);}
-
-  // Init demo mode on landing
   try{initDemoMode();}catch(e){console.warn('initDemoMode error',e);}
 
-  // Check auth
   const storedUser=getStoredUser();
   if(storedUser){
     try{setupUser(storedUser);}catch(e){console.warn('setupUser error',e);}
-    try{goTo('ritual');}catch(e){goTo('dashboard');}
+    try{goTo('ritual');}catch(e){
+      try{goTo('dashboard');}catch(e2){}
+    }
   } else {
     const landing=document.getElementById('landing-view');
     if(landing)landing.classList.add('on');
   }
+}
+
+// Boot immediately — no loader, no delay
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',init);
+} else {
+  init();
 }
 
 // Service Worker Registration
