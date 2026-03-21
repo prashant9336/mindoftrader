@@ -384,6 +384,15 @@ a{color:var(--green);text-decoration:none;}
 .sample-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
 .sample-chip{padding:5px 12px;border-radius:20px;font-size:0.68rem;font-weight:600;cursor:pointer;background:var(--card2);border:1px solid var(--border2);color:var(--muted);transition:all 0.2s;}
 .sample-chip:hover{border-color:var(--blue-bd);color:var(--blue);background:var(--blue-bg);}
+/* BROKER GUIDE TABS */
+.broker-tab-btn{padding:7px 14px;border-radius:var(--r);font-size:0.75rem;font-weight:600;cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:transparent;font-family:var(--font);transition:all 0.2s;}
+.broker-tab-btn:hover{color:var(--text);}
+.broker-tab-btn.on{background:var(--green-bg);border-color:var(--green-bd);color:var(--green);}
+.broker-guide{display:none;}
+.broker-guide.on{display:block;}
+.ph-btn{background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:5px 12px;font-size:0.68rem;font-weight:600;color:var(--text);cursor:pointer;font-family:var(--font);transition:all 0.2s;}
+.ph-btn:hover{border-color:var(--green-bd);color:var(--green);}
+
 
 /* AI COACH */
 #ai-view{padding:68px 16px 24px;}
@@ -739,39 +748,28 @@ a{color:var(--green);text-decoration:none;}
 <!-- CONNECT -->
 <div class="view" id="connect-view">
   <div class="connect-inner">
+
+    <!-- HERO -->
     <div class="connect-hero">
       <div class="ch-icon">⚡</div>
-      <div class="ch-title">Connect Your Broker</div>
-      <div class="ch-sub">Import your trade history instantly. AI will analyze every behavioral pattern in seconds.</div>
-      <div class="ch-badge">🔒 Read-only access · We never place orders</div>
+      <div class="ch-title">Import Your Trades</div>
+      <div class="ch-sub">Upload CSV from any Indian broker. We auto-detect options, pair BUY/SELL, calculate P&L, and detect behavioral patterns — all in under 10 seconds.</div>
+      <div class="ch-badge">🔒 Read-only · We never place orders · Data stays on your device</div>
     </div>
-    <div class="broker-cards">
-      <div class="broker-card">
-        <div class="bc-top"><div class="bc-logo" style="background:rgba(255,120,0,0.1);border:1px solid rgba(255,120,0,0.2);color:#ff7800">Z</div><div><div class="bc-name">Zerodha Kite</div><div class="bc-desc">Most popular · API ready</div></div></div>
-        <button class="bc-btn" onclick="openZerodhaModal()">Connect Zerodha →</button>
-      </div>
-      <div class="broker-card">
-        <div class="bc-top"><div class="bc-logo" style="background:rgba(0,100,255,0.1);border:1px solid rgba(0,100,255,0.2);color:#0064ff">D</div><div><div class="bc-name">Dhan</div><div class="bc-desc">Coming soon</div></div></div>
-        <button class="bc-btn outline" disabled>Coming Soon</button>
-      </div>
-      <div class="broker-card">
-        <div class="bc-top"><div class="bc-logo" style="background:rgba(255,69,0,0.1);border:1px solid rgba(255,69,0,0.2);color:#ff4500">A</div><div><div class="bc-name">Angel One</div><div class="bc-desc">Coming soon</div></div></div>
-        <button class="bc-btn outline" disabled>Coming Soon</button>
-      </div>
-      <div class="broker-card">
-        <div class="bc-top"><div class="bc-logo" style="background:rgba(0,200,100,0.1);border:1px solid rgba(0,200,100,0.2);color:#00c864">U</div><div><div class="bc-name">Upstox</div><div class="bc-desc">Coming soon</div></div></div>
-        <button class="bc-btn outline" disabled>Coming Soon</button>
-      </div>
-    </div>
+
+    <!-- CSV UPLOAD (main action - moved to top) -->
     <div class="panel">
-      <div class="panel-head"><div class="panel-title"><div class="pdot amber"></div>Upload Trade History</div><div class="panel-tag">Any broker CSV</div></div>
+      <div class="panel-head">
+        <div class="panel-title"><div class="pdot amber"></div>Upload Trade History CSV</div>
+        <div class="panel-tag">All brokers supported</div>
+      </div>
       <div class="panel-body">
-        <p style="font-size:0.78rem;color:var(--text);margin-bottom:14px;line-height:1.6">Export your trade history as CSV and upload here. We auto-detect options trades and calculate P&L correctly.</p>
         <div class="csv-drop" id="csv-drop" onclick="document.getElementById('csv-file').click()">
           <div class="csv-drop-icon">📂</div>
           <div class="csv-drop-title">Drop your trade CSV here</div>
-          <div class="csv-drop-sub">or click to browse · Zerodha · Dhan · Angel · Any broker<br>
-            <a onclick="loadSampleData(event)">→ Load 12 sample trades to try it out</a>
+          <div class="csv-drop-sub">
+            Works with: <strong style="color:var(--green)">Zerodha · Dhan · Angel One · Upstox · ICICI Direct · Kotak · HDFC Securities</strong><br>
+            <a onclick="loadSampleData(event)">→ Load 12 sample trades to try first</a>
           </div>
           <input type="file" id="csv-file" accept=".csv,.xlsx,.xls" onchange="handleCSVUpload(event)">
         </div>
@@ -785,22 +783,150 @@ a{color:var(--green);text-decoration:none;}
             <div class="ip-stat">Options: <strong id="ip-options">0</strong></div>
           </div>
         </div>
+        <!-- Behavior detection result -->
+        <div id="behavior-detected" style="display:none;margin-top:12px;background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:var(--r);padding:12px 14px;font-size:0.78rem;color:var(--text);line-height:1.7"></div>
       </div>
     </div>
+
+    <!-- IMPORTED TRADES TABLE -->
     <div class="panel" id="imported-trades-panel" style="display:none">
-      <div class="panel-head"><div class="panel-title"><div class="pdot"></div>Imported Trades</div><div class="panel-tag" id="imported-count-tag"></div></div>
-      <div style="overflow-x:auto"><table class="imported-table"><thead><tr><th>Date</th><th>Symbol</th><th>Action</th><th>Entry</th><th>Exit</th><th>Qty</th><th>P&L</th></tr></thead><tbody id="imported-tbody"></tbody></table></div>
+      <div class="panel-head">
+        <div class="panel-title"><div class="pdot"></div>Imported Trades</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="panel-tag" id="imported-count-tag"></div>
+          <button class="ph-btn" onclick="goTo('ai');runAIAnalysis()" style="background:var(--blue-bg);border-color:var(--blue-bd);color:var(--blue)">🤖 Run AI Analysis →</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="imported-table">
+          <thead><tr><th>Date</th><th>Symbol</th><th>Action</th><th>Entry</th><th>Exit</th><th>Lots</th><th>P&L</th><th>Detected</th></tr></thead>
+          <tbody id="imported-tbody"></tbody>
+        </table>
+      </div>
     </div>
+
+    <!-- BROKER CSV GUIDES — TABS -->
     <div class="panel">
-      <div class="panel-head"><div class="panel-title"><div class="pdot"></div>Zerodha CSV Format Guide</div></div>
-      <div class="panel-body">
-        <div class="modal-steps">
-          <div class="step-row"><div class="step-num">1</div><div class="step-text">Login to <a href="https://kite.zerodha.com" target="_blank">kite.zerodha.com</a> → Console → Reports</div></div>
-          <div class="step-row"><div class="step-num">2</div><div class="step-text"><strong style="color:var(--white)">Trade Book</strong> → Select date range → <strong style="color:var(--white)">Download CSV</strong></div></div>
-          <div class="step-row"><div class="step-num">3</div><div class="step-text">Upload the CSV above — we auto-detect options, calculate P&L, run AI analysis</div></div>
+      <div class="panel-head">
+        <div class="panel-title"><div class="pdot g"></div>How to Export CSV — Step by Step</div>
+      </div>
+      <div class="panel-body" style="padding-top:8px">
+        <!-- Broker tabs -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px" id="broker-tabs">
+          <button class="broker-tab-btn on" onclick="switchBrokerGuide(this,'zerodha')">Zerodha</button>
+          <button class="broker-tab-btn" onclick="switchBrokerGuide(this,'dhan')">Dhan</button>
+          <button class="broker-tab-btn" onclick="switchBrokerGuide(this,'angel')">Angel One</button>
+          <button class="broker-tab-btn" onclick="switchBrokerGuide(this,'upstox')">Upstox</button>
+          <button class="broker-tab-btn" onclick="switchBrokerGuide(this,'icici')">ICICI Direct</button>
+          <button class="broker-tab-btn" onclick="switchBrokerGuide(this,'other')">Other</button>
+        </div>
+
+        <!-- Zerodha -->
+        <div class="broker-guide on" id="guide-zerodha">
+          <div class="broker-guide-header" style="background:rgba(255,120,0,0.07);border:1px solid rgba(255,120,0,0.15);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+            <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,120,0,0.15);display:flex;align-items:center;justify-content:center;font-weight:800;color:#ff7800;font-size:0.9rem">Z</div>
+            <div><div style="font-size:0.82rem;font-weight:700;color:var(--white)">Zerodha Kite</div><div style="font-size:0.68rem;color:var(--muted)">Trade Book CSV · Recommended format</div></div>
+          </div>
+          <div class="modal-steps">
+            <div class="step-row"><div class="step-num">1</div><div class="step-text">Open <a href="https://kite.zerodha.com" target="_blank">kite.zerodha.com</a> → Click your name (top right) → <strong style="color:var(--white)">Console</strong></div></div>
+            <div class="step-row"><div class="step-num">2</div><div class="step-text">Left sidebar → <strong style="color:var(--white)">Reports</strong> → <strong style="color:var(--white)">Trade Book</strong></div></div>
+            <div class="step-row"><div class="step-num">3</div><div class="step-text">Select date range (up to 1 year) → Click <strong style="color:var(--green)">⬇ Download</strong> button → Save as CSV</div></div>
+            <div class="step-row"><div class="step-num">4</div><div class="step-text">Upload the file above ↑ — we detect Zerodha format automatically and import all NIFTY/BANKNIFTY options trades</div></div>
+          </div>
+          <div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:var(--r);padding:10px 14px;font-size:0.74rem;color:rgba(0,230,118,0.8);margin-top:12px">
+            ✅ Columns detected: <code style="background:var(--card2);padding:1px 5px;border-radius:3px;font-size:0.7rem">symbol, trade_type, price, quantity, trade_date</code>
+          </div>
+        </div>
+
+        <!-- Dhan -->
+        <div class="broker-guide" id="guide-dhan">
+          <div class="broker-guide-header" style="background:rgba(0,100,255,0.07);border:1px solid rgba(0,100,255,0.15);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+            <div style="width:32px;height:32px;border-radius:8px;background:rgba(0,100,255,0.15);display:flex;align-items:center;justify-content:center;font-weight:800;color:#0064ff;font-size:0.9rem">D</div>
+            <div><div style="font-size:0.82rem;font-weight:700;color:var(--white)">Dhan</div><div style="font-size:0.68rem;color:var(--muted)">Trade History CSV</div></div>
+          </div>
+          <div class="modal-steps">
+            <div class="step-row"><div class="step-num">1</div><div class="step-text">Open <a href="https://web.dhan.co" target="_blank">web.dhan.co</a> → Click <strong style="color:var(--white)">Portfolio</strong> in top menu</div></div>
+            <div class="step-row"><div class="step-num">2</div><div class="step-text">Click <strong style="color:var(--white)">Trade History</strong> → Select date range</div></div>
+            <div class="step-row"><div class="step-num">3</div><div class="step-text">Click <strong style="color:var(--green)">Export</strong> → Download as CSV → Upload above</div></div>
+            <div class="step-row"><div class="step-num">4</div><div class="step-text">Dhan exports: <code style="background:var(--card2);padding:1px 5px;border-radius:3px;font-size:0.68rem">symbol, side, price, qty, trade_date</code></div></div>
+          </div>
+        </div>
+
+        <!-- Angel One -->
+        <div class="broker-guide" id="guide-angel">
+          <div class="broker-guide-header" style="background:rgba(255,69,0,0.07);border:1px solid rgba(255,69,0,0.15);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+            <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,69,0,0.15);display:flex;align-items:center;justify-content:center;font-weight:800;color:#ff4500;font-size:0.9rem">A</div>
+            <div><div style="font-size:0.82rem;font-weight:700;color:var(--white)">Angel One (SmartAPI)</div><div style="font-size:0.68rem;color:var(--muted)">Orderbook CSV</div></div>
+          </div>
+          <div class="modal-steps">
+            <div class="step-row"><div class="step-num">1</div><div class="step-text">Login to <a href="https://trade.angelone.in" target="_blank">trade.angelone.in</a> → Click your profile</div></div>
+            <div class="step-row"><div class="step-num">2</div><div class="step-text">Go to <strong style="color:var(--white)">Reports</strong> → <strong style="color:var(--white)">Trade Book</strong></div></div>
+            <div class="step-row"><div class="step-num">3</div><div class="step-text">Select <strong style="color:var(--white)">FO segment</strong> → date range → Click <strong style="color:var(--green)">Download CSV</strong></div></div>
+            <div class="step-row"><div class="step-num">4</div><div class="step-text">Angel exports: <code style="background:var(--card2);padding:1px 5px;border-radius:3px;font-size:0.68rem">tradingsymbol, transaction_type, average_price, quantity</code></div></div>
+          </div>
+        </div>
+
+        <!-- Upstox -->
+        <div class="broker-guide" id="guide-upstox">
+          <div class="broker-guide-header" style="background:rgba(0,200,100,0.07);border:1px solid rgba(0,200,100,0.15);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+            <div style="width:32px;height:32px;border-radius:8px;background:rgba(0,200,100,0.15);display:flex;align-items:center;justify-content:center;font-weight:800;color:#00c864;font-size:0.9rem">U</div>
+            <div><div style="font-size:0.82rem;font-weight:700;color:var(--white)">Upstox</div><div style="font-size:0.68rem;color:var(--muted)">Trade History CSV</div></div>
+          </div>
+          <div class="modal-steps">
+            <div class="step-row"><div class="step-num">1</div><div class="step-text">Login to <a href="https://pro.upstox.com" target="_blank">pro.upstox.com</a> → Top menu → <strong style="color:var(--white)">Portfolio</strong></div></div>
+            <div class="step-row"><div class="step-num">2</div><div class="step-text"><strong style="color:var(--white)">Trade History</strong> → Select FO segment → Choose date range</div></div>
+            <div class="step-row"><div class="step-num">3</div><div class="step-text">Click <strong style="color:var(--green)">Download</strong> → Select CSV format → Upload above</div></div>
+            <div class="step-row"><div class="step-num">4</div><div class="step-text">Upstox exports: <code style="background:var(--card2);padding:1px 5px;border-radius:3px;font-size:0.68rem">symbol, side, avg_price, qty, trade_date</code></div></div>
+          </div>
+        </div>
+
+        <!-- ICICI -->
+        <div class="broker-guide" id="guide-icici">
+          <div class="broker-guide-header" style="background:rgba(255,171,0,0.07);border:1px solid rgba(255,171,0,0.15);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+            <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,171,0,0.15);display:flex;align-items:center;justify-content:center;font-weight:800;color:#ffab00;font-size:0.9rem">I</div>
+            <div><div style="font-size:0.82rem;font-weight:700;color:var(--white)">ICICI Direct / Kotak / HDFC</div><div style="font-size:0.68rem;color:var(--muted)">Order History CSV</div></div>
+          </div>
+          <div class="modal-steps">
+            <div class="step-row"><div class="step-num">1</div><div class="step-text">Login to your broker portal → Go to <strong style="color:var(--white)">Reports</strong> or <strong style="color:var(--white)">Order History</strong></div></div>
+            <div class="step-row"><div class="step-num">2</div><div class="step-text">Filter by <strong style="color:var(--white)">FO / Derivatives</strong> segment → Select date range (max 90 days usually)</div></div>
+            <div class="step-row"><div class="step-num">3</div><div class="step-text">Download as <strong style="color:var(--white)">CSV or Excel</strong> → Upload above</div></div>
+            <div class="step-row"><div class="step-num">4</div><div class="step-text">If import fails, try renaming columns to: <code style="background:var(--card2);padding:1px 5px;border-radius:3px;font-size:0.68rem">symbol, trade_type, price, quantity, trade_date</code></div></div>
+          </div>
+        </div>
+
+        <!-- Other -->
+        <div class="broker-guide" id="guide-other">
+          <div class="broker-guide-header" style="background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+            <div style="width:32px;height:32px;border-radius:8px;background:var(--border2);display:flex;align-items:center;justify-content:center;font-size:1rem">🏦</div>
+            <div><div style="font-size:0.82rem;font-weight:700;color:var(--white)">Any Other Broker</div><div style="font-size:0.68rem;color:var(--muted)">Generic CSV format</div></div>
+          </div>
+          <div style="font-size:0.78rem;color:var(--text);margin-bottom:12px;line-height:1.7">For any broker not listed above, your CSV needs at least these 4 columns (names can vary — we auto-detect):</div>
+          <div style="background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:14px;font-family:var(--mono);font-size:0.72rem;color:var(--green);margin-bottom:12px;line-height:2">
+            symbol &nbsp;|&nbsp; buy/sell &nbsp;|&nbsp; price &nbsp;|&nbsp; quantity &nbsp;|&nbsp; date
+          </div>
+          <div class="modal-steps">
+            <div class="step-row"><div class="step-num">1</div><div class="step-text">Export your trade/order history as CSV from your broker</div></div>
+            <div class="step-row"><div class="step-num">2</div><div class="step-text">Open in Excel or Google Sheets — verify it has symbol, trade type, price, quantity, and date columns</div></div>
+            <div class="step-row"><div class="step-num">3</div><div class="step-text">Upload above — if 0 trades detected, rename the columns to match: <code style="background:var(--card2);padding:1px 5px;border-radius:3px">symbol, trade_type, price, quantity, trade_date</code></div></div>
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- ZERODHA API CONNECT -->
+    <div class="broker-cards">
+      <div class="broker-card" style="border-color:rgba(255,120,0,0.2)">
+        <div class="bc-top"><div class="bc-logo" style="background:rgba(255,120,0,0.1);border:1px solid rgba(255,120,0,0.2);color:#ff7800">Z</div><div><div class="bc-name">Zerodha API</div><div class="bc-desc">Direct connect · Auto-sync</div></div></div>
+        <div style="font-size:0.72rem;color:var(--muted);line-height:1.5;margin-bottom:8px">Skip CSV entirely — connect directly via Zerodha API for automatic trade import.</div>
+        <button class="bc-btn" onclick="openZerodhaModal()">Connect Zerodha API →</button>
+      </div>
+      <div class="broker-card">
+        <div class="bc-top"><div class="bc-logo" style="background:rgba(0,230,118,0.08);border:1px solid var(--green-bd);color:var(--green)">+</div><div><div class="bc-name">More Brokers</div><div class="bc-desc">API connect coming soon</div></div></div>
+        <div style="font-size:0.72rem;color:var(--muted);line-height:1.5;margin-bottom:8px">Dhan, Angel One, Upstox API connections are in development. Use CSV import for now.</div>
+        <button class="bc-btn outline" disabled>Coming Soon</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1611,9 +1737,49 @@ function renderHeatmap(){
 }
 
 function renderPatterns(){
-  document.getElementById('pat-tbody').innerHTML=PATTERNS.map(p=>{
+  const tbody=document.getElementById('pat-tbody');
+  if(trades.length>=3){
+    // Build REAL behavioral pattern data from actual trades
+    const patterns={
+      'Revenge Trade':    {trades:trades.filter(t=>t.emotion==='revenge'),     col:'var(--red)'},
+      'FOMO Entry':       {trades:trades.filter(t=>t.emotion==='fomo'),        col:'var(--amber)'},
+      'Early Exit':       {trades:trades.filter(t=>t.setup&&t.setup.includes('Early Exit')), col:'var(--amber)'},
+      'No Stop Loss':     {trades:trades.filter(t=>t.rules&&t.rules[1]===0&&t.pnl<0), col:'var(--red)'},
+      'Fear Exit':        {trades:trades.filter(t=>t.emotion==='fear'),        col:'var(--blue)'},
+      'Overtrading':      {trades:trades.filter(t=>t.emotion==='overconfident'),col:'var(--amber)'},
+      'Calm + Setup':     {trades:trades.filter(t=>['calm','focused'].includes(t.emotion)&&t.rules&&t.rules.every(r=>r)), col:'var(--green)'},
+    };
+    // Get days for counting frequency properly
+    const allDays=new Set(trades.map(t=>t.date)).size||1;
+    const maxFreq=Math.max(1,...Object.values(patterns).map(p=>p.trades.length));
+    const rows=Object.entries(patterns)
+      .filter(([,p])=>p.trades.length>0)
+      .sort((a,b)=>{
+        // Sort: losses first by cost, then gains
+        const aCost=a[1].trades.reduce((s,t)=>s+t.pnl,0);
+        const bCost=b[1].trades.reduce((s,t)=>s+t.pnl,0);
+        return aCost-bCost;
+      });
+    if(rows.length>0){
+      tbody.innerHTML=rows.map(([name,p])=>{
+        const freq=p.trades.length;
+        const totalPnl=p.trades.reduce((s,t)=>s+t.pnl,0);
+        const avgPnl=Math.round(totalPnl/freq);
+        const pc=avgPnl>=0?'var(--green)':'var(--red)';
+        const sign=avgPnl>=0?'+':'-';
+        return `<tr>
+          <td style="font-weight:600;color:var(--text)">${name}</td>
+          <td><div class="freq-wrap"><div class="freq-track"><div class="freq-fill" style="width:${(freq/maxFreq)*100}%;background:${p.col}"></div></div><span style="font-size:0.75rem;font-weight:700;color:var(--text);min-width:16px">${freq}</span></div></td>
+          <td style="font-family:var(--mono);font-weight:700;color:${pc}">${sign}₹${Math.abs(avgPnl).toLocaleString('en-IN')}</td>
+        </tr>`;
+      }).join('');
+      return;
+    }
+  }
+  // Fallback to demo data if no trades
+  tbody.innerHTML=PATTERNS.map(p=>{
     const pc=p.pnl>=0?'var(--green)':'var(--red)';
-    return `<tr><td style="font-weight:600;color:var(--text)">${p.name}</td><td><div class="freq-wrap"><div class="freq-track"><div class="freq-fill" style="width:${(p.freq/p.max)*100}%;background:${p.col}"></div></div><span style="font-size:0.75rem;font-weight:700;color:var(--text)">${p.freq}</span></div></td><td style="font-family:var(--mono);font-weight:700;color:${pc}">${(p.pnl>=0?'+':'-')+'₹'+Math.abs(p.pnl).toLocaleString('en-IN')}</td></tr>`;
+    return `<tr><td style="font-weight:600;color:var(--muted);font-style:italic">${p.name} <span style="font-size:0.6rem;color:var(--dim)">(demo)</span></td><td><div class="freq-wrap"><div class="freq-track"><div class="freq-fill" style="width:${(p.freq/p.max)*100}%;background:${p.col};opacity:0.4"></div></div><span style="font-size:0.75rem;font-weight:700;color:var(--dim)">${p.freq}</span></div></td><td style="font-family:var(--mono);font-weight:700;color:${pc};opacity:0.4">${(p.pnl>=0?'+':'-')+'₹'+Math.abs(p.pnl).toLocaleString('en-IN')}</td></tr>`;
   }).join('');
 }
 
@@ -1632,7 +1798,12 @@ function renderEqChart(range){
     const D={'1W':{l:['Mon','Tue','Wed','Thu','Fri','Today'],r:[0,12750,-3300,11250,-2625,18450]},'1M':{l:['Wk1','Wk2','Wk3','Wk4','Now'],r:[0,8000,-2000,15000,18450]},'3M':{l:['Jan','Feb','Mar'],r:[0,25000,40000,18450]}};
     const d=D[range];labels=d.l;cum=d.r.reduce((a,v,i)=>{a.push((a[i-1]||0)+v);return a;},[]);
   }
-  eqChart=new Chart(canvas.getContext('2d'),{type:'line',data:{labels,datasets:[{data:cum,segment:{borderColor:c=>c.p0.parsed.y<=c.p1.parsed.y?'rgba(0,230,118,0.9)':'rgba(255,69,96,0.9)',backgroundColor:c=>c.p0.parsed.y<=c.p1.parsed.y?'rgba(0,230,118,0.06)':'rgba(255,69,96,0.06)'},fill:true,borderWidth:2.5,tension:0.4,pointRadius:4,pointBackgroundColor:c=>c.parsed.y>=0?'var(--green)':'var(--red)',pointBorderColor:'var(--card)',pointBorderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(13,18,24,0.97)',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleFont:{family:'Space Grotesk',size:11},bodyFont:{family:'Space Grotesk',size:11},padding:12,callbacks:{label:c=>'P&L: '+(c.parsed.y>=0?'+':'')+fmtINR(c.parsed.y)}}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(168,188,207,0.45)',font:{family:'Space Grotesk',size:10}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(168,188,207,0.45)',font:{family:'Space Grotesk',size:10},callback:v=>'₹'+(v/1000).toFixed(0)+'K'}}}}});
+  eqChart=new Chart(canvas.getContext('2d'),{type:'line',data:{labels,datasets:[{data:cum,segment:{borderColor:c=>c.p0.parsed.y<=c.p1.parsed.y?'rgba(0,230,118,0.9)':'rgba(255,69,96,0.9)',backgroundColor:c=>c.p0.parsed.y<=c.p1.parsed.y?'rgba(0,230,118,0.06)':'rgba(255,69,96,0.06)'},fill:true,borderWidth:2.5,tension:0.4,pointRadius:4,pointBackgroundColor:c=>c.parsed.y>=0?'var(--green)':'var(--red)',pointBorderColor:'var(--card)',pointBorderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(13,18,24,0.97)',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleFont:{family:'Space Grotesk',size:11},bodyFont:{family:'Space Grotesk',size:11},padding:12,callbacks:{label:c=>'P&L: '+(c.parsed.y>=0?'+':'')+fmtINR(c.parsed.y)}}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(168,188,207,0.45)',font:{family:'Space Grotesk',size:10}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(168,188,207,0.45)',font:{family:'Space Grotesk',size:10},callback:v=>{
+              const abs=Math.abs(v);
+              if(abs>=100000)return(v>=0?'':'-')+'₹'+(abs/100000).toFixed(1)+'L';
+              if(abs>=1000)return(v>=0?'':'-')+'₹'+(abs/1000).toFixed(0)+'K';
+              return(v>=0?'':'-')+'₹'+abs;
+            }}}}}});
 }
 
 function switchEq(btn,range){
@@ -1651,7 +1822,12 @@ function renderEmoChart(){
     const m={};trades.forEach(t=>{if(!m[t.emotion])m[t.emotion]={pnl:0,count:0};m[t.emotion].pnl+=t.pnl;m[t.emotion].count++;});
     labels=Object.keys(m);data=labels.map(e=>Math.round(m[e].pnl/m[e].count));
   }
-  emoChart=new Chart(canvas.getContext('2d'),{type:'bar',data:{labels,datasets:[{data,backgroundColor:data.map(v=>v>=0?'rgba(0,230,118,0.5)':'rgba(255,69,96,0.5)'),borderRadius:4,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(13,18,24,0.97)',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleFont:{family:'Space Grotesk',size:11},bodyFont:{family:'Space Grotesk',size:11},padding:12,callbacks:{label:c=>'Avg: '+(c.parsed.x>=0?'+':'')+fmtINR(c.parsed.x)}}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(168,188,207,0.45)',font:{family:'Space Grotesk',size:9},callback:v=>'₹'+(v/1000).toFixed(0)+'K'}},y:{grid:{display:false},ticks:{color:'rgba(168,188,207,0.5)',font:{family:'Space Grotesk',size:10}}}}}});
+  emoChart=new Chart(canvas.getContext('2d'),{type:'bar',data:{labels,datasets:[{data,backgroundColor:data.map(v=>v>=0?'rgba(0,230,118,0.5)':'rgba(255,69,96,0.5)'),borderRadius:4,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(13,18,24,0.97)',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleFont:{family:'Space Grotesk',size:11},bodyFont:{family:'Space Grotesk',size:11},padding:12,callbacks:{label:c=>'Avg: '+(c.parsed.x>=0?'+':'')+fmtINR(c.parsed.x)}}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(168,188,207,0.45)',font:{family:'Space Grotesk',size:9},callback:v=>{
+              const abs=Math.abs(v);
+              if(abs>=100000)return(v>=0?'':'-')+'₹'+(abs/100000).toFixed(1)+'L';
+              if(abs>=1000)return(v>=0?'':'-')+'₹'+(abs/1000).toFixed(0)+'K';
+              return(v>=0?'':'-')+'₹'+abs;
+            }}},y:{grid:{display:false},ticks:{color:'rgba(168,188,207,0.5)',font:{family:'Space Grotesk',size:10}}}}}});
 }
 
 // ══════════════════════════════════════════════════
@@ -1910,7 +2086,8 @@ function parseCSV(text,filename){
       symbol:symbolRaw, indexName, optType, strike,
       dateStr, ls, lots:0, totalQty:0,
       buyQty:0, sellQty:0,
-      buyTotal:0, sellTotal:0
+      buyTotal:0, sellTotal:0,
+      firstTime: dateRaw // keep execution time for sequence analysis
     };
 
     // Accumulate weighted average price
@@ -1965,17 +2142,22 @@ function parseCSV(text,filename){
       entry: Math.round(entry*100)/100,
       exit: Math.round(exit*100)/100,
       sl:0, target:0,
-      setup:'Imported',
-      emotion:'calm',
-      rules:[1,1,1,1,1,1,1],
+      setup: 'Imported',
+      emotion: 'calm', // will be updated by detectBehavior()
+      rules: [1,1,1,1,1,1,1],
       pnl,
-      broken:false,
-      imported:true
+      broken: false,
+      imported: true,
+      executionTime: g.firstTime || null
     });
 
     imported++;
     document.getElementById('ip-imported').textContent=imported;
   });
+
+  // ── BEHAVIORAL DETECTION ENGINE ───────────────────────────────
+  // Run after all trades are built so we can analyze sequences
+  detectBehavior(newTrades);
 
   document.getElementById('ip-bar').style.width='100%';
   document.getElementById('ip-status').textContent=`✓ ${imported} trades processed from ${found} rows.`;
@@ -1999,13 +2181,238 @@ function parseCSV(text,filename){
   setTimeout(()=>{goTo('ai');runAIAnalysis();},1800);
 }
 
+
+// ══════════════════════════════════════════════════
+// BEHAVIORAL DETECTION ENGINE
+// Automatically detects emotions from trade patterns
+// ══════════════════════════════════════════════════
+function detectBehavior(newTrades) {
+  if (!newTrades || newTrades.length === 0) return;
+
+  // Sort by date then execution time
+  const sorted = [...newTrades].sort((a, b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    return (a.executionTime || '').localeCompare(b.executionTime || '');
+  });
+
+  // Group trades by day
+  const byDay = {};
+  sorted.forEach(t => {
+    if (!byDay[t.date]) byDay[t.date] = [];
+    byDay[t.date].push(t);
+  });
+
+  // Map trade id → detected emotion + rule flags
+  const detectedEmotions = {};
+  const detectedRules = {};
+  const detectedSetups = {};
+
+  Object.entries(byDay).forEach(([date, dayTrades]) => {
+    const totalDayTrades = dayTrades.length;
+
+    dayTrades.forEach((trade, idx) => {
+      let emotion = 'calm';
+      let rules = [1,1,1,1,1,1,1];
+      let setup = 'Imported';
+      let broken = false;
+      const flags = [];
+
+      // ── RULE 1: Stop loss check ─────────────────────────────
+      // If loss is > 2x average loss, likely no stop loss
+      const avgLoss = dayTrades.filter(t=>t.pnl<0).reduce((s,t)=>s+Math.abs(t.pnl),0) /
+                      Math.max(1, dayTrades.filter(t=>t.pnl<0).length);
+      if (trade.pnl < 0 && Math.abs(trade.pnl) > avgLoss * 2.5) {
+        rules[1] = 0; // No stop loss
+        broken = true;
+        flags.push('no_sl');
+      }
+
+      // ── RULE 2: Position sizing ─────────────────────────────
+      // If lots > 2x average lots for the day, oversize
+      const avgLots = dayTrades.reduce((s,t)=>s+t.lots,0) / Math.max(1,totalDayTrades);
+      if (trade.lots > avgLots * 2.2) {
+        rules[2] = 0; // Position size too big
+        broken = true;
+        flags.push('oversize');
+      }
+
+      // ── PATTERN 1: REVENGE TRADE ────────────────────────────
+      // Trade came after 1+ consecutive losses on the same day
+      if (idx >= 1) {
+        const prevTrade = dayTrades[idx - 1];
+        // Previous trade was a loss
+        if (prevTrade.pnl < 0) {
+          emotion = 'revenge';
+          rules[5] = 0; // Broke "no revenge trade after 2+ losses" rule
+          broken = true;
+          setup = 'Revenge Entry';
+          flags.push('revenge');
+        }
+        // Two consecutive losses before this trade
+        if (idx >= 2 && dayTrades[idx-1].pnl < 0 && dayTrades[idx-2].pnl < 0) {
+          emotion = 'revenge';
+          rules[5] = 0;
+          broken = true;
+          setup = 'Double-Loss Revenge';
+          flags.push('revenge_strong');
+        }
+      }
+
+      // ── PATTERN 2: FOMO ENTRY ───────────────────────────────
+      // Entry price is significantly higher/worse than earlier trades today
+      // (chased a move that already happened)
+      if (idx >= 1) {
+        const earlierTrades = dayTrades.slice(0, idx);
+        const avgEarlierEntry = earlierTrades.reduce((s,t)=>s+t.entry,0) / earlierTrades.length;
+        const isBuyOption = trade.action.includes('BUY');
+        // FOMO BUY: bought at much higher price than earlier (chased up)
+        // FOMO SELL: bought PE at much higher price than earlier (chased down)
+        if (isBuyOption && trade.entry > avgEarlierEntry * 1.4 && emotion === 'calm') {
+          emotion = 'fomo';
+          rules[0] = 0; // Didn't confirm setup
+          broken = true;
+          setup = 'FOMO Entry';
+          flags.push('fomo');
+        }
+      }
+
+      // ── PATTERN 3: OVERTRADING ──────────────────────────────
+      // More than 5 trades in a single day = overtrading / emotional
+      if (totalDayTrades > 5 && emotion === 'calm') {
+        emotion = 'overconfident';
+        rules[3] = 0; // Too many trades
+        broken = true;
+        flags.push('overtrading');
+      }
+
+      // ── PATTERN 4: EARLY EXIT ───────────────────────────────
+      // Profitable trade but exit was only 30-60% of the move
+      if (trade.pnl > 0 && trade.exit > 0 && trade.entry > 0) {
+        const move = trade.exit - trade.entry;
+        const potentialMove = trade.entry * 0.5; // Options can move 50%+
+        // If they exited at less than 40% of a big move, likely fear exit
+        if (move > 0 && move < potentialMove * 0.4 && trade.pnl > 0 && emotion === 'calm') {
+          emotion = 'fear';
+          rules[6] = 0; // Didn't exit at planned target
+          setup = 'Early Exit';
+          broken = true;
+          flags.push('early_exit');
+        }
+      }
+
+      // ── PATTERN 5: AFTERNOON TRADING ───────────────────────
+      // Trades after 12:30 PM IST tend to be emotional
+      if (trade.executionTime) {
+        const timeStr = trade.executionTime || '';
+        const hourMatch = timeStr.match(/(\d{2}):(\d{2})/);
+        if (hourMatch) {
+          const hour = parseInt(hourMatch[1]);
+          const min = parseInt(hourMatch[2]);
+          if (hour >= 12 && min >= 30 && emotion === 'calm') {
+            // Mark afternoon trades (not necessarily emotional, just flagged)
+            setup = setup === 'Imported' ? 'Afternoon Trade' : setup;
+          }
+        }
+      }
+
+      // ── PATTERN 6: BIG LOSS = possible no-SL ───────────────
+      // Single trade loss > 5000 = likely no stop loss
+      if (trade.pnl < -5000) {
+        rules[1] = 0;
+        if (emotion === 'calm') emotion = 'fear';
+        broken = true;
+        flags.push('big_loss');
+      }
+
+      // ── PATTERN 7: WINNING STREAK = CALM ────────────────────
+      // 2+ consecutive wins → calm/focused state
+      if (idx >= 2 && dayTrades[idx-1].pnl > 0 && dayTrades[idx-2].pnl > 0 && emotion === 'calm') {
+        emotion = 'focused';
+      }
+
+      // Store detected values
+      detectedEmotions[trade.id] = emotion;
+      detectedRules[trade.id] = rules;
+      detectedSetups[trade.id] = setup;
+
+      // Apply back to trade object
+      trade.emotion = emotion;
+      trade.rules = rules;
+      trade.setup = setup;
+      trade.broken = broken;
+      trade.behaviorFlags = flags;
+    });
+  });
+
+  // Count what we detected
+  const counts = {revenge:0, fomo:0, fear:0, overconfident:0, focused:0, calm:0};
+  newTrades.forEach(t => { if(counts[t.emotion]!==undefined) counts[t.emotion]++; });
+
+  const detectedMsg = [];
+  if(counts.revenge > 0) detectedMsg.push(`${counts.revenge} revenge trades`);
+  if(counts.fomo > 0) detectedMsg.push(`${counts.fomo} FOMO entries`);
+  if(counts.fear > 0) detectedMsg.push(`${counts.fear} fear exits`);
+  if(counts.overconfident > 0) detectedMsg.push(`${counts.overconfident} overtrading`);
+
+  if(detectedMsg.length > 0) {
+    showToast(`🧠 Detected: ${detectedMsg.join(' · ')}`);
+    console.log('Behavioral detection:', counts);
+  }
+}
+
 function showImportedTable(newTrades){
-  const panel=document.getElementById('imported-trades-panel');panel.style.display='block';
-  document.getElementById('imported-count-tag').textContent=newTrades.length+' trades';
-  document.getElementById('imported-tbody').innerHTML=newTrades.slice(0,20).map(t=>{
+  const panel=document.getElementById('imported-trades-panel');
+  panel.style.display='block';
+  const total=newTrades.length;
+  const tagged=newTrades.filter(t=>t.emotion&&t.emotion!=='calm').length;
+  document.getElementById('imported-count-tag').textContent=total+' trades · '+tagged+' behavioral flags';
+
+  // Emotion badge map
+  const emoBadge={
+    calm:   ['tg','😌 Calm'],
+    focused:['tg','🧘 Focused'],
+    fomo:   ['ta','🚀 FOMO'],
+    fear:   ['tb','😨 Fear'],
+    revenge:['tr','😤 Revenge'],
+    greed:  ['ta','🤑 Greed'],
+    overconfident:['ta','😎 Overtrade'],
+  };
+
+  document.getElementById('imported-tbody').innerHTML=newTrades.slice(0,30).map(t=>{
     const pc=t.pnl>0?'var(--green)':t.pnl<0?'var(--red)':'var(--muted)';
-    return `<tr><td>${t.date}</td><td style="color:var(--white);font-weight:600">${t.symbol} ${t.strike}</td><td>${t.action}</td><td style="font-family:var(--mono)">₹${t.entry}</td><td style="font-family:var(--mono)">${t.exit?'₹'+t.exit:'—'}</td><td>${t.lots}</td><td style="font-family:var(--mono);color:${pc}">${t.pnl?(t.pnl>=0?'+':'')+fmtINR(t.pnl):'—'}</td></tr>`;
-  }).join('');
+    const [ecls,elbl]=emoBadge[t.emotion]||['','—'];
+    const emoHtml=ecls?`<span class="tag ${ecls}" style="font-size:0.6rem">${elbl}</span>`:`<span style="color:var(--dim);font-size:0.7rem">${t.emotion||'—'}</span>`;
+    return `<tr>
+      <td style="color:var(--muted);font-size:0.7rem;white-space:nowrap">${t.date}</td>
+      <td style="color:var(--white);font-weight:600;white-space:nowrap">${t.symbol} <span style="color:var(--muted);font-size:0.68rem">${t.strike||''}</span></td>
+      <td style="font-size:0.72rem;color:var(--muted)">${t.action}</td>
+      <td style="font-family:var(--mono);font-size:0.78rem">₹${t.entry}</td>
+      <td style="font-family:var(--mono);font-size:0.78rem">${t.exit?'₹'+t.exit:'—'}</td>
+      <td style="font-size:0.78rem">${t.lots}</td>
+      <td style="font-family:var(--mono);font-weight:700;color:${pc}">${t.pnl?(t.pnl>=0?'+':'')+fmtINR(t.pnl):'—'}</td>
+      <td>${emoHtml}</td>
+    </tr>`;
+  }).join('')+(newTrades.length>30?`<tr><td colspan="8" style="text-align:center;padding:10px;color:var(--muted);font-size:0.72rem">... and ${newTrades.length-30} more trades</td></tr>`:'');
+
+  // Show behavior detection summary
+  const bdEl=document.getElementById('behavior-detected');
+  if(bdEl){
+    const revenge=newTrades.filter(t=>t.emotion==='revenge').length;
+    const fomo=newTrades.filter(t=>t.emotion==='fomo').length;
+    const fear=newTrades.filter(t=>t.emotion==='fear').length;
+    const over=newTrades.filter(t=>t.emotion==='overconfident').length;
+    const focused=newTrades.filter(t=>t.emotion==='focused').length;
+    const parts=[];
+    if(revenge)parts.push(`<span style="color:var(--red)">😤 ${revenge} revenge trades</span>`);
+    if(fomo)parts.push(`<span style="color:var(--amber)">🚀 ${fomo} FOMO entries</span>`);
+    if(fear)parts.push(`<span style="color:var(--blue)">😨 ${fear} fear exits</span>`);
+    if(over)parts.push(`<span style="color:var(--amber)">😎 ${over} overtrades</span>`);
+    if(focused)parts.push(`<span style="color:var(--green)">🧘 ${focused} focused trades</span>`);
+    if(parts.length){
+      bdEl.style.display='block';
+      bdEl.innerHTML='<strong style="color:var(--white)">🧠 Behavioral patterns detected automatically:</strong><br>'+parts.join(' &nbsp;·&nbsp; ')+'<br><span style="font-size:0.7rem;color:var(--dim)">Based on trade sequence analysis. Manual journal logging gives more accurate results.</span>';
+    }
+  }
 }
 
 function loadSampleData(e){
