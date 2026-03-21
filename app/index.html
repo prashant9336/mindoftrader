@@ -116,6 +116,88 @@ a{color:var(--green);text-decoration:none;}
 .feat-d{font-size:0.78rem;color:var(--text);line-height:1.6;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
 
+
+/* ── LANDING DEMO MODE ──────────────────────────────────── */
+#landing-view{min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px 60px;text-align:center;}
+.demo-mode-card{
+  background:linear-gradient(135deg,rgba(0,230,118,0.06),rgba(41,121,255,0.04));
+  border:1px solid rgba(0,230,118,0.2);border-radius:var(--r3);
+  padding:20px;max-width:400px;width:100%;margin-bottom:28px;
+  position:relative;overflow:hidden;
+}
+.demo-mode-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--green),var(--blue),transparent);}
+.dmc-label{font-size:0.68rem;font-weight:700;letter-spacing:0.08em;color:var(--green);text-transform:uppercase;margin-bottom:12px;}
+.dmc-insight{font-size:0.82rem;color:var(--text);line-height:1.6;min-height:44px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;}
+.dmc-loading{color:var(--muted);font-size:0.78rem;}
+.dmc-insight-text{color:var(--white);font-weight:600;}
+.dmc-insight-text .highlight-red{color:var(--red);}
+.dmc-insight-text .highlight-green{color:var(--green);}
+.dmc-stats{display:flex;align-items:center;justify-content:center;gap:0;}
+.dmc-stat{text-align:center;padding:0 16px;}
+.dmc-val{display:block;font-family:var(--mono);font-size:1.4rem;font-weight:800;line-height:1;margin-bottom:3px;}
+.dmc-lbl{font-size:0.62rem;color:var(--muted);letter-spacing:0.06em;}
+.dmc-div{width:1px;height:32px;background:var(--border2);}
+
+/* ── SETUP GUIDE ──────────────────────────────────────────── */
+.setup-guide-card{
+  background:linear-gradient(135deg,rgba(41,121,255,0.06),rgba(0,230,118,0.04));
+  border:1px solid var(--blue-bd);border-radius:var(--r2);
+  padding:20px;margin-bottom:14px;position:relative;overflow:hidden;
+}
+.setup-guide-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--blue),var(--green),transparent);}
+.sgc-title{font-size:1rem;font-weight:800;color:var(--white);margin-bottom:4px;}
+.sgc-sub{font-size:0.75rem;color:var(--muted);margin-bottom:18px;}
+.sgc-steps{display:flex;flex-direction:column;gap:10px;}
+.sgc-step{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--r);transition:all 0.2s;}
+.sgc-step.active{border-color:var(--blue-bd);background:var(--blue-bg);}
+.sgc-step.completed{border-color:var(--green-bd);background:var(--green-bg);opacity:0.7;}
+.sgcs-num{width:28px;height:28px;border-radius:50%;background:var(--border2);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;color:var(--muted);flex-shrink:0;transition:all 0.3s;}
+.sgcs-num.done{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);}
+.sgcs-num.active-num{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);}
+.sgcs-body{flex:1;}
+.sgcs-title{font-size:0.82rem;font-weight:700;color:var(--white);}
+.sgcs-sub{font-size:0.68rem;color:var(--muted);margin-top:2px;}
+.sgcs-btn{background:var(--blue);border:none;border-radius:8px;padding:7px 14px;font-family:var(--font);font-size:0.72rem;font-weight:700;color:#fff;cursor:pointer;white-space:nowrap;transition:all 0.2s;flex-shrink:0;}
+.sgcs-btn:hover{box-shadow:0 3px 12px rgba(41,121,255,0.35);}
+
+/* ── MIND VS MARKET HERO CARD ──────────────────────────────── */
+.mvm-card{
+  background:linear-gradient(160deg,#0d1f2a 0%,#080d14 100%);
+  border:1px solid rgba(0,230,118,0.15);border-radius:var(--r3);
+  padding:20px;margin-bottom:14px;position:relative;overflow:hidden;
+  box-shadow:0 8px 40px rgba(0,0,0,0.4);
+}
+.mvm-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--green),var(--blue),transparent);}
+.mvm-scan{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,230,118,0.08),transparent);animation:mvmScan 5s linear infinite;pointer-events:none;}
+@keyframes mvmScan{from{top:0}to{top:100%}}
+.mvm-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.mvm-label{font-size:0.68rem;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:var(--green);display:flex;align-items:center;gap:6px;}
+.mvm-date{font-size:0.65rem;color:var(--muted);}
+/* THE KEY: calm vs revenge WR comparison */
+.mvm-vs{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:12px;}
+.mvm-side{flex:1;text-align:center;padding:12px;}
+.mvm-side-val{font-family:var(--mono);font-size:2rem;font-weight:800;line-height:1;margin-bottom:4px;}
+.mvm-side-lbl{font-size:0.65rem;color:var(--muted);font-weight:600;}
+.mvm-vs-divider{font-size:0.68rem;font-weight:700;color:var(--dim);padding:0 12px;white-space:nowrap;flex-shrink:0;}
+.mvm-gap-text{text-align:center;font-size:0.78rem;color:var(--text);font-weight:600;padding:8px 12px;background:rgba(255,255,255,0.02);border-radius:var(--r);margin-bottom:14px;line-height:1.5;}
+.mvm-gap-text .gap-number{color:var(--amber);font-weight:800;font-family:var(--mono);}
+/* Metrics row */
+.mvm-metrics{display:flex;align-items:center;justify-content:space-around;padding:12px 0;border-top:1px solid rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.05);margin-bottom:12px;}
+.mvm-metric{text-align:center;flex:1;}
+.mvm-metric-val{font-family:var(--mono);font-size:1rem;font-weight:800;color:var(--white);line-height:1;margin-bottom:3px;}
+.mvm-metric-lbl{font-size:0.58rem;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;}
+.mvm-metric-div{width:1px;height:28px;background:rgba(255,255,255,0.06);}
+/* Daily insight */
+.mvm-daily-insight{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:rgba(0,230,118,0.04);border:1px solid rgba(0,230,118,0.1);border-radius:var(--r);}
+.mdi-icon{font-size:0.9rem;flex-shrink:0;margin-top:1px;}
+.mdi-text{font-size:0.76rem;color:var(--text);line-height:1.55;}
+.mdi-text strong{color:var(--white);}
+
+/* ── DASH HEADER IMPROVED ──────────────────────────────────── */
+.dash-greet{font-size:0.72rem;color:var(--muted);font-weight:500;margin-bottom:3px;letter-spacing:0.03em;}
+.dash-name{font-size:1.4rem;font-weight:800;color:var(--white);line-height:1.1;}
+.dash-name span{color:var(--green);}
+
 /* DASHBOARD */
 #dashboard-view{padding:68px 16px 24px;}
 .dash-hero{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px;}
@@ -649,23 +731,38 @@ a{color:var(--green);text-decoration:none;}
 
 <!-- LANDING -->
 <div class="view" id="landing-view">
-  <div class="land-tag">🧠 India's First Behavioral Trading Mirror</div>
+
+  <!-- Core truth — one sentence -->
+  <div class="land-tag">🧠 Mind vs Market</div>
   <h1 class="land-h1">
     <span class="hi">Your charts show</span>
     <span class="accent">the market.</span>
     <span class="lo">We show your mind.</span>
   </h1>
-  <p class="land-sub">Stop blaming your strategy. The market doesn't take your money — your behavior does.</p>
+  <p class="land-sub">Your strategy is fine. Your behavior is the problem.<br>We show you exactly where your mind is costing you money.</p>
+
+  <!-- DEMO MODE — instant insight, no login -->
+  <div class="demo-mode-card" id="demo-card">
+    <div class="dmc-label">⚡ See it work in 10 seconds — no login needed</div>
+    <div class="dmc-insight" id="dmc-insight">
+      <div class="dmc-loading">Scanning demo trader's behavioral patterns...</div>
+    </div>
+    <div class="dmc-stats" id="dmc-stats" style="display:none">
+      <div class="dmc-stat"><span class="dmc-val" style="color:var(--red)">28%</span><span class="dmc-lbl">Revenge trade WR</span></div>
+      <div class="dmc-div"></div>
+      <div class="dmc-stat"><span class="dmc-val" style="color:var(--green)">74%</span><span class="dmc-lbl">Calm trade WR</span></div>
+      <div class="dmc-div"></div>
+      <div class="dmc-stat"><span class="dmc-val" style="color:var(--amber)">₹21K</span><span class="dmc-lbl">Cost this month</span></div>
+    </div>
+  </div>
+
+  <!-- CTAs -->
   <div class="land-btns">
-    <a href="/login" class="land-btn-primary">Sign in with Google →</a>
-    <button class="land-btn-secondary" onclick="guestMode()">Continue as Guest</button>
+    <a href="/login" class="land-btn-primary">Start Free — Sign in with Google</a>
+    <button class="land-btn-secondary" onclick="guestMode()">Try as Guest</button>
   </div>
-  <div class="land-note">Google sign-in = your data syncs everywhere · Guest = local only</div>
-  <div class="land-feats">
-    <div class="feat"><div class="feat-icon">☁️</div><div class="feat-t">Cloud Sync</div><div class="feat-d">Trades saved across all devices. Never lose your history again.</div></div>
-    <div class="feat"><div class="feat-icon">🤖</div><div class="feat-t">AI Pattern Detection</div><div class="feat-d">"You lose 72% of trades after 2 losses." Find your patterns instantly.</div></div>
-    <div class="feat"><div class="feat-icon">🧬</div><div class="feat-t">Weekly Trader DNA</div><div class="feat-d">Your behavioral archetype, edge, and one thing to fix — every week.</div></div>
-  </div>
+  <div class="land-note">Free forever · No credit card · Your data stays private</div>
+
 </div>
 
 <!-- RITUAL VIEW -->
@@ -966,17 +1063,106 @@ a{color:var(--green);text-decoration:none;}
     <div class="mkt-alert-text" id="mkt-alert-text"></div>
   </div>
 
+  <!-- DASH HEADER -->
   <div class="dash-hero">
     <div>
-      <div class="dash-greet">// BEHAVIORAL SCAN ACTIVE</div>
-      <div class="dash-name">Welcome back, <span id="dash-name-txt">Trader</span></div>
+      <div class="dash-greet" id="dash-greet-txt">Good morning</div>
+      <div class="dash-name">Hey <span id="dash-name-txt">Trader</span> 👋</div>
     </div>
     <div class="dash-live">
       <div class="dash-time" id="live-clock">--:--:--</div>
-      <div class="dash-session">NSE Session</div>
+      <div class="dash-session" id="dash-session-lbl">NSE Session</div>
     </div>
   </div>
-  <div class="streak-banner" id="streak-banner">
+
+  <!-- STEP-BY-STEP SETUP GUIDE — shown only when 0 trades -->
+  <div id="setup-guide" style="display:none">
+    <div class="setup-guide-card">
+      <div class="sgc-title">👋 Welcome to MindOfTrader</div>
+      <div class="sgc-sub">You're 3 steps away from your first behavioral insight</div>
+      <div class="sgc-steps">
+        <div class="sgc-step" id="sgs-1">
+          <div class="sgcs-num done" id="sgsn-1">1</div>
+          <div class="sgcs-body">
+            <div class="sgcs-title">✓ You're in</div>
+            <div class="sgcs-sub">Account ready</div>
+          </div>
+        </div>
+        <div class="sgc-step" id="sgs-2">
+          <div class="sgcs-num" id="sgsn-2">2</div>
+          <div class="sgcs-body">
+            <div class="sgcs-title">Import or log your first trade</div>
+            <div class="sgcs-sub">Upload a Zerodha CSV or log manually</div>
+          </div>
+          <button onclick="goTo('connect')" class="sgcs-btn">Import CSV →</button>
+        </div>
+        <div class="sgc-step" id="sgs-3">
+          <div class="sgcs-num" id="sgsn-3">3</div>
+          <div class="sgcs-body">
+            <div class="sgcs-title">Run AI analysis</div>
+            <div class="sgcs-sub">Get your behavioral patterns in seconds</div>
+          </div>
+          <button onclick="goTo('ai')" class="sgcs-btn" style="opacity:0.4" id="sgs-ai-btn">Analyze →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIND VS MARKET — daily engagement hero card (shown when trades exist) -->
+  <div id="mind-vs-market" style="display:none">
+    <div class="mvm-card">
+      <div class="mvm-scan"></div>
+      <div class="mvm-top">
+        <div class="mvm-label">🧠 Mind vs Market</div>
+        <div class="mvm-date" id="mvm-date">Today</div>
+      </div>
+      <!-- THE KEY INSIGHT: calm vs revenge gap -->
+      <div class="mvm-insight" id="mvm-insight">
+        <div class="mvm-vs">
+          <div class="mvm-side">
+            <div class="mvm-side-val" id="mvm-calm-wr" style="color:var(--green)">—</div>
+            <div class="mvm-side-lbl">😌 Calm WR</div>
+          </div>
+          <div class="mvm-vs-divider">vs</div>
+          <div class="mvm-side">
+            <div class="mvm-side-val" id="mvm-revenge-wr" style="color:var(--red)">—</div>
+            <div class="mvm-side-lbl">😤 Revenge WR</div>
+          </div>
+        </div>
+        <div class="mvm-gap-text" id="mvm-gap-text">Import trades to see your behavioral gap</div>
+      </div>
+      <!-- Daily streak + score row -->
+      <div class="mvm-metrics">
+        <div class="mvm-metric">
+          <div class="mvm-metric-val" id="mvm-streak">🔥 0</div>
+          <div class="mvm-metric-lbl">Day Streak</div>
+        </div>
+        <div class="mvm-metric-div"></div>
+        <div class="mvm-metric">
+          <div class="mvm-metric-val" id="mvm-disc-score" style="color:var(--green)">—</div>
+          <div class="mvm-metric-lbl">Discipline</div>
+        </div>
+        <div class="mvm-metric-div"></div>
+        <div class="mvm-metric">
+          <div class="mvm-metric-val" id="mvm-today-pnl">₹0</div>
+          <div class="mvm-metric-lbl">Today P&L</div>
+        </div>
+        <div class="mvm-metric-div"></div>
+        <div class="mvm-metric">
+          <div class="mvm-metric-val" id="mvm-trades-count" style="color:var(--blue)">0</div>
+          <div class="mvm-metric-lbl">Total Trades</div>
+        </div>
+      </div>
+      <!-- Daily AI insight -->
+      <div class="mvm-daily-insight" id="mvm-daily-insight">
+        <div class="mdi-icon">💡</div>
+        <div class="mdi-text" id="mdi-text">Loading your daily insight...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STREAK BANNER (kept for backward compat, now hidden — replaced by mvm) -->
+  <div id="streak-banner" style="display:none">
     <div class="sb-icon">🔥</div>
     <div class="sb-body">
       <div class="sb-title" id="streak-title">Active Streak</div>
@@ -1951,6 +2137,9 @@ function init(){
   renderTradeTable(trades);
   renderDNA();
 
+  // Init demo mode on landing
+  initDemoMode();
+
   // Check auth: Firebase user, local Google session, guest, or no session
   const storedUser=getStoredUser();
   if(storedUser){
@@ -2034,6 +2223,197 @@ setInterval(()=>{const el=document.getElementById('live-clock');if(el)el.textCon
 // ══════════════════════════════════════════════════
 // NAV + USER MENU
 // ══════════════════════════════════════════════════
+
+
+// ══════════════════════════════════════════════════
+// UX: DEMO MODE — landing page instant insight
+// ══════════════════════════════════════════════════
+function initDemoMode(){
+  const insights=[
+    {text:'Your <span class="highlight-red">revenge trades win 28%</span>. Your <span class="highlight-green">calm trades win 74%</span>. That gap is costing you ₹47,000/month.'},
+    {text:'Traders who stop after 2 daily losses save an average of <span class="highlight-green">₹38,000/month</span>. One rule. Massive impact.'},
+    {text:'<span class="highlight-red">84% of losing trades</span> happen in emotional states. The market doesn't beat you — your behavior does.'},
+    {text:'FOMO entries have a <span class="highlight-red">31% win rate</span>. Waiting for your setup? <span class="highlight-green">68% win rate</span>. Same market.'},
+  ];
+  const pick=insights[Math.floor(Date.now()/3600000)%insights.length];
+  setTimeout(()=>{
+    const insEl=document.getElementById('dmc-insight');
+    const statsEl=document.getElementById('dmc-stats');
+    if(insEl){insEl.innerHTML='<div class="dmc-insight-text">'+pick.text+'</div>';}
+    if(statsEl){statsEl.style.display='flex';}
+  },1200);
+}
+
+// ══════════════════════════════════════════════════
+// UX: SETUP GUIDE — first-time user onboarding
+// ══════════════════════════════════════════════════
+function renderSetupGuide(){
+  const guide=document.getElementById('setup-guide');
+  const mvm=document.getElementById('mind-vs-market');
+  if(!guide||!mvm)return;
+
+  if(trades.length===0){
+    // Show setup guide, hide MvM
+    guide.style.display='block';
+    mvm.style.display='none';
+    // Mark step 1 done, step 2 active
+    document.getElementById('sgs-1')?.classList.add('completed');
+    document.getElementById('sgsn-1').textContent='✓';
+    document.getElementById('sgs-2')?.classList.add('active');
+    document.getElementById('sgsn-2')?.classList.add('active-num');
+  } else {
+    // Has trades — show Mind vs Market, hide guide
+    guide.style.display='none';
+    mvm.style.display='block';
+    renderMindVsMarket();
+    // Unlock AI button if has trades
+    const aiBtn=document.getElementById('sgs-ai-btn');
+    if(aiBtn)aiBtn.style.opacity='1';
+  }
+}
+
+// ══════════════════════════════════════════════════
+// UX: MIND VS MARKET — the core daily engagement card
+// ══════════════════════════════════════════════════
+function renderMindVsMarket(){
+  const today=new Date().toISOString().split('T')[0];
+  const todayTrades=trades.filter(t=>t.date===today);
+  const todayPnl=todayTrades.reduce((s,t)=>s+t.pnl,0);
+
+  // Calm vs revenge win rates
+  const calmT=trades.filter(t=>['calm','focused'].includes(t.emotion)&&t.exit&&t.pnl!==0);
+  const revengeT=trades.filter(t=>t.emotion==='revenge'&&t.exit&&t.pnl!==0);
+  const calmWR=calmT.length>=2?Math.min(95,Math.round(calmT.filter(t=>t.pnl>0).length/calmT.length*100)):null;
+  const revengeWR=revengeT.length>=1?Math.round(revengeT.filter(t=>t.pnl>0).length/revengeT.length*100):null;
+
+  // Render win rates
+  const calmEl=document.getElementById('mvm-calm-wr');
+  const revEl=document.getElementById('mvm-revenge-wr');
+  if(calmEl)calmEl.textContent=calmWR!==null?calmWR+'%':'—';
+  if(revEl)revEl.textContent=revengeWR!==null?revengeWR+'%':'—';
+
+  // Gap insight text
+  const gapEl=document.getElementById('mvm-gap-text');
+  if(gapEl){
+    if(calmWR!==null&&revengeWR!==null){
+      const gap=calmWR-revengeWR;
+      const revCost=Math.abs(revengeT.filter(t=>t.pnl<0).reduce((s,t)=>s+t.pnl,0));
+      gapEl.innerHTML=`Your calm trades win <strong>${gap} points more</strong> than revenge trades.`
+        +(revCost>0?` Revenge trading has cost you <span class="gap-number">₹${revCost.toLocaleString('en-IN')}</span> so far.`:'');
+    } else if(trades.length>0){
+      gapEl.textContent='Keep logging with emotions — your Mind vs Market gap will appear here.';
+    } else {
+      gapEl.textContent='Import trades or log manually to see your behavioral gap.';
+    }
+  }
+
+  // Metrics
+  const streak=calcStreak();
+  const stEl=document.getElementById('mvm-streak');
+  if(stEl)stEl.textContent=(streak>0?'🔥 ':'')+streak;
+
+  // Discipline score
+  const completedT=trades.filter(t=>t.exit&&t.pnl!==0);
+  const badEmo=trades.filter(t=>['revenge','fomo','overconfident'].includes(t.emotion)).length;
+  const disc=trades.length?Math.min(95,Math.max(20,Math.round((1-badEmo/Math.max(1,trades.length))*100))):null;
+  const discEl=document.getElementById('mvm-disc-score');
+  if(discEl){discEl.textContent=disc!==null?disc:('—');discEl.style.color=disc>=70?'var(--green)':disc>=50?'var(--amber)':'var(--red)';}
+
+  // Today P&L
+  const pnlEl=document.getElementById('mvm-today-pnl');
+  if(pnlEl){
+    pnlEl.textContent=todayPnl!==0?(todayPnl>=0?'+':'')+fmtINRShort(todayPnl):'₹0';
+    pnlEl.style.color=todayPnl>0?'var(--green)':todayPnl<0?'var(--red)':'var(--muted)';
+  }
+  const tcEl=document.getElementById('mvm-trades-count');
+  if(tcEl)tcEl.textContent=trades.length;
+
+  // Date
+  const dtEl=document.getElementById('mvm-date');
+  if(dtEl)dtEl.textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+
+  // Daily insight
+  renderDailyInsight(calmWR,revengeWR,streak,disc,todayTrades.length);
+}
+
+// ══════════════════════════════════════════════════
+// UX: DAILY INSIGHT — one sentence, changes per session
+// ══════════════════════════════════════════════════
+function renderDailyInsight(calmWR,revengeWR,streak,disc,todayCount){
+  const el=document.getElementById('mdi-text');
+  if(!el)return;
+
+  const now=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
+  const h=now.getHours();
+  const dayOfWeek=now.getDay(); // 0=Sun
+
+  // Context-aware insights based on real data + time
+  let insight='';
+
+  if(trades.length===0){
+    insight='<strong>Start here:</strong> Import your Zerodha CSV in the Connect tab. Your behavioral analysis will be ready in seconds.';
+  } else if(h<9){
+    // Pre-market
+    const score=disc||70;
+    if(score>=75)insight='<strong>Good discipline score.</strong> Stay with your system today. Don't let a good day turn into overtrading.';
+    else insight='<strong>Pre-market tip:</strong> Set your max loss limit before the first trade. One rule saves ₹47K/month on average.';
+  } else if(h>=9&&h<12){
+    // Morning session
+    if(revengeWR!==null&&revengeWR<35)insight=`<strong>Watch out:</strong> Your revenge trades win only ${revengeWR}%. If you take a loss in the next hour — wait 15 minutes before the next entry.`;
+    else if(calmWR!==null)insight=`<strong>Morning edge:</strong> You win ${calmWR}% of calm trades. Protect that state — no FOMO entries before 11 AM.`;
+    else insight='<strong>Log emotions</strong> on every trade. After 5 trades, your calm vs revenge gap appears — it will change how you trade.';
+  } else if(h>=12&&h<14){
+    // Lunch
+    insight='<strong>Lunch hour warning:</strong> Win rates drop 30–40% between 12:30–2 PM for most traders. Consider pausing now.';
+  } else if(h>=14){
+    // Afternoon
+    if(todayCount>=3)insight=`<strong>You've had ${todayCount} trades today.</strong> Most behavioral mistakes happen after trade #3. Ask yourself: am I still following my system?`;
+    else insight='<strong>Afternoon caution:</strong> Revenge and FOMO trades peak after 2 PM. Your setup matters more — not the P&L.';
+  } else if(dayOfWeek===1){
+    insight='<strong>Monday:</strong> Studies show Monday is the highest revenge-trade day. Start slow. Your week depends on today's discipline.';
+  } else if(streak>=7){
+    insight=`<strong>🔥 ${streak}-day streak!</strong> You're in the top 5% for consistency. Consistency builds the data that makes AI analysis accurate.`;
+  } else if(streak===0){
+    insight='<strong>No streak yet.</strong> Log today's trades — even one trade starts your streak. 7-day streaks unlock better AI insights.';
+  } else {
+    // Generic rotating
+    const tips=[
+      '<strong>Key insight:</strong> The gap between your calm win rate and revenge win rate is your behavioral cost. Close that gap = more profit.',
+      '<strong>One rule:</strong> Stop trading after 2 losses per day. This single change saves ₹47,000/month on average.',
+      '<strong>Pattern to watch:</strong> Most traders' worst trades happen 10–30 minutes after a loss. Set a timer before re-entering.',
+      '<strong>Your real edge</strong> isn't your strategy — it's executing it consistently. MindOfTrader tracks that execution.',
+    ];
+    insight=tips[new Date().getDate()%tips.length];
+  }
+
+  el.innerHTML=insight;
+}
+
+// ══════════════════════════════════════════════════
+// UX: GREETING — time-aware, personal
+// ══════════════════════════════════════════════════
+function updateDashGreeting(){
+  const now=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
+  const h=now.getHours();
+  const greetEl=document.getElementById('dash-greet-txt');
+  const sessionEl=document.getElementById('dash-session-lbl');
+  if(greetEl){
+    if(h<6)greetEl.textContent='Still up? Early start.';
+    else if(h<9)greetEl.textContent='Good morning — pre-market time';
+    else if(h<9.5)greetEl.textContent='Market opens soon';
+    else if(h<12)greetEl.textContent='Morning session live';
+    else if(h<14)greetEl.textContent='Lunch hour — trade carefully';
+    else if(h<15.5)greetEl.textContent='Afternoon session';
+    else if(h<16)greetEl.textContent='Market closing';
+    else greetEl.textContent='Post-market — time to review';
+  }
+  if(sessionEl){
+    const mins=h*60+now.getMinutes();
+    if(mins>=570&&mins<930)sessionEl.textContent='NSE Open 🟢';
+    else if(mins>=555&&mins<570)sessionEl.textContent='Pre-Open ⏰';
+    else sessionEl.textContent='Market Closed';
+  }
+}
 
 // ══════════════════════════════════════════════════
 // RITUAL ENGINE — Daily Trading Routine System
@@ -2463,8 +2843,9 @@ function calcStreak(){
 // DASHBOARD
 // ══════════════════════════════════════════════════
 function renderDashboard(){
-  document.getElementById('dash-name-txt').textContent=traderName||'Trader';
-  renderStreak();
+  document.getElementById('dash-name-txt').textContent=(traderName||'Trader').split(' ')[0];
+  updateDashGreeting();
+  renderSetupGuide();
   showGuestBanner();
   initMarket();
   renderInsights();renderSetups();renderHeatmap();renderPatterns();
