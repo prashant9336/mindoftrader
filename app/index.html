@@ -42,8 +42,8 @@ a{color:var(--green);text-decoration:none;}
 /* VIEWS */
 .view{display:none;position:relative;z-index:10;}
 .view.on{display:block;}
-#landing-view{display:flex;} /* visible by default */
-#landing-view.on{display:flex;}
+#landing-view{display:none;} /* empty placeholder — onboarding replaced it */
+#landing-view.on{display:none;} /* never show — onboarding replaced it */
 
 /* NAV */
 #nav{display:none;position:fixed;top:0;left:0;right:0;z-index:500;height:56px;background:rgba(8,12,16,0.94);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);align-items:center;padding:0 16px;gap:8px;}
@@ -4080,8 +4080,9 @@ function initRitual(){
 function goTo(id){
   // Hide ALL views including landing (which is flex by default)
   document.querySelectorAll('.view').forEach(v=>{
+    if(v.id==='landing-view')return; // always keep landing hidden (onboarding replaced it)
     v.classList.remove('on');
-    v.style.display='';  // reset inline display so CSS class controls it
+    v.style.display='';
   });
   const landing=document.getElementById('landing-view');
   if(landing)landing.style.display='none'; // always hide landing when app opens
