@@ -2518,6 +2518,37 @@ try {
         await window.db_loadAllUserData(user.uid);
         // Update last active timestamp
         window.db_updateLastActive(user.uid);
+
+        // ── CRITICAL: show app if init() ran before Firebase confirmed auth ──
+        const storedUser = getStoredUser ? getStoredUser() : null;
+        const obEl = document.getElementById('onboarding');
+        const navEl = document.getElementById('nav');
+        const dashEl = document.getElementById('dashboard-view');
+
+        // If no view is currently active (blank screen), activate dashboard
+        const anyActive = document.querySelector('.view.on');
+        if (!anyActive) {
+          if (obEl) obEl.classList.add('hidden');
+          if (navEl) navEl.style.display = 'flex';
+          if (storedUser) {
+            try { setupUser(storedUser); } catch(e) {}
+          } else {
+            // Build minimal profile from Firebase user
+            const fallbackProfile = {
+              uid: user.uid,
+              name: user.displayName || 'Trader',
+              email: user.email || null,
+              photo: user.photoURL || null,
+              loginMethod: 'google',
+              lastLogin: new Date().toISOString()
+            };
+            localStorage.setItem(KEYS.USER, JSON.stringify(fallbackProfile));
+            try { setupUser(fallbackProfile); } catch(e) {}
+          }
+          try { goTo('dashboard'); } catch(e) {
+            if (dashEl) dashEl.classList.add('on');
+          }
+        }
       }
     });
 
