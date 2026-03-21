@@ -3,9 +3,14 @@ Allow: /
 Allow: /about
 Allow: /founder
 Allow: /contact
+Allow: /privacy
+Allow: /terms
+Disallow: /app
+Disallow: /admin
+Disallow: /login
 
-# Private app — allow crawl but discourage deep indexing of app state
-Disallow: /api/
-Disallow: /admin/
-
+# Sitemaps
 Sitemap: https://mindoftrader.com/sitemap.xml
+
+# Crawl delay (be kind to server)
+Crawl-delay: 10
