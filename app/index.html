@@ -46,7 +46,7 @@ a{color:var(--green);text-decoration:none;}
 #landing-view.on{display:none;} /* never show — onboarding replaced it */
 
 /* NAV */
-#nav{display:none;position:fixed;top:0;left:0;right:0;z-index:500;height:56px;background:rgba(8,12,16,0.94);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);align-items:center;padding:0 16px;gap:8px;}
+#nav{display:none;position:fixed;top:0;left:0;right:0;z-index:600;background:rgba(8,12,16,0.96);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border-bottom:1px solid var(--border2);}
 .nav-brand{font-family:var(--mono);font-size:0.82rem;font-weight:700;color:var(--white);letter-spacing:0.04em;display:flex;align-items:center;gap:8px;margin-right:8px;white-space:nowrap;text-decoration:none;}
 .nav-brand-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:gPulse 2s infinite;}
 @keyframes gPulse{0%,100%{box-shadow:0 0 8px var(--green);}50%{box-shadow:0 0 18px var(--green),0 0 32px rgba(0,230,118,0.25);}}
@@ -437,7 +437,7 @@ a{color:var(--green);text-decoration:none;}
 /* ══════════════════════════════════════════════════
    BEAUTIFUL NAV — top + bottom (Instagram-style)
 ══════════════════════════════════════════════════ */
-#nav{display:none;position:fixed;top:0;left:0;right:0;z-index:600;background:rgba(8,12,16,0.96);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border-bottom:1px solid var(--border);}
+/* #nav consolidated above */
 .nav-topbar{height:52px;display:flex;align-items:center;padding:0 16px;gap:8px;}
 .nav-tabs-desktop{display:flex;gap:2px;flex:1;}
 @media(max-width:640px){.nav-tabs-desktop{display:none;}}
@@ -3437,6 +3437,45 @@ setTimeout(function(){
     init();
   }
 }, 0);
+
+// HARD FAILSAFE — if after 3s still blank, force show whatever we can
+setTimeout(function(){
+  const anyActive = document.querySelector('.view.on');
+  const onboarding = document.getElementById('onboarding');
+  const onboardingVisible = onboarding && !onboarding.classList.contains('hidden') && onboarding.style.display !== 'none';
+  
+  if(!anyActive && !onboardingVisible){
+    console.warn('[MOT] Blank screen detected — running failsafe recovery');
+    const stored = getStoredUser();
+    const nav = document.getElementById('nav');
+    const ob = document.getElementById('onboarding');
+    
+    if(ob) ob.classList.add('hidden');
+    
+    if(stored){
+      if(nav) nav.style.display = 'flex';
+      try { setupUser(stored); } catch(e){ console.warn('failsafe setupUser',e); }
+      try { goTo('dashboard'); } catch(e){ 
+        const dv = document.getElementById('dashboard-view');
+        if(dv){ dv.classList.add('on'); }
+      }
+    } else {
+      // No user — show onboarding fresh
+      const seen = localStorage.getItem('mot_ob_seen');
+      if(!seen){
+        if(ob){ ob.classList.remove('hidden'); ob.style.display = ''; }
+      } else {
+        // Guest — go to landing or just show dashboard
+        const landing = document.getElementById('landing-view');
+        if(landing) landing.style.display = 'flex';
+        else {
+          if(nav) nav.style.display = 'flex';
+          try { goTo('dashboard'); } catch(e) {}
+        }
+      }
+    }
+  }
+}, 3000);
 
 // Service Worker Registration
 if('serviceWorker' in navigator){
