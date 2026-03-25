@@ -5904,18 +5904,32 @@ function parseCSV(text,filename){
     const isSell = typeRaw==='SELL'||typeRaw==='S'||typeRaw.includes('SELL');
     if(!isBuy&&!isSell)return;
 
-    // Extract index name from symbol
-    // Zerodha format: NIFTY2610626200PE = NIFTY + expiry(261062) + strike(6200) + type(PE)
-    const indexMatch = symbolRaw.match(/^(NIFTY(?!TY)|BANKNIFTY|FINNIFTY|MIDCPNIFTY)/i);
-    const indexName  = indexMatch ? indexMatch[1].toUpperCase() : 'OTHER';
+    // ── NSE OPTIONS SYMBOL PARSER ──────────────────────────────────
+    // Zerodha/NSE format: INDEX + EXPIRY(5 chars) + STRIKE(4-6 digits) + CE/PE
+    //   Weekly:  NIFTY25619 24000CE  → INDEX(NIFTY) + YY(25)+M(6)+DD(19) + 24000 + CE
+    //   Monthly: NIFTY25JUN 24000CE  → INDEX(NIFTY) + YY(25)+MMM(JUN) + 24000 + CE
+    //   BANKNIFTY: 9 chars prefix, same expiry pattern
+    // KEY INSIGHT: expiry is always exactly 5 chars after the index name
 
-    // Extract option type
-    const optType = symbolRaw.endsWith('CE')?'CE':symbolRaw.endsWith('PE')?'PE':'';
+    const INDEX_NAMES = ['BANKNIFTY','MIDCPNIFTY','FINNIFTY','NIFTY'];
+    let indexName = 'OTHER', optType = '', strike = '';
 
-    // Extract strike price
-    // Pattern: INDEX + 6 digit expiry + 4-5 digit strike + CE/PE
-    const strikeMatch = symbolRaw.match(/[A-Z]+\d{5,6}(\d{4,5})(CE|PE)$/);
-    const strike = strikeMatch ? strikeMatch[1]+' '+strikeMatch[2] : '';
+    for (const idx of INDEX_NAMES) {
+      if (symbolRaw.startsWith(idx)) {
+        const rest = symbolRaw.slice(idx.length); // e.g. "2561924000CE" or "25JUN24000CE"
+        // rest = EXPIRY(5) + STRIKE(4-6) + TYPE(2)
+        if (rest.length >= 11) {
+          // expiry is always first 5 chars
+          const afterExpiry = rest.slice(5); // e.g. "24000CE" or "52000PE"
+          if (afterExpiry.endsWith('CE') || afterExpiry.endsWith('PE')) {
+            optType = afterExpiry.slice(-2);                    // CE or PE
+            strike  = afterExpiry.slice(0, -2);                // numeric strike e.g. "24000"
+            indexName = idx;
+          }
+        }
+        break;
+      }
+    }
 
     // Parse date — handle multiple formats
     let dateStr = new Date().toISOString().split('T')[0];
@@ -5968,27 +5982,48 @@ function parseCSV(text,filename){
     // Need at least one side to make a trade
     if(buyAvg===0&&sellAvg===0)return;
 
-    const entry = buyAvg||sellAvg;
-    const exit  = (buyAvg>0&&sellAvg>0) ? (buyAvg<sellAvg?sellAvg:buyAvg) : 0;
+    // ── DETERMINE TRADE DIRECTION FROM DATA ──────────────────────
+    // For options:
+    //   Long  = bought first, sold later  → entry=buyAvg, exit=sellAvg
+    //   Short = sold first, bought later  → entry=sellAvg, exit=buyAvg
+    // We determine direction by which side has more rows/qty (majority side = initiator).
+    // If equal qty on both sides: if buyAvg was logged FIRST treat as long, else short.
+    // Simple heuristic: if we have ONLY buys → open long (no exit). Only sells → open short.
 
-    // Determine action from majority side
-    const action = (buyAvg>0?'BUY':'SELL')+(g.optType?' '+g.optType:'');
+    let entry, exit, action, pnl = 0;
+    const pairedQty = Math.min(g.buyQty, g.sellQty); // matched quantity
 
-    // Calculate lots from actual quantity
+    if(g.buyQty > 0 && g.sellQty === 0){
+      // Open long — no exit yet
+      entry  = buyAvg;
+      exit   = 0;
+      action = 'BUY' + (g.optType ? ' '+g.optType : ' CE');
+      pnl    = 0;
+    } else if(g.sellQty > 0 && g.buyQty === 0){
+      // Open short — no exit yet
+      entry  = sellAvg;
+      exit   = 0;
+      action = 'SELL' + (g.optType ? ' '+g.optType : ' CE');
+      pnl    = 0;
+    } else if(g.buyQty >= g.sellQty){
+      // Long trade (bought more or equal): entry = buyAvg, exit = sellAvg
+      entry  = buyAvg;
+      exit   = sellAvg;
+      action = 'BUY' + (g.optType ? ' '+g.optType : ' CE');
+      // P&L = (sell - buy) × matched qty — can be NEGATIVE if sold lower than bought
+      pnl    = Math.round((sellAvg - buyAvg) * pairedQty);
+    } else {
+      // Short trade (sold more): entry = sellAvg, exit = buyAvg
+      entry  = sellAvg;
+      exit   = buyAvg;
+      action = 'SELL' + (g.optType ? ' '+g.optType : ' CE');
+      // P&L = (sell - buy) × matched qty — can be NEGATIVE if bought back higher
+      pnl    = Math.round((sellAvg - buyAvg) * pairedQty);
+    }
+
+    // Calculate lots from matched quantity (more accurate than max side)
     const maxQty = Math.max(g.buyQty, g.sellQty);
     const lots   = Math.max(1, Math.round(maxQty/g.ls));
-
-    // P&L: only calculate if we have both entry and exit
-    let pnl = 0;
-    if(buyAvg>0&&sellAvg>0){
-      // Long trade: bought then sold
-      if(buyAvg<sellAvg){
-        pnl = Math.round((sellAvg-buyAvg)*Math.min(g.buyQty,g.sellQty));
-      } else {
-        // Short trade: sold then bought back
-        pnl = Math.round((buyAvg-sellAvg)*Math.min(g.buyQty,g.sellQty));
-      }
-    }
 
     newTrades.push({
       id: Date.now()+Math.random(),
@@ -6682,26 +6717,70 @@ let marketData = {
 
 let marketRefreshTimer = null;
 
-// Fetch via Yahoo Finance public API (no key needed)
-async function fetchQuote(symbol) {
-  try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1m&range=1d`;
-    const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
-    if (!resp.ok) return null;
-    const data = await resp.json();
-    const result = data?.chart?.result?.[0];
-    if (!result) return null;
-    const meta = result.meta;
-    return {
-      price: meta.regularMarketPrice,
-      prevClose: meta.chartPreviousClose || meta.previousClose,
-      change: meta.regularMarketPrice - (meta.chartPreviousClose || meta.previousClose),
-      changePct: ((meta.regularMarketPrice - (meta.chartPreviousClose || meta.previousClose)) / (meta.chartPreviousClose || meta.previousClose)) * 100,
-    };
-  } catch(e) {
-    return null;
+// ── LIVE MARKET DATA ─────────────────────────────────────────────
+// Source: Yahoo Finance via CORS proxy (free, no API key, legal for display)
+// Yahoo Finance symbols: ^NSEI (NIFTY 50), ^NSEBANK (BANKNIFTY), ^INDIAVIX
+// Falls back to realistic simulation if all sources fail.
+
+async function fetchYahoo(symbol) {
+  // Yahoo Finance v8 chart API — reliable, no key needed
+  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1m&range=1d`;
+
+  // Try multiple CORS proxies in order
+  const proxies = [
+    url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+  ];
+
+  for (const proxy of proxies) {
+    try {
+      const resp = await fetch(proxy(yahooUrl), {
+        signal: AbortSignal.timeout(5000)
+      });
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      const result = data?.chart?.result?.[0];
+      if (!result) continue;
+      const meta = result.meta;
+      const price    = meta.regularMarketPrice || meta.chartPreviousClose;
+      const prevClose = meta.chartPreviousClose || meta.previousClose || price;
+      if (!price) continue;
+      return {
+        price,
+        prevClose,
+        change:    parseFloat((price - prevClose).toFixed(2)),
+        changePct: parseFloat(((price - prevClose) / prevClose * 100).toFixed(2)),
+        source:    'live'
+      };
+    } catch(e) { continue; }
   }
+
+  // All proxies failed — direct attempt (works if CORS not blocked)
+  try {
+    const resp = await fetch(yahooUrl, { signal: AbortSignal.timeout(4000) });
+    if (resp.ok) {
+      const data = await resp.json();
+      const result = data?.chart?.result?.[0];
+      if (result) {
+        const meta = result.meta;
+        const price     = meta.regularMarketPrice;
+        const prevClose = meta.chartPreviousClose || meta.previousClose || price;
+        return {
+          price, prevClose,
+          change:    parseFloat((price - prevClose).toFixed(2)),
+          changePct: parseFloat(((price - prevClose) / prevClose * 100).toFixed(2)),
+          source:    'live'
+        };
+      }
+    }
+  } catch(e) {}
+
+  return null; // All sources failed
 }
+
+// Keep old fetchQuote name for backward compat
+async function fetchQuote(symbol) { return fetchYahoo(symbol); }
 
 function getSessionStatus() {
   const now = new Date();
@@ -6773,7 +6852,7 @@ function getBehavioralAlert(session, vixData, niftyData) {
   return alerts[0] || null;
 }
 
-function renderMarketStrip(nifty, banknifty, vix, pcr, session) {
+function renderMarketStrip(nifty, banknifty, vix, pcr, session, isLive=false) {
   // Session indicator
   const sessionDot = document.getElementById('ms-session-dot');
   const sessionText = document.getElementById('ms-session-text');
@@ -6864,7 +6943,12 @@ function renderMarketStrip(nifty, banknifty, vix, pcr, session) {
 
   // Updated time
   const upd = document.getElementById('ms-updated');
-  if (upd) upd.textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  if (upd) {
+    const timeStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    upd.textContent = (isLive ? '🟢 Live ' : '🟡 Simulated ') + timeStr;
+    upd.style.color = isLive ? 'rgba(0,230,118,0.6)' : 'rgba(255,171,0,0.6)';
+    upd.title = isLive ? 'Live data from Yahoo Finance' : 'Live data unavailable — showing realistic simulation';
+  }
 
   // Behavioral alert
   const alert = getBehavioralAlert(session, vix, nifty);
@@ -6899,32 +6983,32 @@ function getSimulatedData(session) {
 
 async function refreshMarket() {
   const session = getSessionStatus();
+
+  // Show loading state
+  const updEl = document.getElementById('ms-updated');
+  if (updEl) updEl.textContent = 'Fetching live data...';
+
   try {
-    // Try live data first
+    // Fetch all three simultaneously — 6s timeout each
     const [nifty, banknifty, vix] = await Promise.all([
-      fetchQuote(MARKET_SYMBOLS.nifty),
-      fetchQuote(MARKET_SYMBOLS.banknifty),
-      fetchQuote(MARKET_SYMBOLS.vix)
+      fetchYahoo(MARKET_SYMBOLS.nifty),
+      fetchYahoo(MARKET_SYMBOLS.banknifty),
+      fetchYahoo(MARKET_SYMBOLS.vix)
     ]);
 
-    if (nifty || banknifty) {
-      // Got real data
-      const sim = getSimulatedData(session);
-      renderMarketStrip(
-        nifty || sim.nifty,
-        banknifty || sim.banknifty,
-        vix || sim.vix,
-        null, session
-      );
-    } else {
-      // API unavailable — use simulated
-      const sim = getSimulatedData(session);
-      renderMarketStrip(sim.nifty, sim.banknifty, sim.vix, null, session);
-    }
-  } catch(e) {
-    // Fallback to simulated
+    const isLive = nifty?.source === 'live' || banknifty?.source === 'live';
     const sim = getSimulatedData(session);
-    renderMarketStrip(sim.nifty, sim.banknifty, sim.vix, null, session);
+
+    renderMarketStrip(
+      nifty    || sim.nifty,
+      banknifty|| sim.banknifty,
+      vix      || sim.vix,
+      null, session, isLive
+    );
+
+  } catch(e) {
+    const sim = getSimulatedData(session);
+    renderMarketStrip(sim.nifty, sim.banknifty, sim.vix, null, session, false);
   }
 }
 
