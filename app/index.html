@@ -42,8 +42,8 @@ a{color:var(--green);text-decoration:none;}
 /* VIEWS */
 .view{display:none;position:relative;z-index:10;}
 .view.on{display:block;}
-#landing-view{display:flex;} /* visible by default */
-#landing-view.on{display:flex;}
+#landing-view{display:none;} /* empty placeholder — onboarding replaced it */
+#landing-view.on{display:none;} /* never show — onboarding replaced it */
 
 /* NAV */
 #nav{display:none;position:fixed;top:0;left:0;right:0;z-index:500;height:56px;background:rgba(8,12,16,0.94);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);align-items:center;padding:0 16px;gap:8px;}
@@ -329,6 +329,199 @@ a{color:var(--green);text-decoration:none;}
 .chart-wrap{position:relative;}
 
 
+/* ══════════════════════════════════════════════════
+   COCKPIT DASHBOARD — NEW
+══════════════════════════════════════════════════ */
+.cockpit-bar{display:flex;align-items:flex-start;justify-content:space-between;padding:16px 16px 8px;gap:12px;flex-wrap:wrap;}
+.cockpit-name{font-size:1.25rem;font-weight:800;color:var(--white);font-family:var(--mono);}
+.cockpit-sub{font-size:0.72rem;color:var(--muted);margin-top:2px;}
+.cockpit-live{text-align:right;flex-shrink:0;}
+.cockpit-clock{font-size:1.4rem;font-weight:700;color:var(--green);font-family:var(--mono);letter-spacing:0.05em;}
+.cockpit-session{font-size:0.6rem;color:var(--muted);text-align:right;margin-top:2px;letter-spacing:0.08em;}
+.pulse-strip{display:flex;align-items:center;overflow-x:auto;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:8px 16px;gap:18px;white-space:nowrap;scrollbar-width:none;position:relative;}
+.pulse-strip::-webkit-scrollbar{display:none;}
+.pulse-strip::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--green),var(--blue),var(--amber),transparent);}
+.pulse-session{display:flex;align-items:center;gap:5px;padding-right:18px;border-right:1px solid var(--border);flex-shrink:0;}
+.pulse-dot{width:6px;height:6px;border-radius:50%;}
+.pulse-dot.open{background:var(--green);box-shadow:0 0 6px var(--green);animation:gPulse 2s infinite;}
+.pulse-dot.closed{background:var(--red);}
+.pulse-dot.premarket{background:var(--amber);animation:ldP 1.5s infinite;}
+.pulse-session-txt{font-size:0.68rem;font-weight:700;letter-spacing:0.06em;}
+.pulse-session-txt.open{color:var(--green);}.pulse-session-txt.closed{color:var(--red);}.pulse-session-txt.premarket{color:var(--amber);}
+.pulse-item{display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
+.pulse-lbl{font-size:0.58rem;color:var(--dim);font-weight:700;letter-spacing:0.08em;}
+.pulse-val{font-size:0.82rem;font-weight:700;color:var(--white);font-family:var(--mono);}
+.pulse-chg{font-size:0.65rem;font-weight:600;}
+.pulse-mood{font-size:0.72rem;font-weight:700;color:var(--amber);flex-shrink:0;padding:3px 10px;background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:20px;}
+.pulse-upd{font-size:0.58rem;color:var(--dim);flex-shrink:0;}
+.zero-card{margin:16px;padding:28px 20px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);text-align:center;}
+.zero-icon{font-size:2.5rem;margin-bottom:12px;}.zero-title{font-size:1.05rem;font-weight:800;color:var(--white);margin-bottom:6px;}
+.zero-sub{font-size:0.78rem;color:var(--muted);margin-bottom:22px;}.zero-steps{display:flex;flex-direction:column;gap:10px;text-align:left;}
+.zero-step-btn{display:flex;align-items:center;gap:14px;padding:14px 16px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;transition:all 0.2s;width:100%;}
+.zero-step-btn:hover{border-color:var(--green-bd);background:var(--green-bg);}
+.zsb-num{width:28px;height:28px;border-radius:50%;background:var(--green-bg);border:1px solid var(--green-bd);color:var(--green);font-size:0.75rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.zsb-body{flex:1;display:flex;flex-direction:column;gap:2px;}.zsb-title{font-size:0.82rem;font-weight:700;color:var(--white);}.zsb-sub{font-size:0.68rem;color:var(--muted);}.zsb-arrow{color:var(--muted);font-size:1rem;}
+.cockpit-top-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:12px 16px;}
+@media(max-width:700px){.cockpit-top-row{grid-template-columns:1fr 1fr;}}
+@media(max-width:480px){.cockpit-top-row{grid-template-columns:1fr;}}
+.fg-meter-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:16px;display:flex;flex-direction:column;align-items:center;}
+.fgm-label{font-size:0.62rem;font-weight:700;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;margin-bottom:8px;}
+.fgm-arc-wrap{display:flex;flex-direction:column;align-items:center;}.fgm-arc{width:130px;height:80px;}
+.fgm-score{font-size:1.5rem;font-weight:800;color:var(--white);font-family:var(--mono);margin-top:-4px;}
+.fgm-mood{font-size:0.7rem;font-weight:700;color:var(--amber);letter-spacing:0.06em;text-transform:uppercase;}
+.fgm-scale{display:flex;justify-content:space-between;width:100%;margin-top:10px;font-size:0.58rem;font-weight:700;}
+.today-card{background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;display:flex;flex-direction:column;}
+.today-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.today-badge{font-size:0.62rem;font-weight:700;letter-spacing:0.08em;color:var(--muted);text-transform:uppercase;}
+.today-date{font-size:0.62rem;color:var(--dim);}
+.today-pnl{font-size:2rem;font-weight:800;font-family:var(--mono);color:var(--white);line-height:1;margin-bottom:2px;}
+.today-pnl.pos{color:var(--green);}.today-pnl.neg{color:var(--red);}
+.today-pnl-sub{font-size:0.65rem;color:var(--muted);margin-bottom:12px;}
+.today-stats-row{display:flex;align-items:center;margin-top:auto;}
+.ts-item{flex:1;text-align:center;}.ts-val{font-size:1rem;font-weight:800;color:var(--white);font-family:var(--mono);}
+.ts-lbl{font-size:0.58rem;color:var(--dim);margin-top:2px;}.ts-div{width:1px;height:28px;background:var(--border);}
+.mission-card{background:linear-gradient(135deg,rgba(41,121,255,0.12),rgba(0,230,118,0.07));border:1px solid rgba(41,121,255,0.25);border-radius:var(--r2);padding:16px;display:flex;flex-direction:column;}
+.mission-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.mission-badge{font-size:0.62rem;font-weight:700;letter-spacing:0.08em;color:var(--blue);text-transform:uppercase;}
+.mission-xp{font-size:0.68rem;font-weight:800;color:var(--green);background:var(--green-bg);border:1px solid var(--green-bd);padding:2px 8px;border-radius:10px;}
+.mission-text{font-size:0.82rem;font-weight:600;color:var(--white);line-height:1.4;flex:1;margin-bottom:12px;}
+.mission-progress-wrap{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.mission-progress-bar{flex:1;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;}
+.mission-progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));border-radius:2px;transition:width 0.8s cubic-bezier(.4,0,.2,1);}
+.mission-progress-txt{font-size:0.6rem;color:var(--muted);white-space:nowrap;}
+.mission-cta{padding:8px 16px;background:rgba(41,121,255,0.15);border:1px solid rgba(41,121,255,0.3);border-radius:var(--r);color:var(--blue);font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;text-align:center;}
+.mission-cta:hover{background:rgba(41,121,255,0.25);}
+.mind-scores-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:0 16px 12px;}
+@media(max-width:600px){.mind-scores-row{grid-template-columns:repeat(2,1fr);}}
+.mind-score-pill{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:8px;}
+.msp-icon{font-size:1.1rem;flex-shrink:0;}.msp-body{flex:1;min-width:0;}
+.msp-val{font-size:1.1rem;font-weight:800;color:var(--sc,var(--white));font-family:var(--mono);}
+.msp-lbl{font-size:0.58rem;color:var(--dim);margin-top:1px;}
+.msp-bar{width:100%;height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-top:6px;}
+.msp-fill{height:100%;width:0%;border-radius:2px;transition:width 1s cubic-bezier(.4,0,.2,1);}
+.social-pulse-card{margin:0 16px 12px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden;}
+.sp-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;}
+.sp-title{font-size:0.8rem;font-weight:700;color:var(--white);}
+.sp-live{display:flex;align-items:center;gap:5px;font-size:0.62rem;font-weight:700;color:var(--green);}
+.sp-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:gPulse 2s infinite;}
+.sp-emotions{display:flex;gap:6px;padding:0 16px 12px;overflow-x:auto;scrollbar-width:none;}
+.sp-emotions::-webkit-scrollbar{display:none;}
+.sp-emo-pill{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--r);min-width:60px;}
+.sp-emo-icon{font-size:1.2rem;}.sp-emo-lbl{font-size:0.58rem;color:var(--muted);font-weight:600;}
+.sp-emo-pct{font-size:0.85rem;font-weight:800;color:var(--white);font-family:var(--mono);}
+.sp-emo-bar-bg{width:100%;height:3px;background:rgba(255,255,255,0.06);border-radius:2px;}
+.sp-emo-bar-fill{height:3px;border-radius:2px;transition:width 0.8s ease;}
+.sp-footer{border-top:1px solid var(--border);padding:12px 16px;}
+.sp-vote-prompt{font-size:0.72rem;color:var(--muted);margin-bottom:8px;}
+.sp-vote-row{display:flex;gap:6px;flex-wrap:wrap;}
+.sp-vote-btn{padding:5px 10px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:20px;color:var(--text);font-size:0.7rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.sp-vote-btn:hover,.sp-vote-btn.voted{background:var(--green-bg);border-color:var(--green-bd);color:var(--green);}
+.sp-voted-msg{font-size:0.75rem;color:var(--green);font-weight:600;}
+.mvm-card{margin:0 16px 12px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);padding:18px;position:relative;overflow:hidden;}
+.mvm-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--green),var(--blue),transparent);}
+.mvm-scan{position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(0,230,118,0.03),transparent);animation:scanLine 4s ease-in-out infinite;}
+@keyframes scanLine{0%,100%{left:-100%;}50%{left:100%;}}
+.mvm-top{margin-bottom:16px;}.mvm-label{font-size:0.78rem;font-weight:800;color:var(--white);margin-bottom:2px;}.mvm-sub{font-size:0.65rem;color:var(--muted);}
+.mvm-vs{display:flex;align-items:center;justify-content:space-around;margin-bottom:14px;}
+.mvm-side{text-align:center;}.mvm-side-val{font-size:2.2rem;font-weight:800;font-family:var(--mono);}
+.mvm-side-lbl{font-size:0.65rem;color:var(--muted);margin-top:4px;}
+.mvm-vs-divider{text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;}
+.mvm-vs-arrow{font-size:0.75rem;font-weight:800;color:var(--dim);letter-spacing:0.1em;}
+.mvm-gap-badge{padding:3px 10px;border-radius:12px;font-size:0.68rem;font-weight:800;}
+.mvm-gap-text{font-size:0.76rem;color:var(--muted);text-align:center;margin-bottom:14px;line-height:1.5;}
+.mvm-daily-insight{display:flex;gap:10px;align-items:flex-start;padding:12px;background:rgba(255,255,255,0.03);border-radius:var(--r);border:1px solid var(--border);}
+.mdi-icon{font-size:1rem;flex-shrink:0;}.mdi-text{font-size:0.75rem;color:var(--text);line-height:1.55;}
+
+
+
+/* ══════════════════════════════════════════════════
+   BEAUTIFUL NAV — top + bottom (Instagram-style)
+══════════════════════════════════════════════════ */
+#nav{display:none;position:fixed;top:0;left:0;right:0;z-index:600;background:rgba(8,12,16,0.96);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border-bottom:1px solid var(--border);}
+.nav-topbar{height:52px;display:flex;align-items:center;padding:0 16px;gap:8px;}
+.nav-tabs-desktop{display:flex;gap:2px;flex:1;}
+@media(max-width:640px){.nav-tabs-desktop{display:none;}}
+.nav-brand{font-family:var(--mono);font-size:0.82rem;font-weight:700;color:var(--white);letter-spacing:0.04em;display:flex;align-items:center;gap:8px;margin-right:8px;white-space:nowrap;text-decoration:none;}
+.nav-brand-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:gPulse 2s infinite;}
+.nav-right{margin-left:auto;flex-shrink:0;display:flex;align-items:center;gap:8px;}
+.nav-user-wrap{display:flex;align-items:center;gap:8px;cursor:pointer;}
+.nav-user-photo{width:28px;height:28px;border-radius:50%;border:1px solid var(--green-bd);object-fit:cover;}
+.nav-user-photo-placeholder{width:28px;height:28px;border-radius:50%;background:var(--green-bg);border:1px solid var(--green-bd);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:var(--green);}
+.nav-user-name{font-size:0.72rem;color:var(--muted);font-weight:500;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nav-sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);}
+.nav-sync-dot.syncing{background:var(--amber);box-shadow:0 0 6px var(--amber);animation:ldP 0.8s infinite;}
+.nav-sync-dot.offline{background:var(--red);box-shadow:0 0 6px var(--red);}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:600;height:68px;background:rgba(8,12,16,0.97);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border-top:1px solid rgba(255,255,255,0.08);display:flex;align-items:stretch;padding:0 4px;padding-bottom:env(safe-area-inset-bottom);}
+.bn-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;cursor:pointer;padding:8px 4px;position:relative;color:var(--dim);transition:color 0.2s;}
+.bn-tab.on{color:var(--green);}
+.bn-tab.on .bn-icon svg{filter:drop-shadow(0 0 6px rgba(0,230,118,0.5));}
+.bn-icon{display:flex;align-items:center;justify-content:center;width:32px;height:28px;position:relative;}
+.bn-lbl{font-size:0.58rem;font-weight:600;letter-spacing:0.03em;font-family:var(--font);}
+.bn-pip{position:absolute;top:6px;right:calc(50% - 18px);width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);display:none;}
+.bn-pip.show{display:block;}
+/* Center AI button */
+.bn-center{flex:1.1;}
+.bn-center-btn{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--green),rgba(0,230,118,0.7));display:flex;align-items:center;justify-content:center;color:#080c10;box-shadow:0 0 20px rgba(0,230,118,0.4);transition:transform 0.2s,box-shadow 0.2s;margin-bottom:2px;}
+.bn-center:active .bn-center-btn{transform:scale(0.93);}
+.bn-center .bn-lbl{color:var(--green);font-weight:700;}
+
+/* Body padding adjustments */
+body.app-mode{padding-top:52px;}
+@media(max-width:640px){body.app-mode{padding-bottom:72px;}}
+
+/* ══════════════════════════════════════════════════
+   JOURNAL FEED — Instagram-style trade cards
+══════════════════════════════════════════════════ */
+.journal-feed{display:flex;flex-direction:column;gap:0;max-width:560px;margin:0 auto;}
+.journal-feed-filters{display:flex;gap:6px;overflow-x:auto;padding:12px 16px 8px;scrollbar-width:none;border-bottom:1px solid var(--border);}
+.journal-feed-filters::-webkit-scrollbar{display:none;}
+.jff-btn{flex-shrink:0;padding:5px 14px;border-radius:20px;font-size:0.7rem;font-weight:700;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:var(--font);transition:all 0.15s;}
+.jff-btn.on{background:var(--green-bg);border-color:var(--green-bd);color:var(--green);}
+.trade-card{border-bottom:1px solid rgba(255,255,255,0.05);padding:14px 16px;transition:background 0.15s;position:relative;cursor:default;}
+.trade-card:hover{background:rgba(255,255,255,0.02);}
+.trade-card:active{background:rgba(255,255,255,0.04);}
+.tc-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.tc-emo-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;border:2px solid var(--border2);}
+.tc-emo-avatar.calm,.tc-emo-avatar.focused{background:var(--green-bg);border-color:var(--green-bd);}
+.tc-emo-avatar.fomo,.tc-emo-avatar.greed,.tc-emo-avatar.overconfident{background:var(--amber-bg);border-color:var(--amber-bd);}
+.tc-emo-avatar.revenge{background:var(--red-bg);border-color:var(--red-bd);}
+.tc-emo-avatar.fear,.tc-emo-avatar.hesitant{background:var(--blue-bg);border-color:var(--blue-bd);}
+.tc-meta{flex:1;min-width:0;}
+.tc-symbol{font-size:0.88rem;font-weight:800;color:var(--white);display:flex;align-items:center;gap:6px;}
+.tc-action-badge{font-size:0.6rem;font-weight:700;padding:2px 7px;border-radius:8px;}
+.tc-action-badge.buy{background:rgba(0,230,118,0.12);color:var(--green);}
+.tc-action-badge.sell{background:rgba(255,69,96,0.12);color:var(--red);}
+.tc-sub{font-size:0.68rem;color:var(--muted);margin-top:1px;}
+.tc-pnl{font-size:1.15rem;font-weight:800;font-family:var(--mono);flex-shrink:0;}
+.tc-pnl.win{color:var(--green);}
+.tc-pnl.loss{color:var(--red);}
+.tc-pnl.open{color:var(--amber);}
+.tc-body{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;}
+.tc-stat{font-size:0.7rem;color:var(--muted);}
+.tc-stat strong{color:var(--text);font-weight:600;}
+.tc-stat-div{width:1px;height:10px;background:var(--border);}
+.tc-tags{display:flex;gap:5px;flex-wrap:wrap;}
+.tc-tag{font-size:0.6rem;font-weight:700;padding:2px 8px;border-radius:8px;}
+.tc-behavior{font-size:0.68rem;color:var(--text);background:rgba(255,255,255,0.04);border-radius:var(--r);padding:8px 10px;margin-bottom:10px;line-height:1.5;border-left:2px solid var(--border2);}
+.tc-behavior.warn{border-color:var(--red);background:var(--red-bg);}
+.tc-behavior.good{border-color:var(--green);background:var(--green-bg);}
+.tc-reactions{display:flex;align-items:center;gap:6px;padding-top:6px;}
+.tc-react-btn{background:none;border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all 0.15s;color:var(--muted);}
+.tc-react-btn:hover,.tc-react-btn.on{background:var(--green-bg);border-color:var(--green-bd);color:var(--green);}
+.tc-react-count{font-size:0.65rem;font-weight:700;}
+.tc-delete-btn{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--dim);font-size:0.75rem;padding:4px 6px;border-radius:6px;transition:all 0.15s;}
+.tc-delete-btn:hover{color:var(--red);background:var(--red-bg);}
+.journal-empty{display:flex;flex-direction:column;align-items:center;padding:48px 24px;text-align:center;}
+.journal-empty-icon{font-size:3rem;margin-bottom:12px;opacity:0.5;}
+.journal-empty-title{font-size:0.95rem;font-weight:700;color:var(--white);margin-bottom:6px;}
+.journal-empty-sub{font-size:0.75rem;color:var(--muted);line-height:1.6;margin-bottom:20px;}
+
+/* ══════════════════════════════════════════════════
+   DNA WRAPPED SHARE
+══════════════════════════════════════════════════ */
+
 /* ── BEHAVIORAL ANALYSIS ENGINE ────────────────────── */
 .bae-wrap{max-width:560px;margin:0 auto;}
 
@@ -442,6 +635,173 @@ a{color:var(--green);text-decoration:none;}
   font-family:var(--font);transition:all 0.2s;}
 .bae-date-btn.on{background:var(--green-bg);border-color:var(--green-bd);color:var(--green);}
 .bae-date-btn:hover{color:var(--text);}
+
+
+/* ══════════════════════════════════════════════════
+   ONBOARDING FLOW — 5 screens
+   ══════════════════════════════════════════════════ */
+#onboarding{
+  position:fixed;inset:0;z-index:8000;
+  background:var(--bg);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:24px 20px 40px;
+  overflow:hidden;
+}
+#onboarding.hidden{display:none;}
+
+/* Progress dots */
+.ob-dots{display:flex;gap:6px;margin-bottom:32px;}
+.ob-dot{width:6px;height:6px;border-radius:3px;background:var(--border2);transition:all 0.4s;}
+.ob-dot.on{width:20px;background:var(--green);}
+.ob-dot.done{background:rgba(0,230,118,0.35);}
+
+/* Each screen */
+.ob-screen{
+  display:none;flex-direction:column;align-items:center;
+  text-align:center;max-width:420px;width:100%;
+  animation:obIn 0.45s cubic-bezier(.16,1,.3,1) both;
+}
+.ob-screen.on{display:flex;}
+@keyframes obIn{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── SCREEN 1: HOOK ── */
+.ob-hook-icon{font-size:3.5rem;margin-bottom:20px;animation:obPulse 2s ease-in-out infinite;}
+@keyframes obPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+.ob-hook-line{font-size:clamp(1.6rem,6vw,2.4rem);font-weight:800;color:var(--white);line-height:1.15;letter-spacing:-0.02em;margin-bottom:12px;}
+.ob-hook-line .red{color:var(--red);}
+.ob-hook-line .green{color:var(--green);}
+.ob-hook-sub{font-size:0.95rem;color:var(--text);line-height:1.65;margin-bottom:32px;max-width:340px;}
+.ob-hook-sub strong{color:var(--white);}
+
+/* ── SCREEN 2: INTENT ── */
+.ob-q{font-size:1.3rem;font-weight:800;color:var(--white);line-height:1.3;margin-bottom:8px;}
+.ob-q-sub{font-size:0.82rem;color:var(--muted);margin-bottom:28px;}
+.ob-choices{display:flex;flex-direction:column;gap:10px;width:100%;}
+.ob-choice{
+  display:flex;align-items:center;gap:14px;
+  padding:16px 18px;
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:var(--r2);cursor:pointer;
+  transition:all 0.2s;text-align:left;
+  font-family:var(--font);width:100%;
+}
+.ob-choice:hover,.ob-choice.sel{
+  border-color:var(--green-bd);
+  background:var(--green-bg);
+}
+.ob-choice-icon{font-size:1.4rem;flex-shrink:0;}
+.ob-choice-body{}
+.ob-choice-title{font-size:0.88rem;font-weight:700;color:var(--white);margin-bottom:2px;}
+.ob-choice-sub{font-size:0.72rem;color:var(--muted);}
+.ob-choice.sel .ob-choice-sub{color:rgba(0,230,118,0.7);}
+
+/* ── SCREEN 3: ANALYSIS ── */
+.ob-scan-wrap{position:relative;width:120px;height:120px;margin-bottom:24px;}
+.ob-scan-ring{
+  width:120px;height:120px;border-radius:50%;
+  border:2px solid rgba(0,230,118,0.1);
+  position:absolute;top:0;left:0;
+}
+.ob-scan-arc{
+  width:120px;height:120px;border-radius:50%;
+  border:2px solid transparent;
+  border-top-color:var(--green);
+  border-right-color:rgba(0,230,118,0.3);
+  position:absolute;top:0;left:0;
+  animation:obSpin 1s linear infinite;
+}
+@keyframes obSpin{to{transform:rotate(360deg);}}
+.ob-scan-inner{
+  position:absolute;inset:14px;border-radius:50%;
+  background:var(--green-bg);border:1px solid var(--green-bd);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.6rem;
+}
+.ob-scan-title{font-size:1.1rem;font-weight:800;color:var(--white);margin-bottom:8px;}
+.ob-scan-steps{display:flex;flex-direction:column;gap:6px;width:100%;max-width:280px;}
+.ob-scan-step{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 12px;border-radius:var(--r);
+  font-size:0.78rem;color:var(--muted);
+  background:var(--card2);border:1px solid var(--border);
+  transition:all 0.4s;
+}
+.ob-scan-step.done{color:var(--green);border-color:var(--green-bd);background:var(--green-bg);}
+.ob-scan-step.active{color:var(--white);border-color:var(--border2);}
+.ob-scan-step-icon{font-size:0.8rem;width:16px;text-align:center;}
+
+/* ── SCREEN 4: WOW ── */
+.ob-identity-badge{
+  display:inline-flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,rgba(255,69,96,0.1),rgba(255,171,0,0.08));
+  border:1px solid rgba(255,69,96,0.3);border-radius:var(--r2);
+  padding:12px 20px;margin-bottom:20px;
+}
+.ob-identity-icon{font-size:1.6rem;}
+.ob-identity-label{font-size:0.65rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--red);margin-bottom:2px;}
+.ob-identity-name{font-size:1rem;font-weight:800;color:var(--white);}
+
+.ob-wow-title{font-size:1.2rem;font-weight:800;color:var(--white);line-height:1.3;margin-bottom:12px;}
+.ob-wow-gap{
+  display:flex;align-items:center;justify-content:center;
+  gap:0;margin-bottom:20px;width:100%;
+}
+.ob-gap-side{flex:1;padding:16px 10px;border-radius:var(--r2);}
+.ob-gap-side.bad{background:rgba(255,69,96,0.08);border:1px solid var(--red-bd);}
+.ob-gap-side.good{background:rgba(0,230,118,0.06);border:1px solid var(--green-bd);}
+.ob-gap-num{font-family:var(--mono);font-size:2rem;font-weight:800;line-height:1;margin-bottom:4px;}
+.ob-gap-lbl{font-size:0.65rem;color:var(--muted);font-weight:600;}
+.ob-gap-vs{
+  font-size:0.72rem;font-weight:800;color:var(--dim);
+  padding:0 12px;flex-shrink:0;
+}
+.ob-patterns{display:flex;flex-direction:column;gap:6px;width:100%;margin-bottom:20px;}
+.ob-pattern{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 13px;border-radius:var(--r);
+  font-size:0.78rem;color:var(--text);
+  background:var(--card);border:1px solid var(--border);
+  text-align:left;
+}
+.ob-pattern-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.ob-pattern strong{color:var(--white);}
+
+/* ── SCREEN 5: SIGNUP ── */
+.ob-save-icon{font-size:2.4rem;margin-bottom:16px;}
+.ob-save-title{font-size:1.3rem;font-weight:800;color:var(--white);line-height:1.3;margin-bottom:8px;}
+.ob-save-sub{font-size:0.85rem;color:var(--text);line-height:1.6;margin-bottom:24px;max-width:320px;}
+.ob-save-sub strong{color:var(--green);}
+.ob-google-btn{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:12px;
+  background:var(--white);border:none;border-radius:var(--r2);
+  padding:15px 24px;font-family:var(--font);font-size:0.95rem;font-weight:700;
+  color:#1a1a1a;cursor:pointer;margin-bottom:10px;
+  transition:all 0.2s;box-shadow:0 4px 20px rgba(0,0,0,0.3);
+}
+.ob-google-btn:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(0,0,0,0.4);}
+.ob-google-icon{width:20px;height:20px;}
+.ob-guest-btn{
+  width:100%;background:transparent;border:1px solid var(--border2);
+  border-radius:var(--r2);padding:14px;font-family:var(--font);
+  font-size:0.85rem;font-weight:600;color:var(--muted);cursor:pointer;
+  transition:all 0.2s;margin-bottom:14px;
+}
+.ob-guest-btn:hover{border-color:var(--green-bd);color:var(--text);}
+.ob-save-note{font-size:0.68rem;color:var(--dim);line-height:1.6;}
+
+/* Primary CTA button (reused across screens) */
+.ob-btn{
+  width:100%;background:var(--green);border:none;border-radius:var(--r2);
+  padding:16px;font-family:var(--font);font-size:0.95rem;font-weight:800;
+  color:#080c10;cursor:pointer;transition:all 0.25s;
+  box-shadow:0 4px 20px rgba(0,230,118,0.25);
+}
+.ob-btn:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(0,230,118,0.4);}
+.ob-btn:active{transform:translateY(0);}
+.ob-skip{font-size:0.72rem;color:var(--dim);cursor:pointer;margin-top:14px;
+  transition:color 0.2s;background:none;border:none;font-family:var(--font);}
+.ob-skip:hover{color:var(--muted);}
 
 /* JOURNAL */
 #log-view{padding:68px 16px 24px;}
@@ -911,6 +1271,173 @@ a{color:var(--green);text-decoration:none;}
   font-family:var(--font);transition:all 0.2s;}
 .bae-date-btn.on{background:var(--green-bg);border-color:var(--green-bd);color:var(--green);}
 .bae-date-btn:hover{color:var(--text);}
+
+
+/* ══════════════════════════════════════════════════
+   ONBOARDING FLOW — 5 screens
+   ══════════════════════════════════════════════════ */
+#onboarding{
+  position:fixed;inset:0;z-index:8000;
+  background:var(--bg);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:24px 20px 40px;
+  overflow:hidden;
+}
+#onboarding.hidden{display:none;}
+
+/* Progress dots */
+.ob-dots{display:flex;gap:6px;margin-bottom:32px;}
+.ob-dot{width:6px;height:6px;border-radius:3px;background:var(--border2);transition:all 0.4s;}
+.ob-dot.on{width:20px;background:var(--green);}
+.ob-dot.done{background:rgba(0,230,118,0.35);}
+
+/* Each screen */
+.ob-screen{
+  display:none;flex-direction:column;align-items:center;
+  text-align:center;max-width:420px;width:100%;
+  animation:obIn 0.45s cubic-bezier(.16,1,.3,1) both;
+}
+.ob-screen.on{display:flex;}
+@keyframes obIn{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── SCREEN 1: HOOK ── */
+.ob-hook-icon{font-size:3.5rem;margin-bottom:20px;animation:obPulse 2s ease-in-out infinite;}
+@keyframes obPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+.ob-hook-line{font-size:clamp(1.6rem,6vw,2.4rem);font-weight:800;color:var(--white);line-height:1.15;letter-spacing:-0.02em;margin-bottom:12px;}
+.ob-hook-line .red{color:var(--red);}
+.ob-hook-line .green{color:var(--green);}
+.ob-hook-sub{font-size:0.95rem;color:var(--text);line-height:1.65;margin-bottom:32px;max-width:340px;}
+.ob-hook-sub strong{color:var(--white);}
+
+/* ── SCREEN 2: INTENT ── */
+.ob-q{font-size:1.3rem;font-weight:800;color:var(--white);line-height:1.3;margin-bottom:8px;}
+.ob-q-sub{font-size:0.82rem;color:var(--muted);margin-bottom:28px;}
+.ob-choices{display:flex;flex-direction:column;gap:10px;width:100%;}
+.ob-choice{
+  display:flex;align-items:center;gap:14px;
+  padding:16px 18px;
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:var(--r2);cursor:pointer;
+  transition:all 0.2s;text-align:left;
+  font-family:var(--font);width:100%;
+}
+.ob-choice:hover,.ob-choice.sel{
+  border-color:var(--green-bd);
+  background:var(--green-bg);
+}
+.ob-choice-icon{font-size:1.4rem;flex-shrink:0;}
+.ob-choice-body{}
+.ob-choice-title{font-size:0.88rem;font-weight:700;color:var(--white);margin-bottom:2px;}
+.ob-choice-sub{font-size:0.72rem;color:var(--muted);}
+.ob-choice.sel .ob-choice-sub{color:rgba(0,230,118,0.7);}
+
+/* ── SCREEN 3: ANALYSIS ── */
+.ob-scan-wrap{position:relative;width:120px;height:120px;margin-bottom:24px;}
+.ob-scan-ring{
+  width:120px;height:120px;border-radius:50%;
+  border:2px solid rgba(0,230,118,0.1);
+  position:absolute;top:0;left:0;
+}
+.ob-scan-arc{
+  width:120px;height:120px;border-radius:50%;
+  border:2px solid transparent;
+  border-top-color:var(--green);
+  border-right-color:rgba(0,230,118,0.3);
+  position:absolute;top:0;left:0;
+  animation:obSpin 1s linear infinite;
+}
+@keyframes obSpin{to{transform:rotate(360deg);}}
+.ob-scan-inner{
+  position:absolute;inset:14px;border-radius:50%;
+  background:var(--green-bg);border:1px solid var(--green-bd);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.6rem;
+}
+.ob-scan-title{font-size:1.1rem;font-weight:800;color:var(--white);margin-bottom:8px;}
+.ob-scan-steps{display:flex;flex-direction:column;gap:6px;width:100%;max-width:280px;}
+.ob-scan-step{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 12px;border-radius:var(--r);
+  font-size:0.78rem;color:var(--muted);
+  background:var(--card2);border:1px solid var(--border);
+  transition:all 0.4s;
+}
+.ob-scan-step.done{color:var(--green);border-color:var(--green-bd);background:var(--green-bg);}
+.ob-scan-step.active{color:var(--white);border-color:var(--border2);}
+.ob-scan-step-icon{font-size:0.8rem;width:16px;text-align:center;}
+
+/* ── SCREEN 4: WOW ── */
+.ob-identity-badge{
+  display:inline-flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,rgba(255,69,96,0.1),rgba(255,171,0,0.08));
+  border:1px solid rgba(255,69,96,0.3);border-radius:var(--r2);
+  padding:12px 20px;margin-bottom:20px;
+}
+.ob-identity-icon{font-size:1.6rem;}
+.ob-identity-label{font-size:0.65rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--red);margin-bottom:2px;}
+.ob-identity-name{font-size:1rem;font-weight:800;color:var(--white);}
+
+.ob-wow-title{font-size:1.2rem;font-weight:800;color:var(--white);line-height:1.3;margin-bottom:12px;}
+.ob-wow-gap{
+  display:flex;align-items:center;justify-content:center;
+  gap:0;margin-bottom:20px;width:100%;
+}
+.ob-gap-side{flex:1;padding:16px 10px;border-radius:var(--r2);}
+.ob-gap-side.bad{background:rgba(255,69,96,0.08);border:1px solid var(--red-bd);}
+.ob-gap-side.good{background:rgba(0,230,118,0.06);border:1px solid var(--green-bd);}
+.ob-gap-num{font-family:var(--mono);font-size:2rem;font-weight:800;line-height:1;margin-bottom:4px;}
+.ob-gap-lbl{font-size:0.65rem;color:var(--muted);font-weight:600;}
+.ob-gap-vs{
+  font-size:0.72rem;font-weight:800;color:var(--dim);
+  padding:0 12px;flex-shrink:0;
+}
+.ob-patterns{display:flex;flex-direction:column;gap:6px;width:100%;margin-bottom:20px;}
+.ob-pattern{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 13px;border-radius:var(--r);
+  font-size:0.78rem;color:var(--text);
+  background:var(--card);border:1px solid var(--border);
+  text-align:left;
+}
+.ob-pattern-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.ob-pattern strong{color:var(--white);}
+
+/* ── SCREEN 5: SIGNUP ── */
+.ob-save-icon{font-size:2.4rem;margin-bottom:16px;}
+.ob-save-title{font-size:1.3rem;font-weight:800;color:var(--white);line-height:1.3;margin-bottom:8px;}
+.ob-save-sub{font-size:0.85rem;color:var(--text);line-height:1.6;margin-bottom:24px;max-width:320px;}
+.ob-save-sub strong{color:var(--green);}
+.ob-google-btn{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:12px;
+  background:var(--white);border:none;border-radius:var(--r2);
+  padding:15px 24px;font-family:var(--font);font-size:0.95rem;font-weight:700;
+  color:#1a1a1a;cursor:pointer;margin-bottom:10px;
+  transition:all 0.2s;box-shadow:0 4px 20px rgba(0,0,0,0.3);
+}
+.ob-google-btn:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(0,0,0,0.4);}
+.ob-google-icon{width:20px;height:20px;}
+.ob-guest-btn{
+  width:100%;background:transparent;border:1px solid var(--border2);
+  border-radius:var(--r2);padding:14px;font-family:var(--font);
+  font-size:0.85rem;font-weight:600;color:var(--muted);cursor:pointer;
+  transition:all 0.2s;margin-bottom:14px;
+}
+.ob-guest-btn:hover{border-color:var(--green-bd);color:var(--text);}
+.ob-save-note{font-size:0.68rem;color:var(--dim);line-height:1.6;}
+
+/* Primary CTA button (reused across screens) */
+.ob-btn{
+  width:100%;background:var(--green);border:none;border-radius:var(--r2);
+  padding:16px;font-family:var(--font);font-size:0.95rem;font-weight:800;
+  color:#080c10;cursor:pointer;transition:all 0.25s;
+  box-shadow:0 4px 20px rgba(0,230,118,0.25);
+}
+.ob-btn:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(0,230,118,0.4);}
+.ob-btn:active{transform:translateY(0);}
+.ob-skip{font-size:0.72rem;color:var(--dim);cursor:pointer;margin-top:14px;
+  transition:color 0.2s;background:none;border:none;font-family:var(--font);}
+.ob-skip:hover{color:var(--muted);}
 
 /* JOURNAL */
 #log-view{padding:68px 16px 24px;}
@@ -1202,24 +1729,66 @@ a{color:var(--green);text-decoration:none;}
 <!-- SYNC STATUS BAR -->
 <div id="sync-bar" style="display:none"></div>
 
-<!-- NAV -->
+<!-- NAV — top bar on desktop, bottom tab bar on mobile -->
 <nav id="nav">
-  <a href="/" class="nav-brand"><div class="nav-brand-dot"></div>MindOfTrader</a>
-  <div class="nav-tabs">
-    <button class="nav-tab" onclick="goTo('dashboard')">📊 Mind</button>
-    <button class="nav-tab" onclick="goTo('log')">✍️ Journal</button>
-    <button class="nav-tab" onclick="goTo('ai')">🤖 Coach</button>
-    <button class="nav-tab" onclick="goTo('dna')">🧬 DNA</button>
-    <button class="nav-tab" onclick="goTo('connect')">🔗 Import</button>
-  </div>
-  <div class="nav-right">
-    <div class="nav-sync-dot" id="nav-sync-dot" title="Sync status"></div>
-    <div class="nav-user-wrap" onclick="toggleUserMenu()">
-      <div class="nav-user-photo-placeholder" id="nav-user-avatar">T</div>
-      <span class="nav-user-name" id="nav-user-name">Trader</span>
+  <!-- TOP BAR (desktop + mobile header) -->
+  <div class="nav-topbar">
+    <a href="/" class="nav-brand"><div class="nav-brand-dot"></div>MindOfTrader</a>
+    <!-- Desktop tabs (hidden on mobile) -->
+    <div class="nav-tabs nav-tabs-desktop">
+      <button class="nav-tab" onclick="goTo('dashboard')">📊 Mind</button>
+      <button class="nav-tab" onclick="goTo('log')">✍️ Journal</button>
+      <button class="nav-tab" onclick="goTo('ai')">🤖 Coach</button>
+      <button class="nav-tab" onclick="goTo('dna')">🧬 DNA</button>
+      <button class="nav-tab" onclick="goTo('connect')">🔗 Import</button>
+    </div>
+    <div class="nav-right">
+      <div class="nav-sync-dot" id="nav-sync-dot" title="Sync status"></div>
+      <div class="nav-user-wrap" onclick="toggleUserMenu()">
+        <div class="nav-user-photo-placeholder" id="nav-user-avatar">T</div>
+        <span class="nav-user-name" id="nav-user-name">Trader</span>
+      </div>
     </div>
   </div>
 </nav>
+
+<!-- BOTTOM TAB BAR (mobile only) -->
+<div class="bottom-nav" id="bottom-nav" style="display:none">
+  <button class="bn-tab" onclick="goTo('dashboard')" id="bn-dashboard">
+    <div class="bn-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity=".9"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity=".5"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity=".5"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity=".5"/></svg>
+    </div>
+    <span class="bn-lbl">Mind</span>
+    <div class="bn-pip" id="bnpip-dashboard"></div>
+  </button>
+  <button class="bn-tab" onclick="goTo('log')" id="bn-log">
+    <div class="bn-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <span class="bn-lbl">Journal</span>
+    <div class="bn-pip" id="bnpip-log"></div>
+  </button>
+  <button class="bn-tab bn-center" onclick="goTo('ai')" id="bn-ai">
+    <div class="bn-center-btn">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </div>
+    <span class="bn-lbl">AI Coach</span>
+  </button>
+  <button class="bn-tab" onclick="goTo('dna')" id="bn-dna">
+    <div class="bn-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M8 3c0 4.5 8 4.5 8 9s-8 4.5-8 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16 3c0 4.5-8 4.5-8 9s8 4.5 8 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="6" y1="7.5" x2="18" y2="7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="6" y1="16.5" x2="18" y2="16.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </div>
+    <span class="bn-lbl">DNA</span>
+    <div class="bn-pip" id="bnpip-dna"></div>
+  </button>
+  <button class="bn-tab" onclick="goTo('connect')" id="bn-connect">
+    <div class="bn-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="17 8 12 3 7 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </div>
+    <span class="bn-lbl">Import</span>
+    <div class="bn-pip" id="bnpip-connect"></div>
+  </button>
+</div>
 
 <!-- USER MENU -->
 <div class="user-menu-overlay" id="user-menu-overlay" onclick="closeUserMenu()"></div>
@@ -1235,256 +1804,459 @@ a{color:var(--green);text-decoration:none;}
   <div class="um-item danger" onclick="confirmLogout()">→ Sign Out</div>
 </div>
 
-<!-- LANDING -->
-<div class="view" id="landing-view">
+<!-- ONBOARDING FLOW (replaces old landing) -->
+<div id="onboarding">
 
-  <!-- Core truth — one sentence -->
-  <div class="land-tag">🧠 Mind vs Market</div>
-  <h1 class="land-h1">
-    <span class="hi">Your charts show</span>
-    <span class="accent">the market.</span>
-    <span class="lo">We show your mind.</span>
-  </h1>
-  <p class="land-sub">Your strategy is fine. Your behavior is the problem.<br>We show you exactly where your mind is costing you money.</p>
+  <!-- Progress dots -->
+  <div class="ob-dots">
+    <div class="ob-dot on"  id="obdot-1"></div>
+    <div class="ob-dot"     id="obdot-2"></div>
+    <div class="ob-dot"     id="obdot-3"></div>
+    <div class="ob-dot"     id="obdot-4"></div>
+    <div class="ob-dot"     id="obdot-5"></div>
+  </div>
 
-  <!-- DEMO MODE — instant insight, no login -->
-  <div class="demo-mode-card" id="demo-card">
-    <div class="dmc-label">⚡ See it work in 10 seconds — no login needed</div>
-    <div class="dmc-insight" id="dmc-insight">
-      <div class="dmc-loading">Scanning demo trader's behavioral patterns...</div>
+  <!-- ══ SCREEN 1: EMOTIONAL HOOK ══ -->
+  <div class="ob-screen on" id="ob-s1">
+    <div class="ob-hook-icon">🧠</div>
+    <div class="ob-hook-line">
+      Your strategy is fine.<br>
+      <span class="red">Your behavior</span> is the problem.
     </div>
-    <div class="dmc-stats" id="dmc-stats" style="display:none">
-      <div class="dmc-stat"><span class="dmc-val" style="color:var(--red)">28%</span><span class="dmc-lbl">Revenge trade WR</span></div>
-      <div class="dmc-div"></div>
-      <div class="dmc-stat"><span class="dmc-val" style="color:var(--green)">74%</span><span class="dmc-lbl">Calm trade WR</span></div>
-      <div class="dmc-div"></div>
-      <div class="dmc-stat"><span class="dmc-val" style="color:var(--amber)">₹21K</span><span class="dmc-lbl">Cost this month</span></div>
+    <p class="ob-hook-sub">
+      Every trader has two enemies — the market, and their own mind.<br>
+      <strong>The market you cannot control. Your mind you can.</strong>
+    </p>
+    <button class="ob-btn" onclick="obNext(2)">Show me how →</button>
+    <button class="ob-skip" onclick="obSkipAll()">Skip — take me to the app</button>
+  </div>
+
+  <!-- ══ SCREEN 2: INTENT (1-tap) ══ -->
+  <div class="ob-screen" id="ob-s2">
+    <div class="ob-q">What's your biggest problem right now?</div>
+    <div class="ob-q-sub">Be honest. This shapes your analysis.</div>
+    <div class="ob-choices">
+      <button class="ob-choice" onclick="obSelectIntent(this,'revenge')" id="intent-revenge">
+        <div class="ob-choice-icon">😤</div>
+        <div class="ob-choice-body">
+          <div class="ob-choice-title">I take revenge trades after losses</div>
+          <div class="ob-choice-sub">One bad trade leads to three more bad trades</div>
+        </div>
+      </button>
+      <button class="ob-choice" onclick="obSelectIntent(this,'fomo')" id="intent-fomo">
+        <div class="ob-choice-icon">🚀</div>
+        <div class="ob-choice-body">
+          <div class="ob-choice-title">I chase trades I miss</div>
+          <div class="ob-choice-sub">I see the move and jump in too late</div>
+        </div>
+      </button>
+      <button class="ob-choice" onclick="obSelectIntent(this,'discipline')" id="intent-discipline">
+        <div class="ob-choice-icon">📋</div>
+        <div class="ob-choice-body">
+          <div class="ob-choice-title">I don't follow my own rules</div>
+          <div class="ob-choice-sub">I know what to do, I just don't do it</div>
+        </div>
+      </button>
+      <button class="ob-choice" onclick="obSelectIntent(this,'understand')" id="intent-understand">
+        <div class="ob-choice-icon">🔍</div>
+        <div class="ob-choice-body">
+          <div class="ob-choice-title">I don't know why I keep losing</div>
+          <div class="ob-choice-sub">The losses feel random and I can't see the pattern</div>
+        </div>
+      </button>
     </div>
   </div>
 
-  <!-- CTAs -->
-  <div class="land-btns">
-    <a href="/login" class="land-btn-primary">Start Free — Sign in with Google</a>
-    <button class="land-btn-secondary" onclick="guestMode()">Try as Guest</button>
+  <!-- ══ SCREEN 3: ANALYSIS (animated) ══ -->
+  <div class="ob-screen" id="ob-s3">
+    <div class="ob-scan-wrap">
+      <div class="ob-scan-ring"></div>
+      <div class="ob-scan-arc" id="ob-arc"></div>
+      <div class="ob-scan-inner">🧠</div>
+    </div>
+    <div class="ob-scan-title">Analyzing your trader profile...</div>
+    <div class="ob-scan-steps">
+      <div class="ob-scan-step" id="obs-1">
+        <span class="ob-scan-step-icon">○</span>
+        Identifying behavioral pattern
+      </div>
+      <div class="ob-scan-step" id="obs-2">
+        <span class="ob-scan-step-icon">○</span>
+        Calculating cost of pattern
+      </div>
+      <div class="ob-scan-step" id="obs-3">
+        <span class="ob-scan-step-icon">○</span>
+        Building your trader identity
+      </div>
+    </div>
   </div>
-  <div class="land-note">Free forever · No credit card · Your data stays private</div>
+
+  <!-- ══ SCREEN 4: WOW MOMENT ══ -->
+  <div class="ob-screen" id="ob-s4">
+    <!-- Trader identity badge -->
+    <div class="ob-identity-badge" id="ob-identity-badge">
+      <div class="ob-identity-icon" id="ob-identity-icon">😤</div>
+      <div>
+        <div class="ob-identity-label">Your Trader Identity</div>
+        <div class="ob-identity-name" id="ob-identity-name">The Revenge Trader</div>
+      </div>
+    </div>
+
+    <div class="ob-wow-title" id="ob-wow-title">
+      Your calm trades win <span style="color:var(--green)">74%</span>.<br>
+      Your revenge trades win <span style="color:var(--red)">28%</span>.
+    </div>
+
+    <!-- The gap visual -->
+    <div class="ob-wow-gap">
+      <div class="ob-gap-side bad">
+        <div class="ob-gap-num" style="color:var(--red)" id="ob-bad-wr">28%</div>
+        <div class="ob-gap-lbl" id="ob-bad-lbl">Revenge WR</div>
+      </div>
+      <div class="ob-gap-vs">vs</div>
+      <div class="ob-gap-side good">
+        <div class="ob-gap-num" style="color:var(--green)" id="ob-good-wr">74%</div>
+        <div class="ob-gap-lbl" id="ob-good-lbl">Calm WR</div>
+      </div>
+    </div>
+
+    <!-- Pattern breakdown -->
+    <div class="ob-patterns" id="ob-patterns"></div>
+
+    <button class="ob-btn" onclick="obNext(5)" style="margin-bottom:0">Save my analysis →</button>
+  </div>
+
+  <!-- ══ SCREEN 5: SIGNUP ══ -->
+  <div class="ob-screen" id="ob-s5">
+    <div class="ob-save-icon">🔒</div>
+    <div class="ob-save-title" id="ob-save-title">Save your analysis.</div>
+    <div class="ob-save-sub" id="ob-save-sub">
+      You just saw your behavioral pattern.<br>
+      Sign in to <strong>track it daily</strong>, get AI coaching, and close the gap.
+    </div>
+    <button class="ob-google-btn" onclick="obMarkSeen();window.location.href='/login'">
+      <svg class="ob-google-icon" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      Continue with Google — Free
+    </button>
+    <button class="ob-guest-btn" onclick="obFinishGuest()">Continue without account</button>
+    <div class="ob-save-note">Free forever · No credit card · Your data stays private</div>
+  </div>
 
 </div>
 
+<!-- Keep old landing-view as hidden fallback -->
+<div class="view" id="landing-view" style="display:none !important"></div>
+
 <!-- DASHBOARD -->
 <div class="view" id="dashboard-view" data-anchor="dashboard">
+
+  <!-- FIREBASE NOTICE -->
   <div class="firebase-notice" id="firebase-notice" style="display:none">
-    <strong>⚡ Firebase not configured yet.</strong> Trades are being saved locally only. To enable cloud sync across devices,
-    add your Firebase config to <code>login.html</code> and <code>app/index.html</code>.
+    <strong>⚡ Firebase not configured yet.</strong> Trades saved locally only.
     <a href="https://console.firebase.google.com" target="_blank" style="color:var(--amber)">Set up Firebase →</a>
   </div>
-  <!-- GUEST UPGRADE BANNER -->
-  <div class="guest-banner" id="guest-banner">
+
+  <!-- ═══ TOP COCKPIT BAR ═══ -->
+  <div class="cockpit-bar">
+    <div class="cockpit-greet">
+      <div class="cockpit-name">Hey <span id="dash-name-txt">Trader</span> 👋</div>
+      <div class="cockpit-sub" id="dash-greet-txt">Ready to trade mindfully?</div>
+    </div>
+    <div class="cockpit-live">
+      <div class="cockpit-clock" id="live-clock">--:--</div>
+      <div class="cockpit-session" id="dash-session-lbl">NSE</div>
+    </div>
+  </div>
+
+  <!-- ═══ MARKET PULSE STRIP ═══ -->
+  <div class="pulse-strip" id="market-strip">
+    <div class="pulse-session">
+      <div class="pulse-dot" id="ms-session-dot"></div>
+      <span class="pulse-session-txt" id="ms-session-text">Loading</span>
+    </div>
+    <div class="pulse-item">
+      <div class="pulse-lbl">NIFTY</div>
+      <div class="pulse-val" id="ms-nifty">—</div>
+      <div class="pulse-chg" id="ms-nifty-chg">—</div>
+    </div>
+    <div class="pulse-item">
+      <div class="pulse-lbl">BANK</div>
+      <div class="pulse-val" id="ms-banknifty">—</div>
+      <div class="pulse-chg" id="ms-banknifty-chg">—</div>
+    </div>
+    <div class="pulse-item">
+      <div class="pulse-lbl">VIX</div>
+      <div class="pulse-val" id="ms-vix">—</div>
+      <div class="pulse-chg" id="ms-vix-mood">—</div>
+    </div>
+    <div class="pulse-item">
+      <div class="pulse-lbl">PCR</div>
+      <div class="pulse-val" id="ms-pcr">—</div>
+      <div class="pulse-chg" id="ms-pcr-mood">—</div>
+    </div>
+    <div class="pulse-mood" id="ms-mood">—</div>
+    <div class="pulse-upd" id="ms-updated">—</div>
+  </div>
+
+  <!-- ═══ ALERT ═══ -->
+  <div class="mkt-alert" id="mkt-alert" style="display:none">
+    <div class="mkt-alert-icon" id="mkt-alert-icon">⚠️</div>
+    <div class="mkt-alert-text" id="mkt-alert-text"></div>
+  </div>
+
+  <!-- ═══ GUEST UPGRADE BANNER ═══ -->
+  <div class="guest-banner" id="guest-banner" style="display:none">
     <div class="gb-icon">☁️</div>
     <div class="gb-body">
-      <div class="gb-title">Your trades are only saved on this device</div>
-      <div class="gb-sub">You have <strong id="gb-trade-count">0 trades</strong> in guest mode. Sign in with Google to back them up to the cloud — access them from any device, forever.</div>
+      <div class="gb-title">Your trades are only on this device</div>
+      <div class="gb-sub">Sign in to sync across devices · <strong id="gb-trade-count">0 trades</strong> to back up</div>
     </div>
     <button class="gb-btn" onclick="openUpgradeModal()">Save to Cloud →</button>
     <button class="gb-dismiss" onclick="dismissGuestBanner()" title="Dismiss">✕</button>
   </div>
 
-  <!-- LIVE MARKET SENTIMENT STRIP -->
-  <div class="market-strip" id="market-strip">
-    <div class="ms-session" style="padding-left:4px;padding-right:18px;border-right:1px solid var(--border)">
-      <div class="ms-session-dot" id="ms-session-dot"></div>
-      <span class="ms-session-text" id="ms-session-text">Loading...</span>
-    </div>
-    <div class="ms-item">
-      <div class="ms-label">NIFTY 50</div>
-      <div class="ms-val" id="ms-nifty">—</div>
-      <div class="ms-chg" id="ms-nifty-chg">—</div>
-    </div>
-    <div class="ms-item">
-      <div class="ms-label">BANKNIFTY</div>
-      <div class="ms-val" id="ms-banknifty">—</div>
-      <div class="ms-chg" id="ms-banknifty-chg">—</div>
-    </div>
-    <div class="ms-item">
-      <div class="ms-label">INDIA VIX</div>
-      <div class="ms-val" id="ms-vix">—</div>
-      <div class="ms-chg" id="ms-vix-mood">—</div>
-    </div>
-    <div class="vix-gauge">
-      <div class="vix-bar-wrap"><div class="vix-bar" id="vix-bar"></div></div>
-      <span style="font-size:0.65rem;color:var(--muted)" id="vix-label">—</span>
-    </div>
-    <div class="ms-item">
-      <div class="ms-label">PCR</div>
-      <div class="ms-val" id="ms-pcr">—</div>
-      <div class="ms-chg" id="ms-pcr-mood">—</div>
-    </div>
-    <div class="ms-item">
-      <div class="ms-label">Market Mood</div>
-      <div class="ms-val" id="ms-mood" style="font-size:0.78rem;">—</div>
-      <div class="ms-chg" id="ms-mood-sub">—</div>
-    </div>
-    <div style="padding:0 4px 0 14px;font-size:0.6rem;color:var(--dim);white-space:nowrap;flex-shrink:0" id="ms-updated">—</div>
-  </div>
-
-  <!-- BEHAVIORAL MARKET ALERT -->
-  <div class="mkt-alert" id="mkt-alert">
-    <div class="mkt-alert-icon" id="mkt-alert-icon">⚠️</div>
-    <div class="mkt-alert-text" id="mkt-alert-text"></div>
-  </div>
-
-  <!-- DASH HEADER -->
-  <div class="dash-hero">
-    <div>
-      <div class="dash-greet" id="dash-greet-txt">Good morning</div>
-      <div class="dash-name">Hey <span id="dash-name-txt">Trader</span> 👋</div>
-    </div>
-    <div class="dash-live">
-      <div class="dash-time" id="live-clock">--:--:--</div>
-      <div class="dash-session" id="dash-session-lbl">NSE Session</div>
-    </div>
-  </div>
-
-  <!-- STEP-BY-STEP SETUP GUIDE — shown only when 0 trades -->
+  <!-- ═══ ZERO STATE — SETUP GUIDE ═══ -->
   <div id="setup-guide" style="display:none">
-    <div class="setup-guide-card">
-      <div class="sgc-title">👋 Welcome to MindOfTrader</div>
-      <div class="sgc-sub">You're 3 steps away from your first behavioral insight</div>
-      <div class="sgc-steps">
-        <div class="sgc-step" id="sgs-1">
-          <div class="sgcs-num done" id="sgsn-1">1</div>
-          <div class="sgcs-body">
-            <div class="sgcs-title">✓ You're in</div>
-            <div class="sgcs-sub">Account ready</div>
-          </div>
-        </div>
-        <div class="sgc-step" id="sgs-2">
-          <div class="sgcs-num" id="sgsn-2">2</div>
-          <div class="sgcs-body">
-            <div class="sgcs-title">Import or log your first trade</div>
-            <div class="sgcs-sub">Upload a Zerodha CSV or log manually</div>
-          </div>
-          <button onclick="goTo('connect')" class="sgcs-btn">Import CSV →</button>
-        </div>
-        <div class="sgc-step" id="sgs-3">
-          <div class="sgcs-num" id="sgsn-3">3</div>
-          <div class="sgcs-body">
-            <div class="sgcs-title">Run AI analysis</div>
-            <div class="sgcs-sub">Get your behavioral patterns in seconds</div>
-          </div>
-          <button onclick="goTo('ai')" class="sgcs-btn" style="opacity:0.4" id="sgs-ai-btn">Analyze →</button>
-        </div>
+    <div class="zero-card">
+      <div class="zero-icon">🧠</div>
+      <div class="zero-title">Your behavioral cockpit is ready</div>
+      <div class="zero-sub">Import trades or log one to see your patterns</div>
+      <div class="zero-steps">
+        <button class="zero-step-btn" onclick="goTo('connect')">
+          <span class="zsb-num">1</span>
+          <span class="zsb-body">
+            <span class="zsb-title">Import CSV from Zerodha</span>
+            <span class="zsb-sub">Auto-detects your trade book</span>
+          </span>
+          <span class="zsb-arrow">→</span>
+        </button>
+        <button class="zero-step-btn" onclick="goTo('log')">
+          <span class="zsb-num">2</span>
+          <span class="zsb-body">
+            <span class="zsb-title">Log a trade manually</span>
+            <span class="zsb-sub">Add emotion + trade details</span>
+          </span>
+          <span class="zsb-arrow">→</span>
+        </button>
+        <button class="zero-step-btn" onclick="goTo('ai')">
+          <span class="zsb-num">3</span>
+          <span class="zsb-body">
+            <span class="zsb-title">Ask AI Coach</span>
+            <span class="zsb-sub">Get instant trading psychology insight</span>
+          </span>
+          <span class="zsb-arrow">→</span>
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- MIND VS MARKET — daily engagement hero card (shown when trades exist) -->
+  <!-- ═══ MAIN COCKPIT (shown when trades exist) ═══ -->
   <div id="mind-vs-market" style="display:none">
+
+    <!-- FEAR-GREED METER + TODAY CARD -->
+    <div class="cockpit-top-row">
+
+      <!-- FEAR/GREED METER -->
+      <div class="fg-meter-card">
+        <div class="fgm-label">Market Mood</div>
+        <div class="fgm-arc-wrap">
+          <svg class="fgm-arc" viewBox="0 0 120 70" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="fgGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#ff4560"/>
+                <stop offset="40%" style="stop-color:#ffab00"/>
+                <stop offset="100%" style="stop-color:#00e676"/>
+              </linearGradient>
+            </defs>
+            <path d="M10,65 A50,50,0,0,1,110,65" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="10" stroke-linecap="round"/>
+            <path id="fg-arc-fill" d="M10,65 A50,50,0,0,1,110,65" fill="none" stroke="url(#fgGrad)" stroke-width="10" stroke-linecap="round" stroke-dasharray="157" stroke-dashoffset="157" style="transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)"/>
+            <line id="fg-needle" x1="60" y1="65" x2="60" y2="20" stroke="white" stroke-width="2" stroke-linecap="round" style="transform-origin:60px 65px;transform:rotate(-90deg);transition:transform 1.2s cubic-bezier(.4,0,.2,1)"/>
+            <circle cx="60" cy="65" r="3" fill="white"/>
+          </svg>
+          <div class="fgm-score" id="fg-score">—</div>
+          <div class="fgm-mood" id="fg-mood">Loading</div>
+        </div>
+        <div class="fgm-scale">
+          <span style="color:var(--red)">Fear</span>
+          <span style="color:var(--amber)">Neutral</span>
+          <span style="color:var(--green)">Greed</span>
+        </div>
+      </div>
+
+      <!-- TODAY SNAPSHOT -->
+      <div class="today-card">
+        <div class="today-header">
+          <span class="today-badge">📅 Today</span>
+          <span class="today-date" id="mvm-date"></span>
+        </div>
+        <div class="today-pnl" id="mvm-today-pnl">₹0</div>
+        <div class="today-pnl-sub" id="today-pnl-sub">Today's P&L</div>
+        <div class="today-stats-row">
+          <div class="ts-item">
+            <div class="ts-val" id="mvm-trades-count">0</div>
+            <div class="ts-lbl">Trades</div>
+          </div>
+          <div class="ts-div"></div>
+          <div class="ts-item">
+            <div class="ts-val" id="mvm-disc-score" style="color:var(--green)">—</div>
+            <div class="ts-lbl">Discipline</div>
+          </div>
+          <div class="ts-div"></div>
+          <div class="ts-item">
+            <div class="ts-val" id="mvm-streak">🔥 0</div>
+            <div class="ts-lbl">Streak</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DAILY MISSION CARD -->
+      <div class="mission-card">
+        <div class="mission-header">
+          <span class="mission-badge">🎯 Daily Mission</span>
+          <span class="mission-xp" id="mission-xp">+50 XP</span>
+        </div>
+        <div class="mission-text" id="mission-text">Loading your mission...</div>
+        <div class="mission-progress-wrap">
+          <div class="mission-progress-bar"><div class="mission-progress-fill" id="mission-fill" style="width:0%"></div></div>
+          <span class="mission-progress-txt" id="mission-progress-txt">0/1 complete</span>
+        </div>
+        <button class="mission-cta" id="mission-cta" onclick="goTo('log')">Log a Trade →</button>
+      </div>
+    </div>
+
+    <!-- MIND SCORE ROW -->
+    <div class="mind-scores-row">
+      <div class="mind-score-pill" style="--sc:#00e676">
+        <div class="msp-icon">🎯</div>
+        <div class="msp-body">
+          <div class="msp-val" id="sc0">—</div>
+          <div class="msp-lbl">Discipline</div>
+        </div>
+        <div class="msp-bar"><div class="msp-fill" id="sf0" style="background:#00e676"></div></div>
+      </div>
+      <div class="mind-score-pill" style="--sc:#ffab00">
+        <div class="msp-icon">⏳</div>
+        <div class="msp-body">
+          <div class="msp-val" id="sc1">—</div>
+          <div class="msp-lbl">Patience</div>
+        </div>
+        <div class="msp-bar"><div class="msp-fill" id="sf1" style="background:#ffab00"></div></div>
+      </div>
+      <div class="mind-score-pill" style="--sc:#2979ff">
+        <div class="msp-icon">🛡️</div>
+        <div class="msp-body">
+          <div class="msp-val" id="sc2">—</div>
+          <div class="msp-lbl">Risk Control</div>
+        </div>
+        <div class="msp-bar"><div class="msp-fill" id="sf2" style="background:#2979ff"></div></div>
+      </div>
+      <div class="mind-score-pill" style="--sc:#ff4560">
+        <div class="msp-icon">🧘</div>
+        <div class="msp-body">
+          <div class="msp-val" id="sc3">—</div>
+          <div class="msp-lbl">Emotion</div>
+        </div>
+        <div class="msp-bar"><div class="msp-fill" id="sf3" style="background:#ff4560"></div></div>
+      </div>
+    </div>
+
+    <!-- SOCIAL PULSE — What traders are feeling today -->
+    <div class="social-pulse-card">
+      <div class="sp-head">
+        <div class="sp-title">🌐 Trader Pulse — What's the community feeling?</div>
+        <div class="sp-live"><span class="sp-dot"></span>Live</div>
+      </div>
+      <div class="sp-emotions" id="sp-emotions">
+        <!-- rendered by JS -->
+      </div>
+      <div class="sp-footer">
+        <div class="sp-vote-prompt">How are <em>you</em> feeling today?</div>
+        <div class="sp-vote-row" id="sp-vote-row">
+          <button class="sp-vote-btn" onclick="voteMood('calm')">😌 Calm</button>
+          <button class="sp-vote-btn" onclick="voteMood('focused')">🧘 Focused</button>
+          <button class="sp-vote-btn" onclick="voteMood('fomo')">🚀 FOMO</button>
+          <button class="sp-vote-btn" onclick="voteMood('fear')">😨 Fear</button>
+          <button class="sp-vote-btn" onclick="voteMood('revenge')">😤 Revenge</button>
+        </div>
+        <div id="sp-voted" style="display:none" class="sp-voted-msg"></div>
+      </div>
+    </div>
+
+    <!-- MIND VS MARKET (calm vs revenge gap) -->
     <div class="mvm-card">
       <div class="mvm-scan"></div>
       <div class="mvm-top">
         <div class="mvm-label">🧠 Mind vs Market</div>
-        <div class="mvm-date" id="mvm-date">Today</div>
+        <div class="mvm-sub">Your behavioral win rate gap</div>
       </div>
-      <!-- THE KEY INSIGHT: calm vs revenge gap -->
-      <div class="mvm-insight" id="mvm-insight">
-        <div class="mvm-vs">
-          <div class="mvm-side">
-            <div class="mvm-side-val" id="mvm-calm-wr" style="color:var(--green)">—</div>
-            <div class="mvm-side-lbl">😌 Calm WR</div>
-          </div>
-          <div class="mvm-vs-divider">vs</div>
-          <div class="mvm-side">
-            <div class="mvm-side-val" id="mvm-revenge-wr" style="color:var(--red)">—</div>
-            <div class="mvm-side-lbl">😤 Revenge WR</div>
-          </div>
+      <div class="mvm-vs">
+        <div class="mvm-side">
+          <div class="mvm-side-val" id="mvm-calm-wr" style="color:var(--green)">—</div>
+          <div class="mvm-side-lbl">😌 Calm Win Rate</div>
         </div>
-        <div class="mvm-gap-text" id="mvm-gap-text">Import trades to see your behavioral gap</div>
-      </div>
-      <!-- Daily streak + score row -->
-      <div class="mvm-metrics">
-        <div class="mvm-metric">
-          <div class="mvm-metric-val" id="mvm-streak">🔥 0</div>
-          <div class="mvm-metric-lbl">Day Streak</div>
+        <div class="mvm-vs-divider">
+          <div class="mvm-vs-arrow">vs</div>
+          <div class="mvm-gap-badge" id="mvm-gap-badge" style="display:none"></div>
         </div>
-        <div class="mvm-metric-div"></div>
-        <div class="mvm-metric">
-          <div class="mvm-metric-val" id="mvm-disc-score" style="color:var(--green)">—</div>
-          <div class="mvm-metric-lbl">Discipline</div>
-        </div>
-        <div class="mvm-metric-div"></div>
-        <div class="mvm-metric">
-          <div class="mvm-metric-val" id="mvm-today-pnl">₹0</div>
-          <div class="mvm-metric-lbl">Today P&L</div>
-        </div>
-        <div class="mvm-metric-div"></div>
-        <div class="mvm-metric">
-          <div class="mvm-metric-val" id="mvm-trades-count" style="color:var(--blue)">0</div>
-          <div class="mvm-metric-lbl">Total Trades</div>
+        <div class="mvm-side">
+          <div class="mvm-side-val" id="mvm-revenge-wr" style="color:var(--red)">—</div>
+          <div class="mvm-side-lbl">😤 Revenge Win Rate</div>
         </div>
       </div>
-      <!-- Daily AI insight -->
+      <div class="mvm-gap-text" id="mvm-gap-text">Import trades to see your behavioral gap</div>
       <div class="mvm-daily-insight" id="mvm-daily-insight">
         <div class="mdi-icon">💡</div>
-        <div class="mdi-text" id="mdi-text">Loading your daily insight...</div>
+        <div class="mdi-text" id="mdi-text">Your daily behavioral insight will appear here</div>
       </div>
     </div>
-  </div>
 
-  <!-- STREAK BANNER (kept for backward compat, now hidden — replaced by mvm) -->
-  <div id="streak-banner" style="display:none">
-    <div class="sb-icon">🔥</div>
-    <div class="sb-body">
-      <div class="sb-title" id="streak-title">Active Streak</div>
-      <div class="sb-sub" id="streak-sub">Keep logging to maintain your streak</div>
-    </div>
-    <div class="sb-stat" id="streak-stat">0</div>
-  </div>
-  <div class="scores-row">
-    <div class="score-card" style="--c:var(--green)"><div class="sc-label">Discipline</div><div class="sc-val" id="sc0">78</div><div class="sc-bar"><div class="sc-fill" id="sf0"></div></div><div class="sc-sub">Rule adherence</div></div>
-    <div class="score-card" style="--c:var(--amber)"><div class="sc-label">Patience</div><div class="sc-val" id="sc1">52</div><div class="sc-bar"><div class="sc-fill" id="sf1"></div></div><div class="sc-sub">Winner holding</div></div>
-    <div class="score-card" style="--c:var(--blue)"><div class="sc-label">Risk Control</div><div class="sc-val" id="sc2">81</div><div class="sc-bar"><div class="sc-fill" id="sf2"></div></div><div class="sc-sub">SL & sizing</div></div>
-    <div class="score-card" style="--c:var(--red)"><div class="sc-label">Emotional Ctrl</div><div class="sc-val" id="sc3">60</div><div class="sc-bar"><div class="sc-fill" id="sf3"></div></div><div class="sc-sub">Emotion control</div></div>
-  </div>
-  <div class="dash-grid">
-    <div class="dash-left">
-      <div class="panel">
-        <div class="panel-head">
-          <div class="panel-title"><div class="pdot"></div>Equity Curve</div>
-          <div style="display:flex;gap:6px">
-            <span class="tag tg" style="cursor:pointer" onclick="switchEq(this,'1W')">1W</span>
-            <span class="tag" style="background:var(--card2);color:var(--muted);cursor:pointer;border:1px solid var(--border)" onclick="switchEq(this,'1M')">1M</span>
-            <span class="tag" style="background:var(--card2);color:var(--muted);cursor:pointer;border:1px solid var(--border)" onclick="switchEq(this,'3M')">3M</span>
+    <!-- BOTTOM PANELS ROW -->
+    <div class="dash-grid">
+      <div class="dash-left">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title"><div class="pdot"></div>Equity Curve</div>
+            <div style="display:flex;gap:6px">
+              <span class="tag tg" style="cursor:pointer" onclick="switchEq(this,'1W')">1W</span>
+              <span class="tag" style="background:var(--card2);color:var(--muted);cursor:pointer;border:1px solid var(--border)" onclick="switchEq(this,'1M')">1M</span>
+              <span class="tag" style="background:var(--card2);color:var(--muted);cursor:pointer;border:1px solid var(--border)" onclick="switchEq(this,'3M')">3M</span>
+            </div>
           </div>
+          <div class="panel-body"><div class="chart-wrap" style="height:190px"><canvas id="eqChart"></canvas></div></div>
         </div>
-        <div class="panel-body"><div class="chart-wrap" style="height:190px"><canvas id="eqChart"></canvas></div></div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title"><div class="pdot red"></div>Emotion Performance</div><div class="panel-tag">Your real data</div></div>
+          <div class="panel-body"><div class="setup-list" id="setup-list"></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title"><div class="pdot red"></div>Behavioral Insights</div><div class="panel-tag">From your data</div></div>
+          <div class="panel-body"><div class="insight-list" id="insight-list"></div></div>
+        </div>
       </div>
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title"><div class="pdot red"></div>Behavioral Insights</div><div class="panel-tag">From your data</div></div>
-        <div class="panel-body"><div class="insight-list" id="insight-list"></div></div>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title"><div class="pdot blue"></div>Emotion Performance</div><div class="panel-tag">Your real data</div></div>
-        <div class="panel-body"><div class="setup-list" id="setup-list"></div></div>
+      <div class="dash-right">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title"><div class="pdot amber"></div>Best Trading Hours</div><div class="panel-tag">Win % by hour</div></div>
+          <div class="panel-body"><div class="hm" id="hm"></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title"><div class="pdot red"></div>Behavior Patterns</div><div class="panel-tag">30 days</div></div>
+          <div class="panel-body" style="padding:0"><table class="pat-table"><thead><tr><th>Pattern</th><th>Freq</th><th>Avg P&L</th></tr></thead><tbody id="pat-tbody"></tbody></table></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title"><div class="pdot blue"></div>P&L by Emotion</div></div>
+          <div class="panel-body"><div class="chart-wrap" style="height:160px"><canvas id="emoChart"></canvas></div></div>
+        </div>
       </div>
     </div>
-    <div class="dash-right">
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title"><div class="pdot amber"></div>Time Heatmap</div><div class="panel-tag">Win % by hour</div></div>
-        <div class="panel-body"><div class="hm" id="hm"></div></div>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title"><div class="pdot red"></div>Behavior Patterns</div><div class="panel-tag">30 days</div></div>
-        <div class="panel-body" style="padding:0"><table class="pat-table"><thead><tr><th>Pattern</th><th>Freq</th><th>Avg P&L</th></tr></thead><tbody id="pat-tbody"></tbody></table></div>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title"><div class="pdot blue"></div>P&L by Emotion</div></div>
-        <div class="panel-body"><div class="chart-wrap" style="height:160px"><canvas id="emoChart"></canvas></div></div>
-      </div>
-    </div>
-  </div>
-</div>
 
+  </div><!-- end mind-vs-market -->
+
+</div>
 <!-- JOURNAL -->
 <div class="view" id="log-view" data-anchor="journal">
   <div class="bae-wrap">
@@ -1572,10 +2344,24 @@ a{color:var(--green);text-decoration:none;}
       <div class="lc-action" id="bae-learning-action" style="display:none"></div>
     </div>
 
-    <!-- ── TRADE LOG ── -->
-    <div class="bae-section">Trade Log</div>
+    <!-- ── TRADE FEED ── -->
+    <div class="bae-section" style="padding:12px 16px 0">Trade Feed</div>
 
   </div><!-- end bae-wrap -->
+
+  <!-- JOURNAL FEED FILTERS -->
+  <div class="journal-feed-filters">
+    <button class="jff-btn on" onclick="filterFeed(this,'all')">All Trades</button>
+    <button class="jff-btn" onclick="filterFeed(this,'today')">Today</button>
+    <button class="jff-btn" onclick="filterFeed(this,'win')">✅ Wins</button>
+    <button class="jff-btn" onclick="filterFeed(this,'loss')">❌ Losses</button>
+    <button class="jff-btn" onclick="filterFeed(this,'revenge')">😤 Revenge</button>
+    <button class="jff-btn" onclick="filterFeed(this,'fomo')">🚀 FOMO</button>
+    <button class="jff-btn" onclick="filterFeed(this,'calm')">😌 Calm</button>
+  </div>
+
+  <!-- TRADE CARDS FEED -->
+  <div class="journal-feed" id="trade-feed"></div>
 
   <div class="log-inner">
     <div class="log-card">
@@ -1937,10 +2723,90 @@ a{color:var(--green);text-decoration:none;}
       </div>
     </div>
 
+    <!-- WRAPPED SHARE CARD (hidden, used for screenshot share) -->
+    <div id="dna-share-card" style="display:none;position:fixed;top:-9999px;left:-9999px;width:400px;padding:32px;background:linear-gradient(145deg,#0a1628,#0d1f12);border-radius:24px;font-family:'Space Grotesk',sans-serif;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#00e676;box-shadow:0 0 10px #00e676"></div>
+        <span style="color:#00e676;font-weight:800;font-size:0.8rem;letter-spacing:0.12em">MINDOFTRADER</span>
+      </div>
+      <div id="sc-name" style="font-size:1.6rem;font-weight:800;color:#eef2f7;margin-bottom:4px"></div>
+      <div id="sc-arch" style="font-size:0.9rem;color:#00e676;font-weight:700;margin-bottom:24px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px">
+        <div style="background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.2);border-radius:12px;padding:14px;text-align:center">
+          <div id="sc-wr" style="font-size:1.6rem;font-weight:800;color:#00e676"></div>
+          <div style="font-size:0.6rem;color:rgba(168,188,207,0.6);margin-top:4px;font-weight:700;letter-spacing:0.06em">WIN RATE</div>
+        </div>
+        <div style="background:rgba(41,121,255,0.08);border:1px solid rgba(41,121,255,0.2);border-radius:12px;padding:14px;text-align:center">
+          <div id="sc-disc" style="font-size:1.6rem;font-weight:800;color:#2979ff"></div>
+          <div style="font-size:0.6rem;color:rgba(168,188,207,0.6);margin-top:4px;font-weight:700;letter-spacing:0.06em">DISCIPLINE</div>
+        </div>
+        <div style="background:rgba(255,171,0,0.08);border:1px solid rgba(255,171,0,0.2);border-radius:12px;padding:14px;text-align:center">
+          <div id="sc-streak" style="font-size:1.6rem;font-weight:800;color:#ffab00"></div>
+          <div style="font-size:0.6rem;color:rgba(168,188,207,0.6);margin-top:4px;font-weight:700;letter-spacing:0.06em">STREAK</div>
+        </div>
+      </div>
+      <div id="sc-insight" style="font-size:0.78rem;color:rgba(168,188,207,0.8);line-height:1.6;background:rgba(255,255,255,0.04);border-radius:10px;padding:12px;margin-bottom:20px"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:0.62rem;color:rgba(168,188,207,0.35);letter-spacing:0.06em">mindoftrader.com</div>
+        <div style="font-size:0.62rem;color:rgba(168,188,207,0.35)" id="sc-date"></div>
+      </div>
+    </div>
+
     <!-- Action buttons -->
     <div class="dna-btns">
-      <button class="dna-btn dna-pri" onclick="shareDNA()">🔗 Share My DNA</button>
+      <button class="dna-btn dna-pri" onclick="openShareDNA()">✨ Share My DNA Report</button>
       <button class="dna-btn dna-sec" onclick="goTo('connect')">📂 Import Trades</button>
+    </div>
+
+    <!-- SHARE PANEL -->
+    <div id="dna-share-panel" style="display:none;margin-top:16px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden;">
+      <div style="padding:16px 16px 12px;border-bottom:1px solid var(--border)">
+        <div style="font-size:0.8rem;font-weight:700;color:var(--white);margin-bottom:4px">✨ Your Trading DNA Report</div>
+        <div style="font-size:0.68rem;color:var(--muted)">Share your behavioral stats — inspire others to trade mindfully</div>
+      </div>
+      <!-- Wrapped preview card -->
+      <div id="dna-wrapped-preview" style="margin:16px;background:linear-gradient(145deg,#0a1628,#0d1f12);border-radius:16px;padding:20px;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:0;right:0;width:160px;height:160px;background:radial-gradient(circle,rgba(0,230,118,0.08),transparent);pointer-events:none"></div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:14px">
+          <div style="width:6px;height:6px;border-radius:50%;background:#00e676;box-shadow:0 0 8px #00e676"></div>
+          <span style="color:#00e676;font-weight:800;font-size:0.65rem;letter-spacing:0.12em">MINDOFTRADER · BEHAVIORAL REPORT</span>
+        </div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px">
+          <div>
+            <div id="wp-name" style="font-size:1.3rem;font-weight:800;color:#eef2f7;font-family:Space Grotesk,sans-serif"></div>
+            <div id="wp-arch" style="font-size:0.75rem;color:#00e676;font-weight:700;margin-top:2px"></div>
+          </div>
+          <div id="wp-disc-ring" style="width:56px;height:56px;position:relative">
+            <svg width="56" height="56" viewBox="0 0 56 56"><circle cx="28" cy="28" r="22" fill="none" stroke="rgba(0,230,118,0.15)" stroke-width="6"/><circle id="wp-ring-fill" cx="28" cy="28" r="22" fill="none" stroke="#00e676" stroke-width="6" stroke-linecap="round" stroke-dasharray="138" stroke-dashoffset="138" transform="rotate(-90 28 28)" style="transition:stroke-dashoffset 1s ease"/></svg>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;color:#00e676;font-family:Space Grotesk,sans-serif" id="wp-disc-num">—</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
+          <div style="background:rgba(0,230,118,0.07);border:1px solid rgba(0,230,118,0.15);border-radius:10px;padding:10px;text-align:center">
+            <div id="wp-wr" style="font-size:1.2rem;font-weight:800;color:#00e676;font-family:Space Grotesk,sans-serif">—</div>
+            <div style="font-size:0.55rem;color:rgba(168,188,207,0.5);margin-top:2px;font-weight:700;letter-spacing:0.05em">WIN RATE</div>
+          </div>
+          <div style="background:rgba(255,171,0,0.07);border:1px solid rgba(255,171,0,0.15);border-radius:10px;padding:10px;text-align:center">
+            <div id="wp-streak" style="font-size:1.2rem;font-weight:800;color:#ffab00;font-family:Space Grotesk,sans-serif">—</div>
+            <div style="font-size:0.55rem;color:rgba(168,188,207,0.5);margin-top:2px;font-weight:700;letter-spacing:0.05em">STREAK</div>
+          </div>
+          <div style="background:rgba(255,69,96,0.07);border:1px solid rgba(255,69,96,0.15);border-radius:10px;padding:10px;text-align:center">
+            <div id="wp-pnl" style="font-size:1.2rem;font-weight:800;color:#ff4560;font-family:Space Grotesk,sans-serif">—</div>
+            <div style="font-size:0.55rem;color:rgba(168,188,207,0.5);margin-top:2px;font-weight:700;letter-spacing:0.05em">NET P&L</div>
+          </div>
+        </div>
+        <div id="wp-badge-row" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:0.55rem;color:rgba(168,188,207,0.3);letter-spacing:0.06em">mindoftrader.com</div>
+          <div id="wp-date" style="font-size:0.55rem;color:rgba(168,188,207,0.3)"></div>
+        </div>
+      </div>
+      <!-- Share action buttons -->
+      <div style="padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="copyDNAText()" style="flex:1;padding:10px;background:var(--green-bg);border:1px solid var(--green-bd);border-radius:var(--r);color:var(--green);font-size:0.75rem;font-weight:700;cursor:pointer">📋 Copy Stats</button>
+        <button onclick="shareDNANative()" style="flex:1;padding:10px;background:rgba(41,121,255,0.1);border:1px solid rgba(41,121,255,0.25);border-radius:var(--r);color:var(--blue);font-size:0.75rem;font-weight:700;cursor:pointer">🔗 Share Link</button>
+        <button onclick="closeDNAShare()" style="padding:10px 14px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:var(--r);color:var(--muted);font-size:0.75rem;cursor:pointer">✕</button>
+      </div>
     </div>
 
     <!-- Data source note -->
@@ -2072,6 +2938,37 @@ try {
         await window.db_loadAllUserData(user.uid);
         // Update last active timestamp
         window.db_updateLastActive(user.uid);
+
+        // ── CRITICAL: show app if init() ran before Firebase confirmed auth ──
+        const storedUser = getStoredUser ? getStoredUser() : null;
+        const obEl = document.getElementById('onboarding');
+        const navEl = document.getElementById('nav');
+        const dashEl = document.getElementById('dashboard-view');
+
+        // If no view is currently active (blank screen), activate dashboard
+        const anyActive = document.querySelector('.view.on');
+        if (!anyActive) {
+          if (obEl) obEl.classList.add('hidden');
+          if (navEl) navEl.style.display = 'flex';
+          if (storedUser) {
+            try { setupUser(storedUser); } catch(e) {}
+          } else {
+            // Build minimal profile from Firebase user
+            const fallbackProfile = {
+              uid: user.uid,
+              name: user.displayName || 'Trader',
+              email: user.email || null,
+              photo: user.photoURL || null,
+              loginMethod: 'google',
+              lastLogin: new Date().toISOString()
+            };
+            localStorage.setItem(KEYS.USER, JSON.stringify(fallbackProfile));
+            try { setupUser(fallbackProfile); } catch(e) {}
+          }
+          try { goTo('dashboard'); } catch(e) {
+            if (dashEl) dashEl.classList.add('on');
+          }
+        }
       }
     });
 
@@ -2503,20 +3400,33 @@ function init(){
 
   const storedUser=getStoredUser();
   if(storedUser){
-    // User is signed in — hide landing, show app
+    // User is signed in — skip onboarding, show app
+    const ob=document.getElementById('onboarding');
+    if(ob)ob.classList.add('hidden');
     const landing=document.getElementById('landing-view');
     if(landing)landing.style.display='none';
+    const nav=document.getElementById('nav');
+    if(nav)nav.style.display='flex';
     try{setupUser(storedUser);}catch(e){console.warn('setupUser error',e);}
     try{goTo('dashboard');}catch(e){
-      try{goTo('dashboard');}catch(e2){
-        // Last resort: just show dashboard
-        const dv=document.getElementById('dashboard-view');
-        if(dv)dv.classList.add('on');
-      }
+      const dv=document.getElementById('dashboard-view');
+      if(dv)dv.classList.add('on');
     }
+  } else {
+    // No user — show onboarding for first-timers, landing for returning guests
+    const showOb = initOnboarding();
+    if(!showOb){
+      // Returning guest or has seen onboarding — show landing
+      const ob=document.getElementById('onboarding');
+      if(ob)ob.classList.add('hidden');
+      const landing=document.getElementById('landing-view');
+      if(landing){landing.style.display='flex';}
+      // Hide nav for landing
+      const nav=document.getElementById('nav');
+      if(nav)nav.style.display='none';
+    }
+    // else: onboarding is showing, nav is hidden
   }
-  // If no user: landing is already visible (display:flex by default)
-  // Nothing to do
 }
 
 // Boot — use setTimeout(0) to ensure DOM is fully parsed first
@@ -2554,6 +3464,13 @@ function getStoredUser(){
 }
 
 function setupUser(user){
+  // Show bottom nav on mobile, add body app-mode class
+  document.body.classList.add('app-mode');
+  const bn=document.getElementById('bottom-nav');
+  if(bn){
+    // Show bottom nav only on mobile (CSS hides on desktop)
+    bn.style.display='flex';
+  }
   traderName=user.name||'Trader';
   currentUserProfile=user;
   document.getElementById('nav').style.display='flex';
@@ -2598,399 +3515,284 @@ setInterval(()=>{const el=document.getElementById('live-clock');if(el)el.textCon
 // ══════════════════════════════════════════════════
 
 
-// ══════════════════════════════════════════════════
-// UX: DEMO MODE — landing page instant insight
-// ══════════════════════════════════════════════════
-function initDemoMode(){
-  const insights=[
-    {text:`Your <span class="highlight-red">revenge trades win 28%</span>. Your <span class="highlight-green">calm trades win 74%</span>. That gap is costing you Rs.47,000/month.`},
-    {text:`Traders who stop after 2 daily losses save an average of <span class="highlight-green">Rs.38,000/month</span>. One rule. Massive impact.`},
-    {text:`<span class="highlight-red">84% of losing trades</span> happen in emotional states. The market does not beat you — your behavior does.`},
-    {text:`FOMO entries have a <span class="highlight-red">31% win rate</span>. Waiting for your setup? <span class="highlight-green">68% win rate</span>. Same market.`},
-  ];
-  const pick=insights[Math.floor(Date.now()/3600000)%insights.length];
-  setTimeout(()=>{
-    const insEl=document.getElementById('dmc-insight');
-    const statsEl=document.getElementById('dmc-stats');
-    if(insEl){insEl.innerHTML='<div class="dmc-insight-text">'+pick.text+'</div>';}
-    if(statsEl){statsEl.style.display='flex';}
-  },1200);
-}
+// ══════════════════════════════════════════════════════════════
+// ONBOARDING ENGINE — 5-screen flow
+// Signup AFTER insight, not before
+// ══════════════════════════════════════════════════════════════
 
-// ══════════════════════════════════════════════════
-// UX: SETUP GUIDE — first-time user onboarding
-// ══════════════════════════════════════════════════
-function renderSetupGuide(){
-  const guide=document.getElementById('setup-guide');
-  const mvm=document.getElementById('mind-vs-market');
-  if(!guide||!mvm)return;
+let obCurrentScreen = 1;
+let obIntent = 'revenge'; // default
 
-  if(trades.length===0){
-    // Show setup guide, hide MvM
-    guide.style.display='block';
-    mvm.style.display='none';
-    // Mark step 1 done, step 2 active
-    document.getElementById('sgs-1')?.classList.add('completed');
-    document.getElementById('sgsn-1').textContent='✓';
-    document.getElementById('sgs-2')?.classList.add('active');
-    document.getElementById('sgsn-2')?.classList.add('active-num');
-  } else {
-    // Has trades — show Mind vs Market, hide guide
-    guide.style.display='none';
-    mvm.style.display='block';
-    renderMindVsMarket();
-    // Unlock AI button if has trades
-    const aiBtn=document.getElementById('sgs-ai-btn');
-    if(aiBtn)aiBtn.style.opacity='1';
+// Intent → identity map
+const OB_PROFILES = {
+  revenge: {
+    icon: '😤',
+    name: 'The Revenge Trader',
+    badgeColor: 'rgba(255,69,96,0.1)',
+    badgeBorder: 'rgba(255,69,96,0.3)',
+    labelColor: 'var(--red)',
+    badWR: '28%',
+    badLbl: 'Revenge trade WR',
+    goodWR: '74%',
+    goodLbl: 'Calm trade WR',
+    wowTitle: 'Your calm trades win <span style="color:var(--green)">74%</span>.<br>Your revenge trades win <span style="color:var(--red)">28%</span>.',
+    patterns: [
+      { dot:'var(--red)',   text:'<strong>After a loss</strong>, you enter again immediately — and lose again' },
+      { dot:'var(--amber)', text:'<strong>Trade count spikes</strong> on your worst P&L days' },
+      { dot:'var(--green)', text:'<strong>Your first trade of the day</strong> wins significantly more often' },
+    ],
+    saveTitle: 'Your analysis is ready.',
+    saveSub: `You're a Revenge Trader. The fix is one rule: <strong>15-minute pause after every loss.</strong> Sign in to track it daily.`,
+  },
+  fomo: {
+    icon: '🚀',
+    name: 'The FOMO Chaser',
+    badgeColor: 'rgba(255,171,0,0.1)',
+    badgeBorder: 'rgba(255,171,0,0.3)',
+    labelColor: 'var(--amber)',
+    badWR: '31%',
+    badLbl: 'FOMO entry WR',
+    goodWR: '71%',
+    goodLbl: 'Planned entry WR',
+    wowTitle: 'Your planned entries win <span style="color:var(--green)">71%</span>.<br>Your FOMO entries win <span style="color:var(--red)">31%</span>.',
+    patterns: [
+      { dot:'var(--red)',   text:'<strong>You enter after a big candle</strong> — already chasing the move' },
+      { dot:'var(--amber)', text:'<strong>Entries between 12–2 PM</strong> are your weakest — peak FOMO hours' },
+      { dot:'var(--green)', text:'<strong>When you wait for a pullback</strong>, your win rate doubles' },
+    ],
+    saveTitle: 'Your pattern is clear.',
+    saveSub: `You're a FOMO Chaser. The fix: <strong>only enter on pullbacks, never on breakouts.</strong> Sign in to track it daily.`,
+  },
+  discipline: {
+    icon: '📋',
+    name: 'The Rule Breaker',
+    badgeColor: 'rgba(41,121,255,0.1)',
+    badgeBorder: 'rgba(41,121,255,0.3)',
+    labelColor: 'var(--blue)',
+    badWR: '34%',
+    badLbl: 'Rule-broken trade WR',
+    goodWR: '69%',
+    goodLbl: 'Rule-followed WR',
+    wowTitle: 'When you follow your rules, you win <span style="color:var(--green)">69%</span>.<br>When you break them, <span style="color:var(--red)">34%</span>.',
+    patterns: [
+      { dot:'var(--red)',   text:'<strong>Rule breaks happen most</strong> on days you start with a loss' },
+      { dot:'var(--amber)', text:'<strong>Stop loss placement</strong> is skipped on 60% of losing trades' },
+      { dot:'var(--green)', text:'<strong>Your strategy actually works</strong> — execution is the only problem' },
+    ],
+    saveTitle: 'The data is simple.',
+    saveSub: `You're a Rule Breaker. Your strategy works — your execution doesn't. Sign in to <strong>track rule compliance</strong> on every trade.`,
+  },
+  understand: {
+    icon: '🔍',
+    name: 'The Lost Trader',
+    badgeColor: 'rgba(156,39,176,0.1)',
+    badgeBorder: 'rgba(156,39,176,0.3)',
+    labelColor: '#9c27b0',
+    badWR: '38%',
+    badLbl: 'Overall win rate',
+    goodWR: '67%',
+    goodLbl: 'Morning session WR',
+    wowTitle: 'You win <span style="color:var(--green)">67%</span> in the morning.<br>You lose <span style="color:var(--red)">58%</span> in the afternoon.',
+    patterns: [
+      { dot:'var(--red)',   text:'<strong>Most losses happen after 12:30 PM</strong> — low liquidity, high noise' },
+      { dot:'var(--amber)', text:'<strong>Trade count increases</strong> as P&L goes negative — classic loss-chasing' },
+      { dot:'var(--green)', text:'<strong>Your morning setups</strong> are solid — protect them by stopping earlier' },
+    ],
+    saveTitle: 'Now you know why.',
+    saveSub: `The pattern was there all along — you just needed the data. Sign in to <strong>track and break it</strong> daily.`,
+  },
+};
+
+// ── NAVIGATION ─────────────────────────────────────────────────
+function obNext(screen) {
+  // Animate out current
+  const cur = document.getElementById('ob-s' + obCurrentScreen);
+  if (cur) { cur.classList.remove('on'); }
+
+  obCurrentScreen = screen;
+
+  // Update dots
+  for (let i = 1; i <= 5; i++) {
+    const dot = document.getElementById('obdot-' + i);
+    if (!dot) continue;
+    dot.classList.remove('on','done');
+    if (i === screen) dot.classList.add('on');
+    else if (i < screen) dot.classList.add('done');
   }
+
+  // Animate in next
+  const next = document.getElementById('ob-s' + screen);
+  if (next) {
+    next.style.animation = 'none';
+    requestAnimationFrame(() => {
+      next.style.animation = '';
+      next.classList.add('on');
+    });
+  }
+
+  // Special: screen 3 = run analysis animation
+  if (screen === 3) obRunAnalysis();
 }
 
-// ══════════════════════════════════════════════════
-// UX: MIND VS MARKET — the core daily engagement card
-// ══════════════════════════════════════════════════
-function renderMindVsMarket(){
-  const today=new Date().toISOString().split('T')[0];
-  const todayTrades=trades.filter(t=>t.date===today);
-  const todayPnl=todayTrades.reduce((s,t)=>s+t.pnl,0);
+function obSelectIntent(btn, intent) {
+  // Clear all selections
+  document.querySelectorAll('.ob-choice').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  obIntent = intent;
+  // Auto-advance after 400ms
+  setTimeout(() => obNext(3), 400);
+}
 
-  // Calm vs revenge win rates
-  const calmT=trades.filter(t=>['calm','focused'].includes(t.emotion)&&t.exit&&t.pnl!==0);
-  const revengeT=trades.filter(t=>t.emotion==='revenge'&&t.exit&&t.pnl!==0);
-  const calmWR=calmT.length>=2?Math.min(95,Math.round(calmT.filter(t=>t.pnl>0).length/calmT.length*100)):null;
-  const revengeWR=revengeT.length>=1?Math.round(revengeT.filter(t=>t.pnl>0).length/revengeT.length*100):null;
+// ── ANALYSIS ANIMATION (Screen 3) ──────────────────────────────
+function obRunAnalysis() {
+  const steps = ['obs-1', 'obs-2', 'obs-3'];
+  const icons = ['🔍', '💰', '🧬'];
+  let i = 0;
 
-  // Render win rates
-  const calmEl=document.getElementById('mvm-calm-wr');
-  const revEl=document.getElementById('mvm-revenge-wr');
-  if(calmEl)calmEl.textContent=calmWR!==null?calmWR+'%':'—';
-  if(revEl)revEl.textContent=revengeWR!==null?revengeWR+'%':'—';
-
-  // Gap insight text
-  const gapEl=document.getElementById('mvm-gap-text');
-  if(gapEl){
-    if(calmWR!==null&&revengeWR!==null){
-      const gap=calmWR-revengeWR;
-      const revCost=Math.abs(revengeT.filter(t=>t.pnl<0).reduce((s,t)=>s+t.pnl,0));
-      gapEl.innerHTML=`Your calm trades win <strong>${gap} points more</strong> than revenge trades.`
-        +(revCost>0?` Revenge trading has cost you <span class="gap-number">₹${revCost.toLocaleString('en-IN')}</span> so far.`:'');
-    } else if(trades.length>0){
-      gapEl.textContent='Keep logging with emotions — your Mind vs Market gap will appear here.';
-    } else {
-      gapEl.textContent='Import trades or log manually to see your behavioral gap.';
+  // Reset all steps
+  steps.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.classList.remove('done','active');
+      el.querySelector('.ob-scan-step-icon').textContent = '○';
     }
-  }
+  });
 
-  // Metrics
-  const streak=calcStreak();
-  const stEl=document.getElementById('mvm-streak');
-  if(stEl)stEl.textContent=(streak>0?'🔥 ':'')+streak;
+  // Also reset scan inner icon
+  const inner = document.querySelector('.ob-scan-inner');
 
-  // Discipline score
-  const completedT=trades.filter(t=>t.exit&&t.pnl!==0);
-  const badEmo=trades.filter(t=>['revenge','fomo','overconfident'].includes(t.emotion)).length;
-  const disc=trades.length?Math.min(95,Math.max(20,Math.round((1-badEmo/Math.max(1,trades.length))*100))):null;
-  const discEl=document.getElementById('mvm-disc-score');
-  if(discEl){discEl.textContent=disc!==null?disc:('—');discEl.style.color=disc>=70?'var(--green)':disc>=50?'var(--amber)':'var(--red)';}
-
-  // Today P&L
-  const pnlEl=document.getElementById('mvm-today-pnl');
-  if(pnlEl){
-    pnlEl.textContent=todayPnl!==0?(todayPnl>=0?'+':'')+fmtINRShort(todayPnl):'₹0';
-    pnlEl.style.color=todayPnl>0?'var(--green)':todayPnl<0?'var(--red)':'var(--muted)';
-  }
-  const tcEl=document.getElementById('mvm-trades-count');
-  if(tcEl)tcEl.textContent=trades.length;
-
-  // Date
-  const dtEl=document.getElementById('mvm-date');
-  if(dtEl)dtEl.textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
-
-  // Daily insight
-  renderDailyInsight(calmWR,revengeWR,streak,disc,todayTrades.length);
-}
-
-// ══════════════════════════════════════════════════
-// UX: DAILY INSIGHT — one sentence, changes per session
-// ══════════════════════════════════════════════════
-function renderDailyInsight(calmWR,revengeWR,streak,disc,todayCount){
-  const el=document.getElementById('mdi-text');
-  if(!el)return;
-
-  const now=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
-  const h=now.getHours();
-  const dayOfWeek=now.getDay(); // 0=Sun
-
-  // Context-aware insights based on real data + time
-  let insight='';
-
-  if(trades.length===0){
-    insight='<strong>Start here:</strong> Import your Zerodha CSV in the Connect tab. Your behavioral analysis will be ready in seconds.';
-  } else if(h<9){
-    // Pre-market
-    const score=disc||70;
-    if(score>=75)insight='<strong>Good discipline score.</strong> Stay with your system today. Do not let a good day turn into overtrading.';
-    else insight='<strong>Pre-market tip:</strong> Set your max loss limit before the first trade. One rule saves ₹47K/month on average.';
-  } else if(h>=9&&h<12){
-    // Morning session
-    if(revengeWR!==null&&revengeWR<35)insight=`<strong>Watch out:</strong> Your revenge trades win only ${revengeWR}%. If you take a loss in the next hour — wait 15 minutes before the next entry.`;
-    else if(calmWR!==null)insight=`<strong>Morning edge:</strong> You win ${calmWR}% of calm trades. Protect that state — no FOMO entries before 11 AM.`;
-    else insight='<strong>Log emotions</strong> on every trade. After 5 trades, your calm vs revenge gap appears — it will change how you trade.';
-  } else if(h>=12&&h<14){
-    // Lunch
-    insight='<strong>Lunch hour warning:</strong> Win rates drop 30–40% between 12:30–2 PM for most traders. Consider pausing now.';
-  } else if(h>=14){
-    // Afternoon
-    if(todayCount>=3)insight=`<strong>You've had ${todayCount} trades today.</strong> Most behavioral mistakes happen after trade #3. Ask yourself: am I still following my system?`;
-    else insight='<strong>Afternoon caution:</strong> Revenge and FOMO trades peak after 2 PM. Your setup matters more — not the P&L.';
-  } else if(dayOfWeek===1){
-    insight=`<strong>Monday:</strong> Studies show Monday is the highest revenge-trade day. Start slow. Your week depends on today's discipline.`;
-  } else if(streak>=7){
-    insight=`<strong>🔥 ${streak}-day streak!</strong> You're in the top 5% for consistency. Consistency builds the data that makes AI analysis accurate.`;
-  } else if(streak===0){
-    insight=`<strong>No streak yet.</strong> Log today's trades — even one trade starts your streak. 7-day streaks unlock better AI insights.`;
-  } else {
-    // Generic rotating
-    const tips=[
-      '<strong>Key insight:</strong> The gap between your calm win rate and revenge win rate is your behavioral cost. Close that gap = more profit.',
-      '<strong>One rule:</strong> Stop trading after 2 losses per day. This single change saves ₹47,000/month on average.',
-      `<strong>Pattern to watch:</strong> Most traders' worst trades happen 10-30 minutes after a loss. Set a timer before re-entering.`,
-      `<strong>Your real edge</strong> is not your strategy — it is executing it consistently. MindOfTrader tracks that execution.`,
-    ];
-    insight=tips[new Date().getDate()%tips.length];
-  }
-
-  el.innerHTML=insight;
-}
-
-// ══════════════════════════════════════════════════
-// UX: GREETING — time-aware, personal
-// ══════════════════════════════════════════════════
-function updateDashGreeting(){
-  const now=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
-  const h=now.getHours();
-  const greetEl=document.getElementById('dash-greet-txt');
-  const sessionEl=document.getElementById('dash-session-lbl');
-  if(greetEl){
-    if(h<6)greetEl.textContent='Still up? Early start.';
-    else if(h<9)greetEl.textContent='Good morning — pre-market time';
-    else if(h<9.5)greetEl.textContent='Market opens soon';
-    else if(h<12)greetEl.textContent='Morning session live';
-    else if(h<14)greetEl.textContent='Lunch hour — trade carefully';
-    else if(h<15.5)greetEl.textContent='Afternoon session';
-    else if(h<16)greetEl.textContent='Market closing';
-    else greetEl.textContent='Post-market — time to review';
-  }
-  if(sessionEl){
-    const mins=h*60+now.getMinutes();
-    if(mins>=570&&mins<930)sessionEl.textContent='NSE Open 🟢';
-    else if(mins>=555&&mins<570)sessionEl.textContent='Pre-Open ⏰';
-    else sessionEl.textContent='Market Closed';
-  }
-}
-
-// ══════════════════════════════════════════════════
-// UX: DEMO MODE — landing page instant insight
-// ══════════════════════════════════════════════════
-function initDemoMode(){
-  const insights=[
-    {text:`Your <span class="highlight-red">revenge trades win 28%</span>. Your <span class="highlight-green">calm trades win 74%</span>. That gap is costing you Rs.47,000/month.`},
-    {text:`Traders who stop after 2 daily losses save an average of <span class="highlight-green">Rs.38,000/month</span>. One rule. Massive impact.`},
-    {text:`<span class="highlight-red">84% of losing trades</span> happen in emotional states. The market does not beat you — your behavior does.`},
-    {text:`FOMO entries have a <span class="highlight-red">31% win rate</span>. Waiting for your setup? <span class="highlight-green">68% win rate</span>. Same market.`},
-  ];
-  const pick=insights[Math.floor(Date.now()/3600000)%insights.length];
-  setTimeout(()=>{
-    const insEl=document.getElementById('dmc-insight');
-    const statsEl=document.getElementById('dmc-stats');
-    if(insEl){insEl.innerHTML='<div class="dmc-insight-text">'+pick.text+'</div>';}
-    if(statsEl){statsEl.style.display='flex';}
-  },1200);
-}
-
-// ══════════════════════════════════════════════════
-// UX: SETUP GUIDE — first-time user onboarding
-// ══════════════════════════════════════════════════
-function renderSetupGuide(){
-  const guide=document.getElementById('setup-guide');
-  const mvm=document.getElementById('mind-vs-market');
-  if(!guide||!mvm)return;
-
-  if(trades.length===0){
-    // Show setup guide, hide MvM
-    guide.style.display='block';
-    mvm.style.display='none';
-    // Mark step 1 done, step 2 active
-    document.getElementById('sgs-1')?.classList.add('completed');
-    document.getElementById('sgsn-1').textContent='✓';
-    document.getElementById('sgs-2')?.classList.add('active');
-    document.getElementById('sgsn-2')?.classList.add('active-num');
-  } else {
-    // Has trades — show Mind vs Market, hide guide
-    guide.style.display='none';
-    mvm.style.display='block';
-    renderMindVsMarket();
-    // Unlock AI button if has trades
-    const aiBtn=document.getElementById('sgs-ai-btn');
-    if(aiBtn)aiBtn.style.opacity='1';
-  }
-}
-
-// ══════════════════════════════════════════════════
-// UX: MIND VS MARKET — the core daily engagement card
-// ══════════════════════════════════════════════════
-function renderMindVsMarket(){
-  const today=new Date().toISOString().split('T')[0];
-  const todayTrades=trades.filter(t=>t.date===today);
-  const todayPnl=todayTrades.reduce((s,t)=>s+t.pnl,0);
-
-  // Calm vs revenge win rates
-  const calmT=trades.filter(t=>['calm','focused'].includes(t.emotion)&&t.exit&&t.pnl!==0);
-  const revengeT=trades.filter(t=>t.emotion==='revenge'&&t.exit&&t.pnl!==0);
-  const calmWR=calmT.length>=2?Math.min(95,Math.round(calmT.filter(t=>t.pnl>0).length/calmT.length*100)):null;
-  const revengeWR=revengeT.length>=1?Math.round(revengeT.filter(t=>t.pnl>0).length/revengeT.length*100):null;
-
-  // Render win rates
-  const calmEl=document.getElementById('mvm-calm-wr');
-  const revEl=document.getElementById('mvm-revenge-wr');
-  if(calmEl)calmEl.textContent=calmWR!==null?calmWR+'%':'—';
-  if(revEl)revEl.textContent=revengeWR!==null?revengeWR+'%':'—';
-
-  // Gap insight text
-  const gapEl=document.getElementById('mvm-gap-text');
-  if(gapEl){
-    if(calmWR!==null&&revengeWR!==null){
-      const gap=calmWR-revengeWR;
-      const revCost=Math.abs(revengeT.filter(t=>t.pnl<0).reduce((s,t)=>s+t.pnl,0));
-      gapEl.innerHTML=`Your calm trades win <strong>${gap} points more</strong> than revenge trades.`
-        +(revCost>0?` Revenge trading has cost you <span class="gap-number">₹${revCost.toLocaleString('en-IN')}</span> so far.`:'');
-    } else if(trades.length>0){
-      gapEl.textContent='Keep logging with emotions — your Mind vs Market gap will appear here.';
-    } else {
-      gapEl.textContent='Import trades or log manually to see your behavioral gap.';
+  function advance() {
+    if (i >= steps.length) {
+      // All done — populate wow screen then advance
+      obBuildWow();
+      setTimeout(() => obNext(4), 300);
+      return;
     }
+    const el = document.getElementById(steps[i]);
+    if (el) {
+      el.classList.add('active');
+      el.querySelector('.ob-scan-step-icon').textContent = '●';
+      if (inner) inner.textContent = icons[i];
+    }
+    // Complete after delay
+    setTimeout(() => {
+      if (el) {
+        el.classList.remove('active');
+        el.classList.add('done');
+        el.querySelector('.ob-scan-step-icon').textContent = '✓';
+      }
+      i++;
+      setTimeout(advance, 200);
+    }, 700);
   }
 
-  // Metrics
-  const streak=calcStreak();
-  const stEl=document.getElementById('mvm-streak');
-  if(stEl)stEl.textContent=(streak>0?'🔥 ':'')+streak;
-
-  // Discipline score
-  const completedT=trades.filter(t=>t.exit&&t.pnl!==0);
-  const badEmo=trades.filter(t=>['revenge','fomo','overconfident'].includes(t.emotion)).length;
-  const disc=trades.length?Math.min(95,Math.max(20,Math.round((1-badEmo/Math.max(1,trades.length))*100))):null;
-  const discEl=document.getElementById('mvm-disc-score');
-  if(discEl){discEl.textContent=disc!==null?disc:('—');discEl.style.color=disc>=70?'var(--green)':disc>=50?'var(--amber)':'var(--red)';}
-
-  // Today P&L
-  const pnlEl=document.getElementById('mvm-today-pnl');
-  if(pnlEl){
-    pnlEl.textContent=todayPnl!==0?(todayPnl>=0?'+':'')+fmtINRShort(todayPnl):'₹0';
-    pnlEl.style.color=todayPnl>0?'var(--green)':todayPnl<0?'var(--red)':'var(--muted)';
-  }
-  const tcEl=document.getElementById('mvm-trades-count');
-  if(tcEl)tcEl.textContent=trades.length;
-
-  // Date
-  const dtEl=document.getElementById('mvm-date');
-  if(dtEl)dtEl.textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
-
-  // Daily insight
-  renderDailyInsight(calmWR,revengeWR,streak,disc,todayTrades.length);
+  setTimeout(advance, 400);
 }
 
-// ══════════════════════════════════════════════════
-// UX: DAILY INSIGHT — one sentence, changes per session
-// ══════════════════════════════════════════════════
-function renderDailyInsight(calmWR,revengeWR,streak,disc,todayCount){
-  const el=document.getElementById('mdi-text');
-  if(!el)return;
+// ── BUILD WOW SCREEN from intent ───────────────────────────────
+function obBuildWow() {
+  const p = OB_PROFILES[obIntent] || OB_PROFILES.revenge;
 
-  const now=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
-  const h=now.getHours();
-  const dayOfWeek=now.getDay(); // 0=Sun
+  // Identity badge
+  const badge = document.getElementById('ob-identity-badge');
+  if (badge) {
+    badge.style.background = `linear-gradient(135deg,${p.badgeColor},rgba(0,0,0,0))`;
+    badge.style.borderColor = p.badgeBorder;
+  }
+  const icon = document.getElementById('ob-identity-icon');
+  if (icon) icon.textContent = p.icon;
+  const name = document.getElementById('ob-identity-name');
+  if (name) name.textContent = p.name;
 
-  // Context-aware insights based on real data + time
-  let insight='';
+  // Label color
+  const label = badge ? badge.querySelector('.ob-identity-label') : null;
+  if (label) label.style.color = p.labelColor;
 
-  if(trades.length===0){
-    insight='<strong>Start here:</strong> Import your Zerodha CSV in the Connect tab. Your behavioral analysis will be ready in seconds.';
-  } else if(h<9){
-    // Pre-market
-    const score=disc||70;
-    if(score>=75)insight='<strong>Good discipline score.</strong> Stay with your system today. Do not let a good day turn into overtrading.';
-    else insight='<strong>Pre-market tip:</strong> Set your max loss limit before the first trade. One rule saves ₹47K/month on average.';
-  } else if(h>=9&&h<12){
-    // Morning session
-    if(revengeWR!==null&&revengeWR<35)insight=`<strong>Watch out:</strong> Your revenge trades win only ${revengeWR}%. If you take a loss in the next hour — wait 15 minutes before the next entry.`;
-    else if(calmWR!==null)insight=`<strong>Morning edge:</strong> You win ${calmWR}% of calm trades. Protect that state — no FOMO entries before 11 AM.`;
-    else insight='<strong>Log emotions</strong> on every trade. After 5 trades, your calm vs revenge gap appears — it will change how you trade.';
-  } else if(h>=12&&h<14){
-    // Lunch
-    insight='<strong>Lunch hour warning:</strong> Win rates drop 30–40% between 12:30–2 PM for most traders. Consider pausing now.';
-  } else if(h>=14){
-    // Afternoon
-    if(todayCount>=3)insight=`<strong>You've had ${todayCount} trades today.</strong> Most behavioral mistakes happen after trade #3. Ask yourself: am I still following my system?`;
-    else insight='<strong>Afternoon caution:</strong> Revenge and FOMO trades peak after 2 PM. Your setup matters more — not the P&L.';
-  } else if(dayOfWeek===1){
-    insight=`<strong>Monday:</strong> Studies show Monday is the highest revenge-trade day. Start slow. Your week depends on today's discipline.`;
-  } else if(streak>=7){
-    insight=`<strong>🔥 ${streak}-day streak!</strong> You're in the top 5% for consistency. Consistency builds the data that makes AI analysis accurate.`;
-  } else if(streak===0){
-    insight=`<strong>No streak yet.</strong> Log today's trades — even one trade starts your streak. 7-day streaks unlock better AI insights.`;
-  } else {
-    // Generic rotating
-    const tips=[
-      '<strong>Key insight:</strong> The gap between your calm win rate and revenge win rate is your behavioral cost. Close that gap = more profit.',
-      '<strong>One rule:</strong> Stop trading after 2 losses per day. This single change saves ₹47,000/month on average.',
-      `<strong>Pattern to watch:</strong> Most traders' worst trades happen 10-30 minutes after a loss. Set a timer before re-entering.`,
-      `<strong>Your real edge</strong> is not your strategy — it is executing it consistently. MindOfTrader tracks that execution.`,
-    ];
-    insight=tips[new Date().getDate()%tips.length];
+  // WOW title
+  const wt = document.getElementById('ob-wow-title');
+  if (wt) wt.innerHTML = p.wowTitle;
+
+  // Gap numbers
+  const badWR = document.getElementById('ob-bad-wr');
+  const badLbl = document.getElementById('ob-bad-lbl');
+  const goodWR = document.getElementById('ob-good-wr');
+  const goodLbl = document.getElementById('ob-good-lbl');
+  if (badWR) badWR.textContent = p.badWR;
+  if (badLbl) badLbl.textContent = p.badLbl;
+  if (goodWR) goodWR.textContent = p.goodWR;
+  if (goodLbl) goodLbl.textContent = p.goodLbl;
+
+  // Patterns
+  const patsEl = document.getElementById('ob-patterns');
+  if (patsEl) {
+    patsEl.innerHTML = p.patterns.map(pt => `
+      <div class="ob-pattern">
+        <div class="ob-pattern-dot" style="background:${pt.dot}"></div>
+        <span>${pt.text}</span>
+      </div>
+    `).join('');
   }
 
-  el.innerHTML=insight;
+  // Save screen text
+  const saveTitle = document.getElementById('ob-save-title');
+  const saveSub = document.getElementById('ob-save-sub');
+  if (saveTitle) saveTitle.textContent = p.saveTitle;
+  if (saveSub) saveSub.innerHTML = p.saveSub;
+
+  // Store for later use
+  window.obSelectedProfile = p;
 }
 
-// ══════════════════════════════════════════════════
-// UX: GREETING — time-aware, personal
-// ══════════════════════════════════════════════════
-function updateDashGreeting(){
-  const now=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
-  const h=now.getHours();
-  const greetEl=document.getElementById('dash-greet-txt');
-  const sessionEl=document.getElementById('dash-session-lbl');
-  if(greetEl){
-    if(h<6)greetEl.textContent='Still up? Early start.';
-    else if(h<9)greetEl.textContent='Good morning — pre-market time';
-    else if(h<9.5)greetEl.textContent='Market opens soon';
-    else if(h<12)greetEl.textContent='Morning session live';
-    else if(h<14)greetEl.textContent='Lunch hour — trade carefully';
-    else if(h<15.5)greetEl.textContent='Afternoon session';
-    else if(h<16)greetEl.textContent='Market closing';
-    else greetEl.textContent='Post-market — time to review';
-  }
-  if(sessionEl){
-    const mins=h*60+now.getMinutes();
-    if(mins>=570&&mins<930)sessionEl.textContent='NSE Open 🟢';
-    else if(mins>=555&&mins<570)sessionEl.textContent='Pre-Open ⏰';
-    else sessionEl.textContent='Market Closed';
-  }
+// ── FINISH — skip all, go to app ───────────────────────────────
+function obSkipAll() {
+  obMarkSeen();
+  const ob = document.getElementById('onboarding');
+  if (ob) ob.classList.add('hidden');
+  guestMode();
 }
 
-// ══════════════════════════════════════════════════
+function obFinishGuest() {
+  obMarkSeen();
+  const ob = document.getElementById('onboarding');
+  if (ob) ob.classList.add('hidden');
+  guestMode();
+}
 
-const ACHIEVEMENTS_DEF = [
-  {id:'first_trade',  icon:'🎯', name:'First Trade',   desc:'Log your first trade',        check:()=>trades.length>=1},
-  {id:'streak_3',     icon:'🔥', name:'3-Day Streak',  desc:'3 consecutive days logged',   check:()=>calcStreak()>=3},
-  {id:'streak_7',     icon:'⚡', name:'Week Warrior',  desc:'7-day streak',                check:()=>calcStreak()>=7},
-  {id:'streak_30',    icon:'💎', name:'30-Day Elite',  desc:'30-day streak',               check:()=>calcStreak()>=30},
-  {id:'no_revenge_week',icon:'🛡️',name:'Revenge Free',desc:'0 revenge trades this week',  check:()=>getThisWeekTrades().filter(t=>t.emotion==='revenge').length===0&&getThisWeekTrades().length>=5},
-  {id:'calm_trader',  icon:'🧘', name:'Calm Trader',   desc:'10+ calm trades',             check:()=>trades.filter(t=>['calm','focused'].includes(t.emotion)).length>=10},
-  {id:'hundred_trades',icon:'💯',name:'Century',       desc:'100 trades logged',           check:()=>trades.length>=100},
-  {id:'wr_70',        icon:'📈', name:'Sharp Shooter',  desc:'70%+ win rate (min 10 trades)',check:()=>{const c=trades.filter(t=>t.exit&&t.pnl!==0);return c.length>=10&&Math.round(c.filter(t=>t.pnl>0).length/c.length*100)>=70;}},
-  {id:'level_5',      icon:'🏆', name:'Level 5 Trader', desc:'Reach level 5',              check:()=>getXPLevel()>=5},
-];
+// ── INIT: Show onboarding to first-time users ──────────────────
+function initOnboarding() {
+  const seen = localStorage.getItem('mot_ob_seen');
+  const user = getStoredUser();
+
+  if (user) {
+    // Already has an account — skip onboarding
+    const ob = document.getElementById('onboarding');
+    if (ob) ob.classList.add('hidden');
+    return false; // don't show
+  }
+
+  if (seen) {
+    // Seen onboarding before — skip
+    const ob = document.getElementById('onboarding');
+    if (ob) ob.classList.add('hidden');
+    return false;
+  }
+
+  // First time — show onboarding
+  // Hide nav
+  const nav = document.getElementById('nav');
+  if (nav) nav.style.display = 'none';
+  // Hide landing view
+  const landing = document.getElementById('landing-view');
+  if (landing) landing.style.display = 'none';
+
+  return true; // show onboarding
+}
+
+// Mark onboarding as seen when finishing
+function obMarkSeen() {
+  localStorage.setItem('mot_ob_seen', '1');
+}
+
 
 // ══════════════════════════════════════════════════
 // UX: DEMO MODE — landing page instant insight
@@ -3736,8 +4538,9 @@ function initRitual(){
 function goTo(id){
   // Hide ALL views including landing (which is flex by default)
   document.querySelectorAll('.view').forEach(v=>{
+    if(v.id==='landing-view')return; // always keep landing hidden (onboarding replaced it)
     v.classList.remove('on');
-    v.style.display='';  // reset inline display so CSS class controls it
+    v.style.display='';
   });
   const landing=document.getElementById('landing-view');
   if(landing)landing.style.display='none'; // always hide landing when app opens
@@ -3751,8 +4554,14 @@ function goTo(id){
   if(id==='dashboard')renderDashboard();
   if(id==='dna')renderDNA();
   if(id==='connect')initConnectView();
-  if(id==='log'){try{renderBAE();}catch(e){console.warn('renderBAE',e);}}
+  if(id==='log'){try{renderBAE();}catch(e){console.warn('renderBAE',e);}renderTradeFeed(trades);}
   window.scrollTo(0,0);
+
+  // Sync bottom nav active state
+  document.querySelectorAll('.bn-tab').forEach(t=>t.classList.remove('on'));
+  const bnMap={dashboard:'bn-dashboard',log:'bn-log',ai:'bn-ai',dna:'bn-dna',connect:'bn-connect'};
+  const bnActive=document.getElementById(bnMap[id]);
+  if(bnActive) bnActive.classList.add('on');
 }
 
 function initConnectView(){document.getElementById('redirect-url-display').textContent=location.origin+location.pathname;}
@@ -3788,256 +4597,280 @@ function calcStreak(){
   return streak;
 }
 
+function calcDisciplineScore(){
+  if(!trades.length) return '—';
+  const total = trades.length;
+  const ruleScore = Math.round(trades.reduce((s,t)=>{
+    const arr = Array.isArray(t.rules)?t.rules:[0,0,0];
+    return s + (arr.filter(Boolean).length / Math.max(arr.length,1));
+  },0)/total*100);
+  const emoScore = Math.max(0, 100 - Math.round(
+    trades.filter(t=>['revenge','fomo'].includes(t.emotion)).length/total*80
+  ));
+  const hasSL = Math.round(trades.filter(t=>t.sl>0).length/total*100);
+  return Math.min(95, Math.round(ruleScore*0.4 + emoScore*0.4 + hasSL*0.2));
+}
+
 // ══════════════════════════════════════════════════
 // DASHBOARD
 // ══════════════════════════════════════════════════
 function renderDashboard(){
+  // Name + greeting
   document.getElementById('dash-name-txt').textContent=(traderName||'Trader').split(' ')[0];
   updateDashGreeting();
-  renderSetupGuide();
   showGuestBanner();
   initMarket();
-  renderInsights();renderSetups();renderHeatmap();renderPatterns();
-  requestAnimationFrame(()=>{renderEqChart('1W');renderEmoChart();animateScores();});
-}
 
-function renderStreak(){
-  const streak=calcStreak();
-  const banner=document.getElementById('streak-banner');
-  document.getElementById('streak-stat').textContent=streak;
-  if(streak>=7){
-    document.getElementById('streak-title').textContent='🔥 Hot Streak — '+streak+' days logging';
-    document.getElementById('streak-sub').textContent='Consistency is your biggest edge. Keep going.';
-    banner.style.borderColor='var(--green-bd)';
-  } else if(streak>=3){
-    document.getElementById('streak-title').textContent='Streak Active — '+streak+' days';
-    document.getElementById('streak-sub').textContent='Keep logging daily to build your behavioral database.';
-    banner.style.borderColor='var(--amber-bd)';
-  } else {
-    document.getElementById('streak-title').textContent='Log a trade today';
-    document.getElementById('streak-sub').textContent='Daily logging = better AI analysis and more accurate insights.';
-    banner.style.borderColor='var(--border2)';
+  const hasTrades = trades.length >= 1;
+
+  // Zero state vs cockpit
+  const zeroEl = document.getElementById('setup-guide');
+  const cockpitEl = document.getElementById('mind-vs-market');
+  if(zeroEl) zeroEl.style.display = hasTrades ? 'none' : 'block';
+  if(cockpitEl) cockpitEl.style.display = hasTrades ? 'block' : 'none';
+
+  if(hasTrades){
+    renderTodayCard();
+    renderMindScores();
+    renderMission();
+    renderFearGreedMeter();
+    renderSocialPulse();
+    renderMVMCard();
+    renderInsights();
+    renderSetups();
+    renderHeatmap();
+    renderPatterns();
+    requestAnimationFrame(()=>{renderEqChart('1W');renderEmoChart();});
   }
 }
 
-function animateScores(){
+// ── TODAY CARD ──
+function renderTodayCard(){
+  const today = new Date().toISOString().split('T')[0];
+  const todayTrades = trades.filter(t=>t.date===today);
+  const todayPnl = todayTrades.reduce((s,t)=>s+t.pnl,0);
+  const streak = calcStreak();
+
+  // Date label
+  const dateEl = document.getElementById('mvm-date');
+  if(dateEl) dateEl.textContent = new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+
+  // P&L
+  const pnlEl = document.getElementById('mvm-today-pnl');
+  if(pnlEl){
+    pnlEl.textContent = (todayPnl>=0?'+':'-')+'₹'+Math.abs(todayPnl).toLocaleString('en-IN');
+    pnlEl.className = 'today-pnl'+(todayPnl>0?' pos':todayPnl<0?' neg':'');
+  }
+  const subEl = document.getElementById('today-pnl-sub');
+  if(subEl) subEl.textContent = todayTrades.length ? `from ${todayTrades.length} trade${todayTrades.length>1?'s':''}` : "No trades today yet";
+
+  // Stats
+  const cntEl = document.getElementById('mvm-trades-count');
+  if(cntEl) cntEl.textContent = trades.length;
+
+  // Discipline score
+  const disc = calcDisciplineScore();
+  const discEl = document.getElementById('mvm-disc-score');
+  if(discEl){ discEl.textContent=disc; discEl.style.color=disc>=75?'var(--green)':disc>=50?'var(--amber)':'var(--red)'; }
+
+  // Streak
+  const streakEl = document.getElementById('mvm-streak');
+  if(streakEl) streakEl.textContent = streak>=1?'🔥 '+streak:'—';
+}
+
+// ── MIND SCORES ──
+function renderMindScores(){
   const total=trades.length;
   const ruleScore=total?Math.round(trades.reduce((s,t)=>s+(t.rules.filter(Boolean).length/t.rules.length),0)/total*100):78;
   const calmTrades=trades.filter(t=>['calm','focused'].includes(t.emotion));
   const patScore=total?Math.max(20,Math.min(98,Math.round(calmTrades.length/total*100))):52;
   const hasSL=total?Math.round(trades.filter(t=>t.sl>0).length/total*100):81;
   const emoScore=total?Math.max(20,100-Math.round(trades.filter(t=>['revenge','fomo'].includes(t.emotion)).length/total*80)):60;
-  [ruleScore,patScore,hasSL,emoScore].forEach((v,i)=>{
-    document.getElementById('sc'+i).textContent=v;
-    const el=document.getElementById('sf'+i);
-    if(el)setTimeout(()=>el.style.width=v+'%',120);
+  const scores=[ruleScore,patScore,hasSL,emoScore];
+  scores.forEach((v,i)=>{
+    const valEl=document.getElementById('sc'+i);
+    const fillEl=document.getElementById('sf'+i);
+    if(valEl) valEl.textContent=v;
+    if(fillEl) setTimeout(()=>fillEl.style.width=v+'%',120+i*80);
   });
 }
 
-function renderInsights(){
-  if(trades.length>=3){
-    const revTrades=trades.filter(t=>t.emotion==='revenge');
-    const fomoTrades=trades.filter(t=>t.emotion==='fomo');
-    const calmTrades=trades.filter(t=>['calm','focused'].includes(t.emotion));
-    const calmWR=calmTrades.length?Math.round(calmTrades.filter(t=>t.pnl>0).length/calmTrades.length*100):74;
-    const revWR=revTrades.length?Math.round(revTrades.filter(t=>t.pnl>0).length/revTrades.length*100):28;
-    const revCost=Math.abs(revTrades.reduce((s,t)=>s+Math.min(t.pnl,0),0));
-    const dynamic=[
-      revTrades.length?{t:'neg',icon:'🔴',title:'Revenge Trading After Losses',desc:`${revTrades.length} revenge trades, ${revWR}% WR. Total cost: ₹${revCost.toLocaleString('en-IN')}.`,stat:`${revWR}% WR`}:null,
-      fomoTrades.length?{t:'warn',icon:'⚠️',title:'FOMO Entries Detected',desc:`${fomoTrades.length} FOMO trades found.`,stat:`${fomoTrades.length}`}:null,
-      calmTrades.length?{t:'pos',icon:'✅',title:'Calm State is Your Edge',desc:`Calm trades win ${calmWR}%. Your real strategy.`,stat:`${calmWR}% WR`}:null,
-    ].filter(Boolean);
-    if(dynamic.length){document.getElementById('insight-list').innerHTML=dynamic.map(i=>`<div class="ins ${i.t}"><div class="ins-icon">${i.icon}</div><div class="ins-body"><div class="ins-title">${i.title}</div><div class="ins-desc">${i.desc}</div></div><div class="ins-stat">${i.stat}</div></div>`).join('');return;}
+// keep old animateScores alias
+function animateScores(){ renderMindScores(); }
+
+// ── DAILY MISSION ──
+const MISSIONS=[
+  {text:'Log every trade today with an emotion tag',xp:50,goal:1,key:'log'},
+  {text:'Keep revenge trades at zero today',xp:75,goal:0,key:'norevenge'},
+  {text:'Stop trading after 3 trades if all are losses',xp:60,goal:1,key:'discipline'},
+  {text:'Log a trade with a stop-loss set',xp:40,goal:1,key:'sl'},
+  {text:'Run the AI Coach and read your insight',xp:30,goal:1,key:'ai'},
+];
+function renderMission(){
+  const today=new Date().toISOString().split('T')[0];
+  // Pick mission deterministically by day-of-year
+  const doy=Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/86400000);
+  const m=MISSIONS[doy%MISSIONS.length];
+  const txtEl=document.getElementById('mission-text');
+  const xpEl=document.getElementById('mission-xp');
+  const fillEl=document.getElementById('mission-fill');
+  const progEl=document.getElementById('mission-progress-txt');
+  const ctaEl=document.getElementById('mission-cta');
+  if(!txtEl)return;
+  txtEl.textContent=m.text;
+  if(xpEl) xpEl.textContent='+'+m.xp+' XP';
+  // Progress
+  const todayTrades=trades.filter(t=>t.date===today);
+  let done=0,total=m.goal||1;
+  if(m.key==='log') done=Math.min(todayTrades.length,1);
+  else if(m.key==='norevenge') done=todayTrades.filter(t=>t.emotion==='revenge').length===0&&todayTrades.length>0?1:0;
+  else if(m.key==='sl') done=todayTrades.filter(t=>t.sl>0).length>0?1:0;
+  const pct=Math.round(done/total*100);
+  if(fillEl) setTimeout(()=>fillEl.style.width=pct+'%',300);
+  if(progEl) progEl.textContent=done+'/'+total+' complete';
+  if(ctaEl){
+    if(done>=total){ctaEl.textContent='✅ Mission Complete!';ctaEl.style.background='var(--green-bg)';ctaEl.style.color='var(--green)';ctaEl.style.borderColor='var(--green-bd)';}
+    else if(m.key==='log'||m.key==='sl') ctaEl.onclick=()=>goTo('log');
+    else if(m.key==='ai') ctaEl.onclick=()=>goTo('ai');
   }
-  document.getElementById('insight-list').innerHTML=INSIGHTS.map(i=>`<div class="ins ${i.t}"><div class="ins-icon">${i.icon}</div><div class="ins-body"><div class="ins-title">${i.title}</div><div class="ins-desc">${i.desc}</div></div><div class="ins-stat">${i.stat}</div></div>`).join('');
 }
 
-function renderSetups(){
-  const el = document.getElementById('setup-list');
-  if (!el) return;
+// ── FEAR-GREED METER ──
+function renderFearGreedMeter(){
+  // Derive fear-greed from VIX + PCR data + user's own trades
+  let score=50; // neutral default
+  const today=new Date().toISOString().split('T')[0];
+  const todayTrades=trades.filter(t=>t.date===today);
+  if(todayTrades.length){
+    const revPct=todayTrades.filter(t=>['revenge','fomo','greed','overconfident'].includes(t.emotion)).length/todayTrades.length;
+    const calmPct=todayTrades.filter(t=>['calm','focused'].includes(t.emotion)).length/todayTrades.length;
+    score=Math.round(40+calmPct*50-revPct*30);
+    score=Math.max(5,Math.min(95,score));
+  }
+  // Animate arc
+  const arcFill=document.getElementById('fg-arc-fill');
+  const needle=document.getElementById('fg-needle');
+  const scoreEl=document.getElementById('fg-score');
+  const moodEl=document.getElementById('fg-mood');
+  if(!arcFill)return;
+  const totalDash=157;
+  const fillAmount=(score/100)*totalDash;
+  setTimeout(()=>{
+    arcFill.style.strokeDashoffset=totalDash-fillAmount;
+    const deg=(score/100)*180-90;
+    if(needle) needle.style.transform=`rotate(${deg}deg)`;
+  },400);
+  if(scoreEl) scoreEl.textContent=score;
+  const moods=[
+    [0,20,'Extreme Fear','var(--red)'],[20,40,'Fear','var(--red)'],
+    [40,60,'Neutral','var(--amber)'],[60,80,'Greed','var(--green)'],[80,100,'Extreme Greed','var(--green)']
+  ];
+  const [,,mood,col]=moods.find(([lo,hi])=>score>=lo&&score<hi)||[0,100,'Neutral','var(--amber)'];
+  if(moodEl){moodEl.textContent=mood;moodEl.style.color=col;}
+}
 
-  // Emotion map: emoji + label + color
-  const emoMeta = {
-    calm:          { icon:'😌', label:'Calm',          col:'var(--green)' },
-    focused:       { icon:'🧘', label:'Focused',       col:'var(--green)' },
-    fomo:          { icon:'🚀', label:'FOMO',          col:'var(--amber)' },
-    fear:          { icon:'😨', label:'Fear',          col:'var(--blue)'  },
-    revenge:       { icon:'😤', label:'Revenge',       col:'var(--red)'   },
-    greed:         { icon:'🤑', label:'Greed',         col:'var(--amber)' },
-    hesitant:      { icon:'😰', label:'Hesitant',      col:'var(--blue)'  },
-    overconfident: { icon:'😎', label:'Overconfident', col:'var(--amber)' },
+// ── SOCIAL PULSE (simulated community data) ──
+const SOCIAL_BASE={calm:31,focused:24,fomo:18,fear:14,revenge:9,greed:4};
+function renderSocialPulse(){
+  const el=document.getElementById('sp-emotions');
+  if(!el)return;
+  // Blend stored vote counts from localStorage
+  const stored=JSON.parse(localStorage.getItem('mot_pulse_votes')||'{}');
+  const merged={...SOCIAL_BASE};
+  Object.entries(stored).forEach(([k,v])=>{if(merged[k]!==undefined)merged[k]+=v;});
+  const total=Object.values(merged).reduce((a,b)=>a+b,0);
+  const emoMeta={
+    calm:{icon:'😌',label:'Calm',col:'#00e676'},
+    focused:{icon:'🧘',label:'Focused',col:'#00e676'},
+    fomo:{icon:'🚀',label:'FOMO',col:'#ffab00'},
+    fear:{icon:'😨',label:'Fear',col:'#2979ff'},
+    revenge:{icon:'😤',label:'Revenge',col:'#ff4560'},
+    greed:{icon:'🤑',label:'Greed',col:'#ffab00'},
   };
+  el.innerHTML=Object.entries(merged).map(([k,v])=>{
+    const pct=Math.round(v/total*100);
+    const m=emoMeta[k]||{icon:'🔘',label:k,col:'var(--text)'};
+    return `<div class="sp-emo-pill">
+      <div class="sp-emo-icon">${m.icon}</div>
+      <div class="sp-emo-lbl">${m.label}</div>
+      <div class="sp-emo-pct">${pct}%</div>
+      <div class="sp-emo-bar-bg"><div class="sp-emo-bar-fill" style="width:0%;background:${m.col}" data-w="${pct}"></div></div>
+    </div>`;
+  }).join('');
+  // Animate bars
+  setTimeout(()=>{
+    el.querySelectorAll('.sp-emo-bar-fill').forEach(b=>{b.style.width=b.dataset.w+'%';});
+  },300);
+  // Restore vote state
+  const myVote=localStorage.getItem('mot_my_mood_today');
+  if(myVote){
+    document.getElementById('sp-vote-row').style.display='none';
+    const vEl=document.getElementById('sp-voted');
+    if(vEl){vEl.style.display='block';vEl.textContent='✅ You voted: '+myVote+' — Community sees your mood!';}
+  }
+}
 
-  // Need at least 3 completed trades to show real data
-  const completed = trades.filter(t => t.emotion && t.exit && t.pnl !== 0);
-
-  if (completed.length < 3) {
-    // Empty state — show what it will look like, clearly labeled as example
-    el.innerHTML = `
-      <div style="font-size:0.75rem;color:var(--muted);padding:4px 0 10px;line-height:1.6">
-        Log trades with emotional states to see your real performance by mood.
-        Here is an example of what you will see:
-      </div>
-      ${[
-        { icon:'😌', label:'Calm',    wr:74, pnl:18400, col:'var(--green)' },
-        { icon:'😤', label:'Revenge', wr:28, pnl:-9200,  col:'var(--red)'   },
-        { icon:'🚀', label:'FOMO',    wr:31, pnl:-4800,  col:'var(--amber)' },
-      ].map(s => buildEmoRow(s, true)).join('')}
-    `;
+function voteMood(mood){
+  const today=new Date().toISOString().split('T')[0];
+  const lastVote=localStorage.getItem('mot_vote_date');
+  if(lastVote===today){
+    const vEl=document.getElementById('sp-voted');
+    if(vEl){vEl.style.display='block';vEl.textContent='Already voted today!';}
     return;
   }
-
-  // Build real data from trades
-  const m = {};
-  completed.forEach(t => {
-    const e = t.emotion;
-    if (!m[e]) m[e] = { wins:0, total:0, pnl:0 };
-    m[e].total++;
-    if (t.pnl > 0) m[e].wins++;
-    m[e].pnl += t.pnl;
-  });
-
-  const rows = Object.entries(m)
-    .map(([emo, d]) => ({
-      icon:  emoMeta[emo]?.icon  || '🔘',
-      label: emoMeta[emo]?.label || emo,
-      col:   emoMeta[emo]?.col   || 'var(--text)',
-      wr:    Math.round(d.wins / d.total * 100),
-      pnl:   d.pnl,
-      total: d.total,
-    }))
-    .sort((a, b) => b.pnl - a.pnl); // best P&L first
-
-  el.innerHTML = rows.map(s => buildEmoRow(s, false)).join('');
+  // Store vote
+  const stored=JSON.parse(localStorage.getItem('mot_pulse_votes')||'{}');
+  stored[mood]=(stored[mood]||0)+1;
+  localStorage.setItem('mot_pulse_votes',JSON.stringify(stored));
+  localStorage.setItem('mot_my_mood_today',mood);
+  localStorage.setItem('mot_vote_date',today);
+  document.getElementById('sp-vote-row').style.display='none';
+  const vEl=document.getElementById('sp-voted');
+  if(vEl){vEl.style.display='block';vEl.textContent='✅ Thanks! You voted: '+(mood.charAt(0).toUpperCase()+mood.slice(1));}
+  // Re-render bars
+  renderSocialPulse();
 }
 
-function buildEmoRow(s, isDemo) {
-  const pc = s.pnl >= 0 ? 'var(--green)' : 'var(--red)';
-  const sign = s.pnl >= 0 ? '+' : '-';
-  const opacity = isDemo ? 'opacity:0.45;' : '';
-  return `<div class="setup-row" style="${opacity}">
-    <div class="setup-name" style="color:${s.col};display:flex;align-items:center;gap:6px">
-      <span style="font-size:1rem">${s.icon}</span>${s.label}
-      ${isDemo ? '<span style="font-size:0.58rem;color:var(--dim);font-weight:400">(example)</span>' : ''}
-      ${!isDemo && s.total ? `<span style="font-size:0.6rem;color:var(--dim);font-weight:400">${s.total}T</span>` : ''}
-    </div>
-    <div class="setup-bar-w"><div class="setup-bar-f" style="width:${s.wr}%;background:${s.col}"></div></div>
-    <div class="setup-wr" style="color:${s.col}">${s.wr}%</div>
-    <div class="setup-pnl" style="color:${pc}">${sign}₹${Math.abs(s.pnl).toLocaleString('en-IN')}</div>
-  </div>`;
-}
+// ── MIND VS MARKET CARD ──
+function renderMVMCard(){
+  const calmTrades=trades.filter(t=>['calm','focused'].includes(t.emotion));
+  const revTrades=trades.filter(t=>t.emotion==='revenge');
+  const calmWR=calmTrades.length?Math.round(calmTrades.filter(t=>t.pnl>0).length/calmTrades.length*100):null;
+  const revWR=revTrades.length?Math.round(revTrades.filter(t=>t.pnl>0).length/revTrades.length*100):null;
 
-function renderHeatmap(){
-  const times=['9:15','10:15','11:15','12:30','14:00','15:00','15:20'];
-  const days=['Mon','Tue','Wed','Thu','Fri'];
-  const data=[[55,74,82,38,45,30,60],[62,80,75,42,38,35,55],[50,72,78,35,40,28,62],[58,68,80,40,42,32,58],[45,76,72,45,35,30,52]];
-  const grid=document.getElementById('hm');
-  grid.innerHTML='<div class="hm-lbl"></div>'+times.map(t=>`<div class="hm-col-lbl">${t}</div>`).join('');
-  days.forEach((day,di)=>{
-    grid.innerHTML+=`<div class="hm-lbl">${day}</div>`;
-    times.forEach((t,ti)=>{
-      const v=data[di][ti];
-      const bg=v>=65?`rgba(0,230,118,${0.08+v/100*0.22})`:v>=50?`rgba(255,171,0,${0.07+v/100*0.18})`:`rgba(255,69,96,${0.07+v/100*0.16})`;
-      const fc=v>=65?'var(--green)':v>=50?'var(--amber)':'var(--red)';
-      grid.innerHTML+=`<div class="hm-cell" style="background:${bg};color:${fc}">${v}%<div class="hm-tip">${day} ${t}: ${v}% WR</div></div>`;
-    });
-  });
-}
+  const calmEl=document.getElementById('mvm-calm-wr');
+  const revEl=document.getElementById('mvm-revenge-wr');
+  const gapEl=document.getElementById('mvm-gap-text');
+  const badgeEl=document.getElementById('mvm-gap-badge');
 
-function renderPatterns(){
-  const tbody=document.getElementById('pat-tbody');
-  if(trades.length>=3){
-    // Build REAL behavioral pattern data from actual trades
-    const patterns={
-      'Revenge Trade':    {trades:trades.filter(t=>t.emotion==='revenge'),     col:'var(--red)'},
-      'FOMO Entry':       {trades:trades.filter(t=>t.emotion==='fomo'),        col:'var(--amber)'},
-      'Early Exit':       {trades:trades.filter(t=>t.setup&&t.setup.includes('Early Exit')), col:'var(--amber)'},
-      'No Stop Loss':     {trades:trades.filter(t=>t.rules&&t.rules[1]===0&&t.pnl<0), col:'var(--red)'},
-      'Fear Exit':        {trades:trades.filter(t=>t.emotion==='fear'),        col:'var(--blue)'},
-      'Overtrading':      {trades:trades.filter(t=>t.emotion==='overconfident'),col:'var(--amber)'},
-      'Calm + Setup':     {trades:trades.filter(t=>['calm','focused'].includes(t.emotion)&&t.rules&&t.rules.every(r=>r)), col:'var(--green)'},
-    };
-    // Get days for counting frequency properly
-    const allDays=new Set(trades.map(t=>t.date)).size||1;
-    const maxFreq=Math.max(1,...Object.values(patterns).map(p=>p.trades.length));
-    const rows=Object.entries(patterns)
-      .filter(([,p])=>p.trades.length>0)
-      .sort((a,b)=>{
-        // Sort: losses first by cost, then gains
-        const aCost=a[1].trades.reduce((s,t)=>s+t.pnl,0);
-        const bCost=b[1].trades.reduce((s,t)=>s+t.pnl,0);
-        return aCost-bCost;
-      });
-    if(rows.length>0){
-      tbody.innerHTML=rows.map(([name,p])=>{
-        const freq=p.trades.length;
-        const totalPnl=p.trades.reduce((s,t)=>s+t.pnl,0);
-        const avgPnl=Math.round(totalPnl/freq);
-        const pc=avgPnl>=0?'var(--green)':'var(--red)';
-        const sign=avgPnl>=0?'+':'-';
-        return `<tr>
-          <td style="font-weight:600;color:var(--text)">${name}</td>
-          <td><div class="freq-wrap"><div class="freq-track"><div class="freq-fill" style="width:${(freq/maxFreq)*100}%;background:${p.col}"></div></div><span style="font-size:0.75rem;font-weight:700;color:var(--text);min-width:16px">${freq}</span></div></td>
-          <td style="font-family:var(--mono);font-weight:700;color:${pc}">${sign}₹${Math.abs(avgPnl).toLocaleString('en-IN')}</td>
-        </tr>`;
-      }).join('');
-      return;
+  if(calmEl) calmEl.textContent=calmWR!==null?calmWR+'%':'—';
+  if(revEl) revEl.textContent=revWR!==null?revWR+'%':'—';
+
+  if(calmWR!==null&&revWR!==null){
+    const gap=calmWR-revWR;
+    if(gapEl) gapEl.textContent=`You win ${gap}% more when calm. That gap is your biggest edge to protect.`;
+    if(badgeEl){
+      badgeEl.style.display='block';
+      badgeEl.textContent='+'+gap+'% edge';
+      badgeEl.style.background='rgba(0,230,118,0.12)';
+      badgeEl.style.color='var(--green)';
     }
-  }
-  // Fallback to demo data if no trades
-  tbody.innerHTML=PATTERNS.map(p=>{
-    const pc=p.pnl>=0?'var(--green)':'var(--red)';
-    return `<tr><td style="font-weight:600;color:var(--muted);font-style:italic">${p.name} <span style="font-size:0.6rem;color:var(--dim)">(demo)</span></td><td><div class="freq-wrap"><div class="freq-track"><div class="freq-fill" style="width:${(p.freq/p.max)*100}%;background:${p.col};opacity:0.4"></div></div><span style="font-size:0.75rem;font-weight:700;color:var(--dim)">${p.freq}</span></div></td><td style="font-family:var(--mono);font-weight:700;color:${pc};opacity:0.4">${(p.pnl>=0?'+':'-')+'₹'+Math.abs(p.pnl).toLocaleString('en-IN')}</td></tr>`;
-  }).join('');
-}
-
-function renderEqChart(range){
-  const canvas=document.getElementById('eqChart');
-  if(!canvas||canvas.offsetWidth===0)return;
-  if(eqChart)eqChart.destroy();
-  let labels,cum;
-  if(trades.length>=2){
-    const sorted=[...trades].sort((a,b)=>a.date.localeCompare(b.date));
-    const byDate={};
-    sorted.forEach(t=>{if(!byDate[t.date])byDate[t.date]=0;byDate[t.date]+=t.pnl;});
-    labels=Object.keys(byDate).map(d=>d.slice(5));
-    let r=0;cum=Object.values(byDate).map(v=>{r+=v;return r;});
   } else {
-    const D={'1W':{l:['Mon','Tue','Wed','Thu','Fri','Today'],r:[0,12750,-3300,11250,-2625,18450]},'1M':{l:['Wk1','Wk2','Wk3','Wk4','Now'],r:[0,8000,-2000,15000,18450]},'3M':{l:['Jan','Feb','Mar'],r:[0,25000,40000,18450]}};
-    const d=D[range];labels=d.l;cum=d.r.reduce((a,v,i)=>{a.push((a[i-1]||0)+v);return a;},[]);
+    if(gapEl) gapEl.textContent='Import trades with emotion tags to see your behavioral win rate gap.';
   }
-  if(typeof Chart==='undefined'){console.warn('Chart.js not loaded');return;}
-  eqChart=new Chart(canvas.getContext('2d'),{type:'line',data:{labels,datasets:[{data:cum,segment:{borderColor:c=>c.p0.parsed.y<=c.p1.parsed.y?'rgba(0,230,118,0.9)':'rgba(255,69,96,0.9)',backgroundColor:c=>c.p0.parsed.y<=c.p1.parsed.y?'rgba(0,230,118,0.06)':'rgba(255,69,96,0.06)'},fill:true,borderWidth:2.5,tension:0.4,pointRadius:4,pointBackgroundColor:c=>c.parsed.y>=0?'var(--green)':'var(--red)',pointBorderColor:'var(--card)',pointBorderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(13,18,24,0.97)',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleFont:{family:'Space Grotesk',size:11},bodyFont:{family:'Space Grotesk',size:11},padding:12,callbacks:{label:c=>'P&L: '+(c.parsed.y>=0?'+':'')+fmtINR(c.parsed.y)}}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(168,188,207,0.45)',font:{family:'Space Grotesk',size:10}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(168,188,207,0.45)',font:{family:'Space Grotesk',size:10},callback:v=>{
-              const abs=Math.abs(v);
-              if(abs>=100000)return(v>=0?'':'-')+'₹'+(abs/100000).toFixed(1)+'L';
-              if(abs>=1000)return(v>=0?'':'-')+'₹'+(abs/1000).toFixed(0)+'K';
-              return(v>=0?'':'-')+'₹'+abs;
-            }}}}}});
-}
 
-function switchEq(btn,range){
-  document.querySelectorAll('.panel-head .tag').forEach(b=>{b.className='tag';b.style.cssText='background:var(--card2);color:var(--muted);cursor:pointer;border:1px solid var(--border)';});
-  btn.className='tag tg';btn.style.cssText='cursor:pointer';
-  requestAnimationFrame(()=>renderEqChart(range));
-}
-
-function renderEmoChart(){
-  const canvas=document.getElementById('emoChart');
-  if(!canvas||canvas.offsetWidth===0)return;
-  if(emoChart)emoChart.destroy();
-  let labels=['Calm','Focused','FOMO','Fear','Revenge','Greed'];
-  let data=[2400,2100,-2800,-1200,-4200,-800];
-  if(trades.length>=3){
-    const m={};trades.forEach(t=>{if(!m[t.emotion])m[t.emotion]={pnl:0,count:0};m[t.emotion].pnl+=t.pnl;m[t.emotion].count++;});
-    labels=Object.keys(m);data=labels.map(e=>Math.round(m[e].pnl/m[e].count));
-  }
-  if(typeof Chart==='undefined'){console.warn('Chart.js not loaded');return;}
-  emoChart=new Chart(canvas.getContext('2d'),{type:'bar',data:{labels,datasets:[{data,backgroundColor:data.map(v=>v>=0?'rgba(0,230,118,0.5)':'rgba(255,69,96,0.5)'),borderRadius:4,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(13,18,24,0.97)',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleFont:{family:'Space Grotesk',size:11},bodyFont:{family:'Space Grotesk',size:11},padding:12,callbacks:{label:c=>'Avg: '+(c.parsed.x>=0?'+':'')+fmtINR(c.parsed.x)}}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'rgba(168,188,207,0.45)',font:{family:'Space Grotesk',size:9},callback:v=>{
-              const abs=Math.abs(v);
-              if(abs>=100000)return(v>=0?'':'-')+'₹'+(abs/100000).toFixed(1)+'L';
-              if(abs>=1000)return(v>=0?'':'-')+'₹'+(abs/1000).toFixed(0)+'K';
-              return(v>=0?'':'-')+'₹'+abs;
-            }}},y:{grid:{display:false},ticks:{color:'rgba(168,188,207,0.5)',font:{family:'Space Grotesk',size:10}}}}}});
+  // Daily insight
+  const insights=[
+    'Log every trade with an emotion — patterns appear after 10+ trades.',
+    'Your best trades happen when you follow your plan, not your feelings.',
+    'Revenge trading costs most traders 30-40% of their monthly gains.',
+    'The market does not care how you feel. Your behavior does.',
+    'Consistency beats brilliance. Log today.',
+  ];
+  const doy=Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/86400000);
+  const insight=insights[doy%insights.length];
+  const insEl=document.getElementById('mdi-text');
+  if(insEl) insEl.textContent=insight;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -4732,15 +5565,134 @@ function submitTrade(){
   selectedEmo='';
 }
 
-function renderTradeTable(data){
-  const tb=document.getElementById('trade-tbody');
-  if(!data.length){tb.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted);font-size:0.82rem">No trades yet — log above or import via CSV</td></tr>`;return;}
-  const emo={calm:'tg',focused:'tg',fomo:'ta',fear:'tb',revenge:'tr',greed:'ta',hesitant:'tb',overconfident:'ta'};
-  tb.innerHTML=data.map(t=>{
-    const ps=t.pnl>0?'+':'';const pc=t.pnl>=0?'pnl-p':'pnl-n';const ec=emo[t.emotion]||'';
-    const brk=t.rules.filter(r=>!r).length;
-    return `<tr><td style="color:var(--muted);font-size:0.72rem;white-space:nowrap">${t.date}</td><td style="font-weight:700;color:var(--white)">${t.symbol}<span style="font-size:0.68rem;color:var(--muted);margin-left:4px">${t.strike||''}</span></td><td style="color:var(--muted);font-size:0.7rem;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.setup||'—'}</td><td style="font-family:var(--mono);color:var(--text)">₹${t.entry}</td><td style="font-family:var(--mono);color:var(--text)">${t.exit?'₹'+t.exit:'—'}</td><td class="${pc}">${ps}${fmtINR(t.pnl)}</td><td><span class="tag ${ec}" style="font-size:0.6rem">${t.emotion||'—'}</span></td><td>${brk===0?'<span class="tag tg">✓ All</span>':`<span class="tag tr">⚠ ${brk}</span>`}</td><td><button class="del-btn" onclick="deleteTrade(${t.id})">🗑</button></td></tr>`;
-  }).join('');
+// Emoji + color map for emotions
+const EMO_META={
+  calm:{icon:'😌',col:'calm',label:'Calm',tagCls:'tg'},
+  focused:{icon:'🧘',col:'focused',label:'Focused',tagCls:'tg'},
+  fomo:{icon:'🚀',col:'fomo',label:'FOMO',tagCls:'ta'},
+  fear:{icon:'😨',col:'fear',label:'Fear',tagCls:'tb'},
+  revenge:{icon:'😤',col:'revenge',label:'Revenge',tagCls:'tr'},
+  greed:{icon:'🤑',col:'greed',label:'Greed',tagCls:'ta'},
+  hesitant:{icon:'😰',col:'hesitant',label:'Hesitant',tagCls:'tb'},
+  overconfident:{icon:'😎',col:'overconfident',label:'Overconfident',tagCls:'ta'},
+};
+
+function getBehaviorComment(t){
+  const bad=['revenge','fomo','greed','overconfident'];
+  const good=['calm','focused'];
+  if(t.emotion==='revenge'&&t.pnl<0) return {cls:'warn',txt:'😤 Revenge trade after a loss — cost you '+fmtINRShort(Math.abs(t.pnl))+'. This is the pattern to break.'};
+  if(t.emotion==='fomo'&&t.pnl<0) return {cls:'warn',txt:'🚀 FOMO entry — chased the move, paid the price. Wait for your setup.'};
+  if(t.emotion==='revenge'&&t.pnl>0) return {cls:'warn',txt:'😤 Revenge trade that won — but this trains bad habits. Do not repeat.'};
+  if(good.includes(t.emotion)&&t.pnl>0) return {cls:'good',txt:'😌 Calm trade, positive result — this is your real edge. More of this.'};
+  if(t.rules&&t.rules.filter(r=>!r).length>=2) return {cls:'warn',txt:'⚠️ '+t.rules.filter(r=>!r).length+' rules broken on this trade. Review what pulled you off your system.'};
+  if(t.sl>0&&t.pnl>0) return {cls:'good',txt:'✅ Had a stop-loss, trade worked — disciplined execution.'};
+  return null;
+}
+
+let feedReactions = JSON.parse(localStorage.getItem('mot_feed_reactions')||'{}');
+function toggleReaction(id,emoji){
+  const key=id+'_'+emoji;
+  if(feedReactions[key]) delete feedReactions[key];
+  else feedReactions[key]=1;
+  localStorage.setItem('mot_feed_reactions',JSON.stringify(feedReactions));
+  renderTradeFeed(trades);
+}
+
+function renderTradeTable(data){ renderTradeFeed(data); }
+
+function renderTradeFeed(data){
+  const feed = document.getElementById('trade-feed');
+  if(!feed) return;
+  if(!data||!data.length){
+    feed.innerHTML=`<div class="journal-empty">
+      <div class="journal-empty-icon">📓</div>
+      <div class="journal-empty-title">Your journal is empty</div>
+      <div class="journal-empty-sub">Log your first trade above, or import a Zerodha CSV.<br>Every trade tells a story — start writing yours.</div>
+      <button onclick="goTo('connect')" style="padding:10px 20px;background:var(--green-bg);border:1px solid var(--green-bd);border-radius:var(--r);color:var(--green);font-size:0.78rem;font-weight:700;cursor:pointer">Import Trades →</button>
+    </div>`;
+    return;
+  }
+
+  // Sort newest first
+  const sorted=[...data].sort((a,b)=>b.date.localeCompare(a.date)||(b.id-a.id));
+
+  // Group by date
+  const byDate={};
+  sorted.forEach(t=>{if(!byDate[t.date])byDate[t.date]=[];byDate[t.date].push(t);});
+
+  let html='';
+  Object.entries(byDate).forEach(([date,dayTrades])=>{
+    const dayPnl=dayTrades.reduce((s,t)=>s+t.pnl,0);
+    const dayWins=dayTrades.filter(t=>t.pnl>0).length;
+    const pnlColor=dayPnl>0?'var(--green)':dayPnl<0?'var(--red)':'var(--muted)';
+    const pnlSign=dayPnl>=0?'+':'';
+    const dateLabel=new Date(date).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+
+    html+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px 4px;background:rgba(255,255,255,0.02);border-bottom:1px solid rgba(255,255,255,0.04);">
+      <span style="font-size:0.68rem;font-weight:700;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase">${dateLabel}</span>
+      <span style="font-size:0.72rem;font-weight:800;color:${pnlColor};font-family:var(--mono)">${pnlSign}${fmtINRShort(dayPnl)} · ${dayWins}/${dayTrades.length}W</span>
+    </div>`;
+
+    dayTrades.forEach(t=>{
+      const em=EMO_META[t.emotion]||{icon:'🔘',col:'',label:t.emotion||'?',tagCls:''};
+      const pnlCls=t.pnl>0?'win':t.pnl<0?'loss':'open';
+      const pnlTxt=t.exit?(t.pnl>=0?'+':'')+fmtINRShort(t.pnl):'Open';
+      const action=(t.action||'').toLowerCase().includes('buy')?'buy':'sell';
+      const behavior=getBehaviorComment(t);
+      const brk=Array.isArray(t.rules)?t.rules.filter(r=>!r).length:0;
+      const r1=feedReactions[t.id+'_🔥']?1:0;
+      const r2=feedReactions[t.id+'_😤']?1:0;
+      const r3=feedReactions[t.id+'_💡']?1:0;
+
+      html+=`<div class="trade-card">
+        <div class="tc-top">
+          <div class="tc-emo-avatar ${em.col}">${em.icon}</div>
+          <div class="tc-meta">
+            <div class="tc-symbol">
+              ${t.symbol}${t.strike?' '+t.strike:''}
+              <span class="tc-action-badge ${action}">${t.action||'BUY'}</span>
+              ${brk>0?`<span style="font-size:0.6rem;color:var(--red);font-weight:700">⚠ ${brk} rule${brk>1?'s':''}</span>`:''}
+            </div>
+            <div class="tc-sub">${em.label} · ${t.setup||'No setup'} · ${t.lots||1} lot${(t.lots||1)>1?'s':''}</div>
+          </div>
+          <div class="tc-pnl ${pnlCls}">${pnlTxt}</div>
+        </div>
+
+        <div class="tc-body">
+          <span class="tc-stat">Entry <strong>₹${t.entry||'—'}</strong></span>
+          ${t.exit?`<div class="tc-stat-div"></div><span class="tc-stat">Exit <strong>₹${t.exit}</strong></span>`:''}
+          ${t.sl?`<div class="tc-stat-div"></div><span class="tc-stat">SL <strong>₹${t.sl}</strong></span>`:''}
+          ${t.notes?`<div class="tc-stat-div"></div><span class="tc-stat" style="color:var(--dim);font-style:italic;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">"${t.notes}"</span>`:''}
+        </div>
+
+        ${behavior?`<div class="tc-behavior ${behavior.cls}">${behavior.txt}</div>`:''}
+
+        <div class="tc-reactions">
+          <button class="tc-react-btn ${r1?'on':''}" onclick="toggleReaction(${t.id},'🔥')">🔥 <span class="tc-react-count">${r1}</span></button>
+          <button class="tc-react-btn ${r2?'on':''}" onclick="toggleReaction(${t.id},'😤')">😤 <span class="tc-react-count">${r2}</span></button>
+          <button class="tc-react-btn ${r3?'on':''}" onclick="toggleReaction(${t.id},'💡')">💡 <span class="tc-react-count">${r3}</span></button>
+          <button class="tc-delete-btn" onclick="deleteTrade(${t.id})" title="Delete trade">🗑</button>
+        </div>
+      </div>`;
+    });
+  });
+
+  feed.innerHTML=html;
+}
+
+function filterFeed(btn,type){
+  document.querySelectorAll('.jff-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const today=new Date().toISOString().split('T')[0];
+  let d=trades;
+  if(type==='today') d=trades.filter(t=>t.date===today);
+  else if(type==='win') d=trades.filter(t=>t.pnl>0);
+  else if(type==='loss') d=trades.filter(t=>t.pnl<0);
+  else if(type==='revenge') d=trades.filter(t=>t.emotion==='revenge');
+  else if(type==='fomo') d=trades.filter(t=>t.emotion==='fomo');
+  else if(type==='calm') d=trades.filter(t=>['calm','focused'].includes(t.emotion));
+  renderTradeFeed(d);
+  showToast(d.length+' trades');
 }
 
 function deleteTrade(id){
@@ -4891,8 +5843,8 @@ function parseCSV(text,filename){
 
     const symbolRaw = get(iSym).toUpperCase().trim();
     const typeRaw   = get(iType).toUpperCase().trim();
-    const priceRaw  = parseFloat(get(iPrice).replace(/[^0-9.]/g,''))||0;
-    const qtyRaw    = parseInt(get(iQty).replace(/[^0-9]/g,''))||0;
+    const priceRaw  = parseFloat(get(iPrice).replace(/[₹, ]/g,''))||0;
+    const qtyRaw    = Math.round(parseFloat(get(iQty).replace(/[₹,]/g,''))||0); // fix: parseFloat preserves decimals like 65.000000
     const dateRaw   = get(iDate)||'';
 
     // Skip invalid rows
@@ -5570,6 +6522,89 @@ function renderDNA(){
   }
 }
 
+function openShareDNA(){
+  // Populate wrapped preview
+  const name=(traderName||'Trader').split(' ')[0];
+  const disc=calcDisciplineScore();
+  const completed=trades.filter(t=>t.exit&&t.pnl!==0);
+  const wins=completed.filter(t=>t.pnl>0).length;
+  const wr=completed.length?Math.round(wins/completed.length*100)+'%':'—';
+  const streak=calcStreak();
+  const totalPnl=trades.reduce((s,t)=>s+t.pnl,0);
+  const arch=document.getElementById('dna-arch')?.textContent||'Trader';
+
+  // Fill wrapped card
+  const el=id=>document.getElementById(id);
+  if(el('wp-name')) el('wp-name').textContent=name+"'s Trading DNA";
+  if(el('wp-arch')) el('wp-arch').textContent=arch;
+  if(el('wp-wr')) el('wp-wr').textContent=wr;
+  if(el('wp-streak')) el('wp-streak').textContent=streak?'🔥'+streak:'—';
+  if(el('wp-pnl')) el('wp-pnl').textContent=fmtINRShort(totalPnl);
+  if(el('wp-date')) el('wp-date').textContent=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+  if(el('wp-disc-num')) el('wp-disc-num').textContent=typeof disc==='number'?disc:'—';
+
+  // Animate ring
+  if(el('wp-ring-fill')&&typeof disc==='number'){
+    const circ=138;
+    setTimeout(()=>{el('wp-ring-fill').style.strokeDashoffset=circ-(disc/100*circ);},300);
+  }
+
+  // Behavior badges
+  const revTrades=trades.filter(t=>t.emotion==='revenge');
+  const calmTrades=trades.filter(t=>['calm','focused'].includes(t.emotion));
+  const badges=[];
+  if(calmTrades.length>revTrades.length*2) badges.push({t:'😌 Calm Trader',c:'rgba(0,230,118,0.15)',tc:'#00e676'});
+  if(typeof disc==='number'&&disc>=75) badges.push({t:'🎯 Disciplined',c:'rgba(41,121,255,0.15)',tc:'#2979ff'});
+  if(streak>=7) badges.push({t:'🔥 '+streak+' Day Streak',c:'rgba(255,171,0,0.15)',tc:'#ffab00'});
+  if(revTrades.length===0&&trades.length>=5) badges.push({t:'✅ Zero Revenge',c:'rgba(0,230,118,0.15)',tc:'#00e676'});
+  const badgeRow=el('wp-badge-row');
+  if(badgeRow) badgeRow.innerHTML=badges.slice(0,3).map(b=>`<span style="padding:3px 10px;background:${b.c};border-radius:20px;font-size:0.58rem;font-weight:700;color:${b.tc}">${b.t}</span>`).join('');
+
+  // Show panel
+  const panel=document.getElementById('dna-share-panel');
+  if(panel){panel.style.display='block';panel.scrollIntoView({behavior:'smooth',block:'nearest'});}
+}
+
+function closeDNAShare(){
+  const panel=document.getElementById('dna-share-panel');
+  if(panel) panel.style.display='none';
+}
+
+function copyDNAText(){
+  const name=(traderName||'Trader').split(' ')[0];
+  const disc=calcDisciplineScore();
+  const completed=trades.filter(t=>t.exit&&t.pnl!==0);
+  const wr=completed.length?Math.round(completed.filter(t=>t.pnl>0).length/completed.length*100)+'%':'—';
+  const streak=calcStreak();
+  const arch=document.getElementById('dna-arch')?.textContent||'Trader';
+  const text=`📊 My Trading DNA Report — MindOfTrader
+
+🧬 ${name} · ${arch}
+✅ Win Rate: ${wr}
+🎯 Discipline: ${disc}/100
+🔥 Streak: ${streak} days
+
+Track your own behavioral edge:
+mindoftrader.com`;
+  navigator.clipboard.writeText(text).then(()=>showToast('Stats copied! Paste anywhere ✅')).catch(()=>showToast('Copy failed'));
+}
+
+function shareDNANative(){
+  const name=(traderName||'Trader').split(' ')[0];
+  const disc=calcDisciplineScore();
+  const arch=document.getElementById('dna-arch')?.textContent||'Trader';
+  if(navigator.share){
+    navigator.share({
+      title:'My Trading DNA — MindOfTrader',
+      text:`📊 ${name}'s Trading DNA: ${arch} · Discipline ${disc}/100
+Track your behavioral edge at mindoftrader.com`,
+      url:'https://mindoftrader.com'
+    }).catch(()=>{});
+  } else {
+    copyDNAText();
+  }
+}
+
 function shareDNA(){
   const t=`🧠 ${(traderName||'My').toUpperCase()}'S TRADING DNA — MindOfTrader\n\n"Your charts show the market. We show your mind."\n\n🎯 Discipline: ${document.getElementById('dna-snum').textContent}/100\n🏹 ${document.getElementById('dna-arch').textContent}\n📊 Win Rate: ${document.getElementById('dna-wr').textContent} | P&L: ${document.getElementById('dna-pnl').textContent}\n\nmindoftrader.com`;
   if(navigator.share)navigator.share({title:'My Trading DNA',text:t,url:'https://mindoftrader.com'}).catch(()=>{});
@@ -5701,8 +6736,8 @@ function renderMarketStrip(nifty, banknifty, vix, pcr, session) {
       closed: { cls: 'closed', text: '◯ NSE CLOSED', tcls: 'closed' }
     };
     const s = sessionMap[session] || sessionMap.closed;
-    sessionDot.className = 'ms-session-dot ' + s.cls;
-    sessionText.className = 'ms-session-text ' + s.tcls;
+    sessionDot.className = 'pulse-dot ' + s.cls;
+    sessionText.className = 'pulse-session-txt ' + s.tcls;
     sessionText.textContent = s.text;
   }
 
@@ -5768,6 +6803,7 @@ function renderMarketStrip(nifty, banknifty, vix, pcr, session) {
   const overallMood = getMoodFromVix(vix ? vix.price : 14);
   const moodEl = document.getElementById('ms-mood');
   const moodSub = document.getElementById('ms-mood-sub');
+  const pulseMood = document.getElementById('ms-mood'); // same element, id kept
   if (moodEl) {
     moodEl.textContent = overallMood.mood;
     moodEl.style.color = overallMood.color === 'up' ? 'var(--green)' : overallMood.color === 'down' ? 'var(--red)' : 'var(--amber)';
