@@ -2945,29 +2945,34 @@ try {
         const navEl = document.getElementById('nav');
         const dashEl = document.getElementById('dashboard-view');
 
-        // If no view is currently active (blank screen), activate dashboard
+        // Always ensure app is visible after Firebase confirms auth
+        if (obEl) obEl.classList.add('hidden');
+
+        // Build profile from Firebase user if not in localStorage yet
+        let profile = storedUser;
+        if (!profile) {
+          profile = {
+            uid: user.uid,
+            name: user.displayName || 'Trader',
+            email: user.email || null,
+            photo: user.photoURL || null,
+            loginMethod: 'google',
+            lastLogin: new Date().toISOString()
+          };
+          localStorage.setItem(KEYS.USER, JSON.stringify(profile));
+        }
+
+        // Show nav + app if not already visible
+        if (navEl) navEl.style.display = 'flex';
         const anyActive = document.querySelector('.view.on');
         if (!anyActive) {
-          if (obEl) obEl.classList.add('hidden');
-          if (navEl) navEl.style.display = 'flex';
-          if (storedUser) {
-            try { setupUser(storedUser); } catch(e) {}
-          } else {
-            // Build minimal profile from Firebase user
-            const fallbackProfile = {
-              uid: user.uid,
-              name: user.displayName || 'Trader',
-              email: user.email || null,
-              photo: user.photoURL || null,
-              loginMethod: 'google',
-              lastLogin: new Date().toISOString()
-            };
-            localStorage.setItem(KEYS.USER, JSON.stringify(fallbackProfile));
-            try { setupUser(fallbackProfile); } catch(e) {}
-          }
+          try { setupUser(profile); } catch(e) { console.warn('setupUser',e); }
           try { goTo('dashboard'); } catch(e) {
-            if (dashEl) dashEl.classList.add('on');
+            if (dashEl) { dashEl.classList.add('on'); dashEl.style.display = 'block'; }
           }
+        } else {
+          // View already showing — just make sure nav/user are set up
+          try { setupUser(profile); } catch(e) {}
         }
       }
     });
@@ -3438,44 +3443,49 @@ setTimeout(function(){
   }
 }, 0);
 
-// HARD FAILSAFE — if after 3s still blank, force show whatever we can
-setTimeout(function(){
+// HARD FAILSAFE — fires at 1s intervals, keeps retrying until something shows
+let _failsafeAttempts = 0;
+function _runFailsafe(){
+  _failsafeAttempts++;
   const anyActive = document.querySelector('.view.on');
   const onboarding = document.getElementById('onboarding');
-  const onboardingVisible = onboarding && !onboarding.classList.contains('hidden') && onboarding.style.display !== 'none';
-  
-  if(!anyActive && !onboardingVisible){
-    console.warn('[MOT] Blank screen detected — running failsafe recovery');
-    const stored = getStoredUser();
-    const nav = document.getElementById('nav');
-    const ob = document.getElementById('onboarding');
-    
+  const onboardingVisible = onboarding && !onboarding.classList.contains('hidden');
+  if(anyActive || onboardingVisible) return; // something is showing, stop
+
+  console.warn('[MOT] Blank screen — failsafe attempt', _failsafeAttempts);
+  const stored = getStoredUser();
+  const nav = document.getElementById('nav');
+  const ob = document.getElementById('onboarding');
+
+  if(stored){
+    // Have a stored user — show dashboard immediately
     if(ob) ob.classList.add('hidden');
-    
-    if(stored){
-      if(nav) nav.style.display = 'flex';
-      try { setupUser(stored); } catch(e){ console.warn('failsafe setupUser',e); }
-      try { goTo('dashboard'); } catch(e){ 
-        const dv = document.getElementById('dashboard-view');
-        if(dv){ dv.classList.add('on'); }
-      }
-    } else {
-      // No user — show onboarding fresh
-      const seen = localStorage.getItem('mot_ob_seen');
-      if(!seen){
-        if(ob){ ob.classList.remove('hidden'); ob.style.display = ''; }
-      } else {
-        // Guest — go to landing or just show dashboard
-        const landing = document.getElementById('landing-view');
-        if(landing) landing.style.display = 'flex';
-        else {
-          if(nav) nav.style.display = 'flex';
-          try { goTo('dashboard'); } catch(e) {}
-        }
-      }
+    if(nav) nav.style.display = 'flex';
+    try { setupUser(stored); } catch(e){ console.warn(e); }
+    try { goTo('dashboard'); } catch(e){
+      const dv = document.getElementById('dashboard-view');
+      if(dv) dv.classList.add('on');
     }
+    return; // done
   }
-}, 3000);
+
+  // No stored user yet — Firebase auth might still be loading
+  if(_failsafeAttempts < 8){
+    // Keep retrying every 500ms for up to 4 seconds
+    setTimeout(_runFailsafe, 500);
+    return;
+  }
+
+  // Gave up waiting — no user at all, show onboarding
+  const seen = localStorage.getItem('mot_ob_seen');
+  if(!seen && ob){
+    ob.classList.remove('hidden');
+  } else {
+    // Show onboarding fresh anyway
+    if(ob){ ob.classList.remove('hidden'); localStorage.removeItem('mot_ob_seen'); }
+  }
+}
+setTimeout(_runFailsafe, 800);
 
 // Service Worker Registration
 if('serviceWorker' in navigator){
