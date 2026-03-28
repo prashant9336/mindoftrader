@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+// Early stubs — prevent "not defined" if clicked before main script loads
+window.obNext = function(s){ console.warn('obNext called before load, screen:', s); };
+window.obSkipAll = function(){ console.warn('obSkipAll called before load'); };
+window.goTo = function(id){ console.warn('goTo called before load:', id); };
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>MindOfTrader — Know Your Trading Mind</title>
@@ -1721,6 +1727,304 @@ body.app-mode{padding-top:52px;}
 .firebase-notice.show{display:block;}
 .firebase-notice strong{color:var(--amber);}
 .firebase-notice code{background:var(--card2);padding:2px 6px;border-radius:4px;font-family:var(--mono);font-size:0.75rem;color:var(--green);}
+
+/* ══════════════════════════════════════════════════
+   LIVE TRADER ROOM — Elite Experience Layer
+   MindOfTrader v4.0 — India's #1 Behavioral Trading Platform
+══════════════════════════════════════════════════ */
+
+/* Fonts for room */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap');
+
+#room-view {
+  position: fixed !important;
+  inset: 0;
+  z-index: 550;
+  display: none;
+  flex-direction: column;
+  background: #020408;
+  font-family: 'Rajdhani', var(--font);
+  overflow: hidden;
+}
+#room-view.on {
+  display: flex !important;
+}
+
+/* CRT scanlines */
+#room-view::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,136,0.012) 2px, rgba(0,255,136,0.012) 4px);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Room layout */
+.room-layout { display: grid; grid-template-rows: 46px 1fr 50px; height: 100%; }
+.room-topbar {
+  display: flex; align-items: center;
+  background: #040810;
+  border-bottom: 1px solid rgba(0,255,136,0.08);
+  padding: 0 14px; gap: 14px;
+  position: relative; overflow: hidden; flex-shrink: 0;
+}
+.room-topbar::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,255,136,0.25), transparent);
+  animation: rtopScan 5s linear infinite;
+}
+@keyframes rtopScan { from{transform:translateX(-100%)} to{transform:translateX(100%)} }
+
+.room-back-btn {
+  font-family: 'Share Tech Mono'; font-size: 9px; letter-spacing: 2px;
+  color: rgba(0,255,136,0.6); background: transparent; border: 1px solid rgba(0,255,136,0.15);
+  padding: 4px 10px; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+}
+.room-back-btn:hover { color: #00ff88; border-color: rgba(0,255,136,0.4); background: rgba(0,255,136,0.05); }
+
+.room-logo { font-family: 'Orbitron'; font-size: 11px; font-weight: 900; letter-spacing: 3px; color: #00ff88; }
+.room-logo-sub { font-family: 'Share Tech Mono'; font-size: 8px; color: rgba(74,96,112,0.8); letter-spacing: 1px; }
+
+.room-tickers { display: flex; gap: 0; flex: 1; overflow: hidden; }
+.room-tick {
+  display: flex; flex-direction: column; gap: 1px;
+  padding: 0 14px; border-right: 1px solid #0d1e2e; flex-shrink: 0;
+}
+.room-tick-sym { font-family: 'Share Tech Mono'; font-size: 8px; color: #4a6070; letter-spacing: 1px; }
+.room-tick-val { font-family: 'Orbitron'; font-size: 12px; font-weight: 700; transition: color 0.2s; }
+.room-tick-chg { font-family: 'Share Tech Mono'; font-size: 8px; }
+
+.room-mode-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 12px; font-family: 'Orbitron'; font-size: 8px; letter-spacing: 2px;
+  border: 1px solid rgba(0,136,255,0.3); background: rgba(0,136,255,0.08); color: #0088ff;
+  flex-shrink: 0;
+}
+.room-mode-dot { width: 5px; height: 5px; border-radius: 50%; animation: rmpulse 1.5s ease infinite; }
+@keyframes rmpulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+.room-clock { font-family: 'Share Tech Mono'; font-size: 10px; color: #4a6070; flex-shrink: 0; }
+
+/* Body */
+.room-body { display: grid; grid-template-columns: 44px 1fr 260px; overflow: hidden; }
+
+/* Left rail */
+.room-rail {
+  background: #040810; border-right: 1px solid rgba(0,255,136,0.05);
+  display: flex; flex-direction: column; align-items: center; padding: 10px 0; gap: 4px;
+}
+.rr-btn {
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  border: 1px solid transparent; background: transparent; color: #4a6070;
+  font-size: 10px; cursor: pointer; transition: all 0.15s; font-family: 'Share Tech Mono';
+}
+.rr-btn:hover { color: #00ff88; border-color: rgba(0,255,136,0.2); background: rgba(0,255,136,0.04); }
+.rr-btn.on { color: #00ff88; border-color: rgba(0,255,136,0.3); background: rgba(0,255,136,0.08); }
+.rr-sep { width: 20px; height: 1px; background: #0d1e2e; margin: 3px 0; }
+
+/* Chart stage */
+.room-stage { position: relative; background: #020408; overflow: hidden; }
+#room-canvas { width: 100%; height: 100%; }
+
+/* HUD elements */
+.room-price-hud { position: absolute; top: 12px; left: 12px; z-index: 10; }
+.room-price-main {
+  font-family: 'Orbitron'; font-size: 44px; font-weight: 900;
+  letter-spacing: -1px; line-height: 1; transition: color 0.15s;
+  text-shadow: 0 0 40px currentColor;
+}
+.room-price-sub { font-family: 'Share Tech Mono'; font-size: 10px; margin-top: 3px; letter-spacing: 1px; }
+
+.room-phase-hud { position: absolute; top: 12px; right: 10px; z-index: 10; text-align: right; }
+.room-phase-name { font-family: 'Orbitron'; font-size: 7px; letter-spacing: 3px; color: #4a6070; }
+.room-phase-badge {
+  font-family: 'Orbitron'; font-size: 9px; font-weight: 700; letter-spacing: 2px;
+  padding: 3px 10px; margin-top: 4px; display: inline-block; border: 1px solid;
+}
+
+.room-voice-stage {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2px;
+  pointer-events: none; z-index: 20;
+}
+.room-vline {
+  font-family: 'Orbitron'; font-weight: 900; font-size: 48px; letter-spacing: 6px;
+  text-align: center; opacity: 0; transform: translateY(10px) scale(0.96);
+  transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1);
+  text-shadow: 0 0 80px currentColor, 0 0 160px currentColor; pointer-events: none;
+}
+.room-vline.on { opacity: 1; transform: translateY(0) scale(1); }
+.room-vline.off { opacity: 0; transform: translateY(-8px); transition: opacity 2.5s, transform 2.5s; }
+
+.room-pat-flash {
+  position: absolute; bottom: 58px; left: 12px; z-index: 25;
+  font-family: 'Share Tech Mono'; font-size: 10px; letter-spacing: 2px;
+  padding: 7px 14px; border-left: 3px solid;
+  opacity: 0; transition: opacity 0.3s; pointer-events: none;
+}
+.room-entry-fx {
+  position: absolute; inset: 0; pointer-events: none; z-index: 18;
+  opacity: 0; transition: opacity 0.2s; border: 2px solid;
+}
+.room-mentor-int {
+  position: absolute; top: 56px; left: 50%; transform: translateX(-50%);
+  z-index: 30; font-family: var(--font); font-size: 12px; font-weight: 600;
+  padding: 8px 20px; border: 1px solid rgba(255,170,0,0.4);
+  background: rgba(2,4,8,0.97); color: #ffaa00; white-space: nowrap;
+  opacity: 0; transition: opacity 0.35s; pointer-events: none;
+}
+.room-mentor-int::before { content: '// '; opacity: 0.5; font-family: 'Share Tech Mono'; }
+.room-mentor-int.on { opacity: 1; }
+.room-mistake-pop {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  z-index: 35; font-family: 'Orbitron'; font-size: 12px; font-weight: 700; letter-spacing: 3px;
+  padding: 16px 28px; border: 1px solid #ff2244; background: rgba(2,4,8,0.98); color: #ff2244;
+  text-align: center; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+}
+.room-mistake-pop.on { opacity: 1; }
+.room-watermark {
+  position: absolute; bottom: 60px; right: 12px; z-index: 5;
+  font-family: 'Orbitron'; font-size: 56px; font-weight: 900;
+  color: rgba(0,255,136,0.018); letter-spacing: 4px; pointer-events: none; user-select: none;
+}
+
+/* Right panel */
+.room-rpanel {
+  background: #040810; border-left: 1px solid rgba(0,255,136,0.05);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.room-ptabs { display: flex; border-bottom: 1px solid rgba(0,255,136,0.05); flex-shrink: 0; }
+.room-ptab {
+  flex: 1; font-family: 'Orbitron'; font-size: 7px; letter-spacing: 2px;
+  padding: 9px 2px; text-align: center; cursor: pointer; color: #4a6070;
+  border-bottom: 2px solid transparent; transition: all 0.2s; background: none; border-top: none; border-left: none; border-right: none;
+}
+.room-ptab:hover { color: #c8dde8; }
+.room-ptab.on { color: #00ff88; border-bottom-color: #00ff88; }
+.room-pview { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+.room-pview.show { display: flex; }
+
+/* Trader state */
+.room-tstate { padding: 12px; border-bottom: 1px solid rgba(0,255,136,0.05); flex-shrink: 0; }
+.room-ts-head { font-family: 'Orbitron'; font-size: 7px; letter-spacing: 2px; color: #4a6070; margin-bottom: 10px; }
+.room-ts-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.room-ts-lbl { font-family: 'Share Tech Mono'; font-size: 8px; color: #4a6070; width: 58px; letter-spacing: 1px; }
+.room-ts-track { flex: 1; height: 2px; background: #0d1e2e; position: relative; }
+.room-ts-bar { height: 100%; transition: width 1.4s cubic-bezier(0.16,1,0.3,1); position: relative; }
+.room-ts-bar::after { content:''; position:absolute; right:-1px; top:-3px; width:2px; height:8px; background:currentColor; box-shadow: 0 0 6px currentColor; }
+.room-ts-val { font-family: 'Orbitron'; font-size: 10px; font-weight: 700; min-width: 24px; text-align: right; }
+
+/* Mentor scroll */
+.room-mentor-scroll { flex: 1; overflow-y: auto; padding: 10px; }
+.room-m-head { font-family: 'Orbitron'; font-size: 7px; letter-spacing: 2px; color: #4a6070; margin-bottom: 8px; }
+.room-mline {
+  font-size: 12px; color: #c8dde8; line-height: 1.5;
+  padding: 5px 0 5px 10px; border-left: 1px solid #ffaa00; margin-bottom: 6px;
+  opacity: 0; transform: translateX(6px); transition: all 0.45s cubic-bezier(0.16,1,0.3,1);
+}
+.room-mline.vis { opacity: 1; transform: none; }
+.room-mline.old { opacity: 0.2; border-left-color: #0d1e2e; }
+.room-mline::before { content: '> '; color: rgba(255,170,0,0.4); font-family: 'Share Tech Mono'; font-size: 9px; }
+
+/* Journal */
+.room-jscroll { flex: 1; overflow-y: auto; padding: 8px; }
+.room-jcard {
+  border-left: 2px solid #0d1e2e; padding: 6px 8px; margin-bottom: 7px;
+  background: rgba(255,255,255,0.01); transition: all 0.2s;
+}
+.room-jcard.win { border-left-color: #00ff88; }
+.room-jcard.loss { border-left-color: #ff2244; }
+.room-jcard.insight { border-left-color: #ffaa00; }
+.room-jcard.setup { border-left-color: #0088ff; }
+.room-jtime { font-family: 'Share Tech Mono'; font-size: 8px; color: #4a6070; letter-spacing: 1px; margin-bottom: 2px; }
+.room-jtext { font-size: 11px; color: #c8dde8; line-height: 1.5; }
+.room-jadd { padding: 8px; border-top: 1px solid rgba(0,255,136,0.05); flex-shrink: 0; }
+.room-jadd input, .room-jadd select {
+  width: 100%; background: #070e18; border: 1px solid #0d1e2e;
+  color: #c8dde8; padding: 5px 8px; font-family: 'Share Tech Mono'; font-size: 10px;
+  outline: none; margin-bottom: 4px; transition: border-color 0.2s;
+}
+.room-jadd input:focus, .room-jadd select:focus { border-color: rgba(0,255,136,0.3); }
+.room-jadd select option { background: #040810; }
+
+/* Setups */
+.room-sscroll { flex: 1; overflow-y: auto; padding: 10px; }
+.room-scard {
+  border: 1px solid #0d1e2e; padding: 10px; margin-bottom: 8px;
+  background: #070e18; transition: all 0.25s; position: relative; overflow: hidden;
+}
+.room-scard::before { content:''; position:absolute; left:0; top:0; bottom:0; width:2px; background: transparent; }
+.room-scard.active-s::before { background: #00ff88; box-shadow: 0 0 8px #00ff88; }
+.room-scard:hover { border-color: rgba(0,255,136,0.15); }
+.room-sname { font-family: 'Orbitron'; font-size: 8px; font-weight: 700; letter-spacing: 2px; color: #00ddff; margin-bottom: 4px; }
+.room-sdesc { font-size: 10px; color: #4a6070; line-height: 1.6; }
+.room-stags { margin-top: 5px; display: flex; gap: 4px; flex-wrap: wrap; }
+.room-stag { font-family: 'Share Tech Mono'; font-size: 7px; padding: 2px 5px; border: 1px solid; }
+.room-pat-intel { border: 1px solid #0d1e2e; padding: 10px; font-size: 10px; color: #4a6070; line-height: 1.7; background: #070e18; }
+
+/* Stats */
+.room-stscroll { flex: 1; overflow-y: auto; padding: 10px; }
+.room-sgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+.room-sbox {
+  background: #070e18; border: 1px solid #0d1e2e; padding: 10px;
+}
+.room-sv { font-family: 'Orbitron'; font-size: 22px; font-weight: 900; letter-spacing: -0.5px; line-height: 1; }
+.room-sl { font-family: 'Share Tech Mono'; font-size: 7px; color: #4a6070; letter-spacing: 1px; margin-top: 2px; }
+.room-iblock { border: 1px solid rgba(255,170,0,0.15); background: rgba(255,170,0,0.03); padding: 10px; margin-bottom: 6px; }
+.room-itag { font-family: 'Orbitron'; font-size: 7px; letter-spacing: 2px; color: #ffaa00; margin-bottom: 3px; }
+.room-itxt { font-size: 11px; color: #c8dde8; line-height: 1.6; }
+.room-mblock {
+  font-family: 'Share Tech Mono'; font-size: 9px; padding: 4px 8px;
+  border-left: 2px solid #ff2244; color: #ff2244; background: rgba(255,34,68,0.04); margin-bottom: 4px;
+}
+
+/* Bottom bar */
+.room-bbar {
+  background: #040810; border-top: 1px solid rgba(0,255,136,0.08);
+  display: flex; align-items: center; padding: 0 12px; gap: 8px; flex-shrink: 0; position: relative;
+}
+.room-bbar::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background: linear-gradient(90deg, transparent, rgba(0,255,136,0.15), transparent);
+}
+.room-xbtn {
+  font-family: 'Orbitron'; font-size: 8px; font-weight: 700; letter-spacing: 2px;
+  padding: 7px 14px; border: 1px solid; cursor: pointer; background: transparent;
+  transition: all 0.15s;
+}
+.room-xbtn:active { transform: scale(0.97); }
+.room-xbtn.g { color: #00ff88; border-color: rgba(0,255,136,0.35); }
+.room-xbtn.g:hover { color: #020408; background: #00ff88; }
+.room-xbtn.r { color: #ff2244; border-color: rgba(255,34,68,0.35); }
+.room-xbtn.r:hover { color: #020408; background: #ff2244; }
+.room-xbtn.n { color: #4a6070; border-color: #0d1e2e; }
+.room-xbtn.n:hover { color: #c8dde8; border-color: #4a6070; }
+.room-xbtn:disabled { opacity: 0.25; cursor: default; pointer-events: none; }
+.room-bb-gap { flex: 1; }
+.room-pnl-block { text-align: center; }
+.room-pnl-lbl { font-family: 'Share Tech Mono'; font-size: 8px; color: #4a6070; letter-spacing: 1px; }
+.room-pnl-val { font-family: 'Orbitron'; font-size: 16px; font-weight: 900; letter-spacing: 1px; }
+.room-cpat-bar { font-family: 'Share Tech Mono'; font-size: 8px; color: #4a6070; letter-spacing: 1px; padding: 3px 8px; border: 1px solid #0d1e2e; }
+.room-vol-bar-wrap { display: flex; align-items: center; gap: 5px; font-family: 'Share Tech Mono'; font-size: 8px; color: #4a6070; }
+.room-vtrack { width: 36px; height: 2px; background: #0d1e2e; overflow: hidden; }
+.room-vfill { height: 100%; background: #00ff88; transition: width 0.5s; box-shadow: 0 0 4px #00ff88; }
+
+/* Scrollbars in room */
+#room-view ::-webkit-scrollbar { width: 2px; }
+#room-view ::-webkit-scrollbar-thumb { background: #0d1e2e; }
+
+
+/* ── REAL DATA PANELS ── */
+.realdata-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 0 16px 12px; }
+@media(max-width:700px){ .realdata-grid { grid-template-columns: 1fr; } }
+@media(max-width:900px){ .realdata-grid { grid-template-columns: 1fr 1fr; } }
+.rd-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--r2); overflow: hidden; }
+.rd-panel-head { padding: 10px 14px 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 7px; }
+.rd-panel-title { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--white); }
+.rd-panel-body { padding: 12px; }
+.rd-live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 5px var(--green); animation: gPulse 2s infinite; }
+.ai-market-mentor-wrap { padding: 0 16px 12px; }
+
 </style>
 </head>
 <body>
@@ -1741,6 +2045,7 @@ body.app-mode{padding-top:52px;}
       <button class="nav-tab" onclick="goTo('ai')">🤖 Coach</button>
       <button class="nav-tab" onclick="goTo('dna')">🧬 DNA</button>
       <button class="nav-tab" onclick="goTo('connect')">🔗 Import</button>
+      <button class="nav-tab" onclick="goTo('room')">⬡ Live Room</button>
     </div>
     <div class="nav-right">
       <div class="nav-sync-dot" id="nav-sync-dot" title="Sync status"></div>
@@ -1787,6 +2092,13 @@ body.app-mode{padding-top:52px;}
     </div>
     <span class="bn-lbl">Import</span>
     <div class="bn-pip" id="bnpip-connect"></div>
+  </button>
+  <button class="bn-tab" onclick="goTo('room')" id="bn-room">
+    <div class="bn-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><polyline points="2,17 7,10 11,13 15,7 22,12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="2" y="18" width="20" height="2" rx="1" fill="currentColor" opacity="0.4"/></svg>
+    </div>
+    <span class="bn-lbl">Room</span>
+    <div class="bn-pip" id="bnpip-room"></div>
   </button>
 </div>
 
@@ -2059,6 +2371,50 @@ body.app-mode{padding-top:52px;}
   <div id="mind-vs-market" style="display:none">
 
     <!-- FEAR-GREED METER + TODAY CARD -->
+    
+<!-- ── REAL DATA PANELS: Trend + OI + FII/DII ── -->
+<div class="realdata-grid" id="realdata-panels">
+  <!-- TREND PANEL -->
+  <div class="rd-panel">
+    <div class="rd-panel-head">
+      <div class="rd-live-dot"></div>
+      <div class="rd-panel-title">Market Direction</div>
+    </div>
+    <div class="rd-panel-body" id="trend-panel-wrap">
+      <div style="font-size:0.72rem;color:var(--muted);text-align:center;padding:8px;">Loading trend analysis...</div>
+    </div>
+  </div>
+  <!-- OI PANEL -->
+  <div class="rd-panel">
+    <div class="rd-panel-head">
+      <div class="rd-live-dot" style="background:var(--red);box-shadow:0 0 5px var(--red)"></div>
+      <div class="rd-panel-title">Options OI + PCR</div>
+    </div>
+    <div class="rd-panel-body" id="oi-panel-wrap">
+      <div style="font-size:0.72rem;color:var(--muted);text-align:center;padding:8px;">Loading OI data...</div>
+    </div>
+  </div>
+  <!-- FII/DII PANEL -->
+  <div class="rd-panel">
+    <div class="rd-panel-head">
+      <div class="rd-live-dot" style="background:var(--blue);box-shadow:0 0 5px var(--blue)"></div>
+      <div class="rd-panel-title">FII / DII Flow</div>
+    </div>
+    <div class="rd-panel-body" id="fii-panel-wrap">
+      <div style="font-size:0.72rem;color:var(--muted);text-align:center;padding:8px;">Loading FII data...</div>
+    </div>
+  </div>
+</div>
+<!-- ── AI MARKET MENTOR (data-driven) ── -->
+<div class="ai-market-mentor-wrap">
+  <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.1em;color:var(--label);text-transform:uppercase;margin-bottom:6px;padding:0 2px;">
+    🧠 Market Mentor — Live Analysis
+  </div>
+  <div id="ai-market-mentor">
+    <div style="font-size:0.75rem;color:var(--muted);padding:8px;text-align:center;">Mentor analysis loads with market data...</div>
+  </div>
+</div>
+
     <div class="cockpit-top-row">
 
       <!-- FEAR/GREED METER -->
@@ -2873,6 +3229,194 @@ body.app-mode{padding-top:52px;}
     </div>
   </div>
 </div>
+
+<!-- ══ LIVE TRADER ROOM — Elite Experience ══ -->
+<div class="view" id="room-view">
+<div class="room-layout">
+
+  <!-- TOPBAR -->
+  <div class="room-topbar">
+    <button class="room-back-btn" onclick="goTo('dashboard')">← EXIT ROOM</button>
+    <div style="display:flex;flex-direction:column;gap:1px;padding:0 12px;border-right:1px solid #0d1e2e;border-left:1px solid #0d1e2e;">
+      <div class="room-logo">MINDOFTRADER</div>
+      <div class="room-logo-sub">LIVE TRADING ROOM · INDIA</div>
+    </div>
+    <div class="room-tickers">
+      <div class="room-tick"><div class="room-tick-sym">NIFTY 50</div><div class="room-tick-val" id="rtk1" style="color:#00ff88">24,512</div><div class="room-tick-chg" id="rtk1c" style="color:#00ff88">+97 +0.40%</div></div>
+      <div class="room-tick"><div class="room-tick-sym">BANKNIFTY</div><div class="room-tick-val" id="rtk2" style="color:#ff2244">52,180</div><div class="room-tick-chg" id="rtk2c" style="color:#ff2244">-104 -0.20%</div></div>
+      <div class="room-tick"><div class="room-tick-sym">INDIA VIX</div><div class="room-tick-val" id="rtk3" style="color:#ffaa00">14.2</div><div class="room-tick-chg" style="color:#4a6070">ELEVATED</div></div>
+      <div class="room-tick"><div class="room-tick-sym">SGX NIFTY</div><div class="room-tick-val" id="rtk4" style="color:#00ff88">24,498</div><div class="room-tick-chg" id="rtk4c" style="color:#4a6070">PREMIUM</div></div>
+      <div class="room-tick"><div class="room-tick-sym">PCR</div><div class="room-tick-val" id="rtk-pcr" style="color:#ffaa00">—</div><div class="room-tick-chg" id="rtk-pcr-c" style="color:#4a6070">PUT/CALL</div></div>
+      <div class="room-tick"><div class="room-tick-sym">FII FLOW</div><div class="room-tick-val" id="rtk-fii" style="color:#c8dde8">—</div><div class="room-tick-chg" id="rtk-fii-c" style="color:#4a6070">TODAY</div></div>
+      <div class="room-tick" style="border-right:none"><div class="room-tick-sym">OI RES</div><div class="room-tick-val" id="rtk-res" style="color:#ff2244">—</div><div class="room-tick-chg" id="rtk-sup" style="color:#00ff88">SUP —</div></div>
+    </div>
+    <div class="room-mode-pill" id="room-mode-pill">
+      <div class="room-mode-dot" id="room-mode-dot" style="background:#0088ff"></div>
+      <span id="room-mode-txt" style="color:#0088ff">OBSERVE</span>
+    </div>
+    <div class="room-clock" id="room-clock">00:00:00</div>
+  </div>
+
+  <!-- BODY -->
+  <div class="room-body">
+
+    <!-- LEFT RAIL -->
+    <div class="room-rail">
+      <button class="rr-btn on" id="rrb-cur" onclick="rTool('cur')" title="Select">&#9654;</button>
+      <button class="rr-btn" id="rrb-ln" onclick="rTool('ln')" title="Trendline">╱</button>
+      <button class="rr-btn" id="rrb-sr" onclick="rTool('sr')" title="H-Line">─</button>
+      <div class="rr-sep"></div>
+      <button class="rr-btn" onclick="rSetPhase('trend')" style="font-size:8px;color:#00ff88;" title="Trend phase">TRD</button>
+      <button class="rr-btn" onclick="rSetPhase('chop')" style="font-size:8px;color:#ffaa00;" title="Chop phase">CHP</button>
+      <button class="rr-btn" onclick="rSetPhase('volatile')" style="font-size:8px;color:#ff2244;" title="Volatile">VOL</button>
+      <div class="rr-sep"></div>
+      <button class="rr-btn" onclick="rClrLines()" style="font-size:8px;color:#4a6070;">CLR</button>
+    </div>
+
+    <!-- CHART STAGE -->
+    <div class="room-stage">
+      <canvas id="room-canvas"></canvas>
+      <div class="room-watermark">MOT</div>
+      <div class="room-price-hud">
+        <div class="room-price-main" id="room-price-main" style="color:#00ff88">24,512</div>
+        <div class="room-price-sub" id="room-price-sub" style="color:#00ff88">▲ +97 pts · +0.40%</div>
+      </div>
+      <div class="room-phase-hud">
+        <div class="room-phase-name" id="room-phase-name">MARKET PHASE</div>
+        <div class="room-phase-badge" id="room-phase-badge" style="color:#ff2244;border-color:rgba(255,34,68,0.3);background:rgba(255,34,68,0.06);">VOLATILE</div>
+      </div>
+      <div class="room-voice-stage">
+        <div class="room-vline" id="rvl1" style="color:#00ff88"></div>
+        <div class="room-vline" id="rvl2" style="color:#00ff88"></div>
+      </div>
+      <div class="room-entry-fx" id="room-efx"></div>
+      <div class="room-mentor-int" id="room-mint"></div>
+      <div class="room-pat-flash" id="room-pat-flash"></div>
+      <div class="room-mistake-pop" id="room-mpop"></div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="room-rpanel">
+      <div class="room-ptabs">
+        <button class="room-ptab on" onclick="rTab('mentor',this)">MENTOR</button>
+        <button class="room-ptab" onclick="rTab('journal',this)">JOURNAL</button>
+        <button class="room-ptab" onclick="rTab('setups',this)">SETUPS</button>
+        <button class="room-ptab" onclick="rTab('stats',this)">STATS</button>
+      </div>
+
+      <!-- MENTOR VIEW -->
+      <div id="rpv-mentor" class="room-pview show">
+        <div class="room-tstate">
+          <div class="room-ts-head">// TRADER STATE</div>
+          <div class="room-ts-row">
+            <div class="room-ts-lbl">DISCIPLINE</div>
+            <div class="room-ts-track"><div class="room-ts-bar" id="rbd" style="width:80%;background:#00ff88;color:#00ff88"></div></div>
+            <div class="room-ts-val" id="rvd" style="color:#00ff88">80</div>
+          </div>
+          <div class="room-ts-row">
+            <div class="room-ts-lbl">PATIENCE</div>
+            <div class="room-ts-track"><div class="room-ts-bar" id="rbp" style="width:65%;background:#ffaa00;color:#ffaa00"></div></div>
+            <div class="room-ts-val" id="rvp" style="color:#ffaa00">65</div>
+          </div>
+          <div class="room-ts-row" style="margin:0">
+            <div class="room-ts-lbl">EMO RISK</div>
+            <div class="room-ts-track"><div class="room-ts-bar" id="rbr" style="width:25%;background:#00ff88;color:#00ff88"></div></div>
+            <div class="room-ts-val" id="rvr" style="color:#00ff88">25</div>
+          </div>
+        </div>
+        <div class="room-mentor-scroll">
+          <div class="room-m-head">// LIVE MENTOR FEED</div>
+          <div id="room-mlines"></div>
+        </div>
+      </div>
+
+      <!-- JOURNAL VIEW -->
+      <div id="rpv-journal" class="room-pview">
+        <div class="room-jscroll" id="room-jscroll"></div>
+        <div class="room-jadd">
+          <input id="room-jnote" placeholder="// enter observation..." maxlength="120"/>
+          <select id="room-jtag">
+            <option value="obs">Observation</option>
+            <option value="setup">Setup seen</option>
+            <option value="fomo">Mistake: FOMO</option>
+            <option value="early-exit">Mistake: Early exit</option>
+            <option value="revenge">Mistake: Revenge trade</option>
+            <option value="chop-entry">Mistake: Chop entry</option>
+            <option value="insight">Behavioral insight</option>
+          </select>
+          <button class="room-xbtn n" style="width:100%;margin-top:3px;font-size:7px;" onclick="rLogManual()">LOG ENTRY</button>
+        </div>
+      </div>
+
+      <!-- SETUPS VIEW -->
+      <div id="rpv-setups" class="room-pview">
+        <div class="room-sscroll">
+          <div class="room-m-head" style="padding:2px 0 8px;">// SETUP LIBRARY</div>
+          <div class="room-scard active-s">
+            <div class="room-sname">BREAKOUT PULLBACK</div>
+            <div class="room-sdesc">Price breaks resistance, pulls back to retest, holds and continues. Entry on confirmation candle at the level.</div>
+            <div class="room-stags"><span class="room-stag" style="color:#00ff88;border-color:rgba(0,255,136,0.2);">TREND</span><span class="room-stag" style="color:#00ddff;border-color:rgba(0,221,255,0.2);">HIGH PROB</span></div>
+          </div>
+          <div class="room-scard">
+            <div class="room-sname">OPENING RANGE BREAK</div>
+            <div class="room-sdesc">First 15-min range defines direction. Volume-confirmed break above/below triggers momentum move. NSE 9:15-9:30 AM.</div>
+            <div class="room-stags"><span class="room-stag" style="color:#0088ff;border-color:rgba(0,136,255,0.2);">MOMENTUM</span><span class="room-stag" style="color:#ffaa00;border-color:rgba(255,170,0,0.2);">AM SESSION</span></div>
+          </div>
+          <div class="room-scard">
+            <div class="room-sname">BULL / BEAR FLAG</div>
+            <div class="room-sdesc">Strong impulse move. Tight consolidation channel. Break of channel in impulse direction with volume confirms.</div>
+            <div class="room-stags"><span class="room-stag" style="color:#00ff88;border-color:rgba(0,255,136,0.2);">CONTINUATION</span></div>
+          </div>
+          <div class="room-scard">
+            <div class="room-sname">TREND EXHAUSTION</div>
+            <div class="room-sdesc">Extended move with shrinking candles, volume dry-up near key level. Counter-trend opportunity with defined risk.</div>
+            <div class="room-stags"><span class="room-stag" style="color:#ff2244;border-color:rgba(255,34,68,0.2);">COUNTER</span><span class="room-stag" style="color:#cc88ff;border-color:rgba(204,136,255,0.2);">PATIENCE</span></div>
+          </div>
+          <div class="room-m-head" style="padding:10px 0 6px;">// ACTIVE PATTERN INTEL</div>
+          <div class="room-pat-intel" id="room-pat-intel">Scanning candlestick structure...</div>
+        </div>
+      </div>
+
+      <!-- STATS VIEW -->
+      <div id="rpv-stats" class="room-pview">
+        <div class="room-stscroll">
+          <div class="room-m-head" style="padding:2px 0 8px;">// SESSION INTELLIGENCE</div>
+          <div class="room-sgrid">
+            <div class="room-sbox" style="color:#00ddff"><div class="room-sv" id="rst-t">0</div><div class="room-sl">TRADES</div></div>
+            <div class="room-sbox" style="color:#00ff88"><div class="room-sv" id="rst-w">0%</div><div class="room-sl">WIN RATE</div></div>
+            <div class="room-sbox" style="color:#00ff88"><div class="room-sv" id="rst-p">+0</div><div class="room-sl">NET PTS</div></div>
+            <div class="room-sbox" style="color:#ffaa00"><div class="room-sv" id="rst-s">0</div><div class="room-sl">STREAK</div></div>
+          </div>
+          <div class="room-m-head" style="padding:4px 0 6px;">// BEHAVIORAL PATTERN</div>
+          <div id="room-insights-wrap"></div>
+          <div class="room-m-head" style="padding:8px 0 6px;">// MISTAKE LEDGER</div>
+          <div id="room-mistakes-wrap"><div style="font-size:10px;color:#4a6070;font-family:'Share Tech Mono'">NO MISTAKES LOGGED</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div class="room-bbar">
+    <button class="room-xbtn g" onclick="rEnterTrade()">ENTER TRADE</button>
+    <button class="room-xbtn r" id="room-bx" disabled onclick="rExitTrade()">EXIT POSITION</button>
+    <button class="room-xbtn n" onclick="rAddSR()" style="font-size:7px;">+ S/R LEVEL</button>
+    <div class="room-bb-gap"></div>
+    <div class="room-pnl-block">
+      <div class="room-pnl-lbl">LIVE P&L</div>
+      <div class="room-pnl-val" id="room-pnl-val" style="color:#4a6070">— —</div>
+    </div>
+    <div style="width:1px;height:28px;background:#0d1e2e;"></div>
+    <div class="room-cpat-bar" id="room-cpat-bar">SCANNING...</div>
+    <div class="room-vol-bar-wrap">VOL<div class="room-vtrack"><div class="room-vfill" id="room-vfill" style="width:40%"></div></div></div>
+    <div style="width:1px;height:28px;background:#0d1e2e;"></div>
+    <div id="room-clock2" style="font-family:'Share Tech Mono';font-size:9px;color:#4a6070;"></div>
+  </div>
+
+</div>
+</div>
+
 <div id="toast"></div>
 
 <!-- FIREBASE SDK -->
@@ -3653,7 +4197,7 @@ const OB_PROFILES = {
 };
 
 // ── NAVIGATION ─────────────────────────────────────────────────
-function obNext(screen) {
+window.obNext = function obNext(screen) {
   // Animate out current
   const cur = document.getElementById('ob-s' + obCurrentScreen);
   if (cur) { cur.classList.remove('on'); }
@@ -3793,7 +4337,7 @@ function obBuildWow() {
 }
 
 // ── FINISH — skip all, go to app ───────────────────────────────
-function obSkipAll() {
+window.obSkipAll = function obSkipAll() {
   obMarkSeen();
   const ob = document.getElementById('onboarding');
   if (ob) ob.classList.add('hidden');
@@ -6700,328 +7244,233 @@ function shareDNA(){
 // ══════════════════════════════════════════════════
 
 
-// ══════════════════════════════════════════════════
-// LIVE MARKET SENTIMENT ENGINE
-// ══════════════════════════════════════════════════
 
-const MARKET_SYMBOLS = {
-  nifty:     '^NSEI',
-  banknifty: '^NSEBANK',
-  vix:       '^INDIAVIX'
-};
+var MOT_API=(function(){
+  var prod='https://mindoftrader-api.railway.app';
+  var dev='http://localhost:3001';
+  return(window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1')?dev:prod;
+})();
+var liveMarket={session:'closed',isLive:false,quotes:{nifty:null,banknifty:null,vix:null},oc:null,fiidii:null,trend:null,mentor:[],lastFetch:0,fetchOK:false};
+var marketRefreshTimer=null;
 
-let marketData = {
-  nifty: null, banknifty: null, vix: null,
-  pcr: null, session: 'closed', mood: 'neutral'
-};
-
-let marketRefreshTimer = null;
-
-// ── LIVE MARKET DATA ─────────────────────────────────────────────
-// Source: Yahoo Finance via CORS proxy (free, no API key, legal for display)
-// Yahoo Finance symbols: ^NSEI (NIFTY 50), ^NSEBANK (BANKNIFTY), ^INDIAVIX
-// Falls back to realistic simulation if all sources fail.
-
-async function fetchYahoo(symbol) {
-  // Yahoo Finance v8 chart API — reliable, no key needed
-  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1m&range=1d`;
-
-  // Try multiple CORS proxies in order
-  const proxies = [
-    url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-    url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-    url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-  ];
-
-  for (const proxy of proxies) {
-    try {
-      const resp = await fetch(proxy(yahooUrl), {
-        signal: AbortSignal.timeout(5000)
-      });
-      if (!resp.ok) continue;
-      const data = await resp.json();
-      const result = data?.chart?.result?.[0];
-      if (!result) continue;
-      const meta = result.meta;
-      const price    = meta.regularMarketPrice || meta.chartPreviousClose;
-      const prevClose = meta.chartPreviousClose || meta.previousClose || price;
-      if (!price) continue;
-      return {
-        price,
-        prevClose,
-        change:    parseFloat((price - prevClose).toFixed(2)),
-        changePct: parseFloat(((price - prevClose) / prevClose * 100).toFixed(2)),
-        source:    'live'
-      };
-    } catch(e) { continue; }
-  }
-
-  // All proxies failed — direct attempt (works if CORS not blocked)
-  try {
-    const resp = await fetch(yahooUrl, { signal: AbortSignal.timeout(4000) });
-    if (resp.ok) {
-      const data = await resp.json();
-      const result = data?.chart?.result?.[0];
-      if (result) {
-        const meta = result.meta;
-        const price     = meta.regularMarketPrice;
-        const prevClose = meta.chartPreviousClose || meta.previousClose || price;
-        return {
-          price, prevClose,
-          change:    parseFloat((price - prevClose).toFixed(2)),
-          changePct: parseFloat(((price - prevClose) / prevClose * 100).toFixed(2)),
-          source:    'live'
-        };
-      }
-    }
-  } catch(e) {}
-
-  return null; // All sources failed
+async function fetchMarketSnapshot(){
+  try{
+    var ctrl=new AbortController();
+    var tid=setTimeout(function(){ctrl.abort();},8000);
+    var resp=await fetch(MOT_API+'/api/market/snapshot',{signal:ctrl.signal,headers:{Accept:'application/json'}});
+    clearTimeout(tid);
+    if(!resp.ok)throw new Error('API '+resp.status);
+    var data=await resp.json();
+    liveMarket=Object.assign({},liveMarket,data,{lastFetch:Date.now(),fetchOK:true});
+    return data;
+  }catch(e){liveMarket.fetchOK=false;return null;}
 }
 
-// Keep old fetchQuote name for backward compat
-async function fetchQuote(symbol) { return fetchYahoo(symbol); }
+async function fetchYahooFallback(symbol){
+  var proxies=[
+    function(u){return 'https://api.allorigins.win/raw?url='+encodeURIComponent(u);},
+    function(u){return 'https://corsproxy.io/?'+encodeURIComponent(u);}
+  ];
+  var url='https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(symbol)+'?interval=1m&range=1d';
+  for(var pi=0;pi<proxies.length;pi++){
+    try{
+      var r=await fetch(proxies[pi](url),{signal:AbortSignal.timeout(5000)});
+      if(!r.ok)continue;
+      var d=await r.json();
+      var result=d&&d.chart&&d.chart.result&&d.chart.result[0];
+      if(!result)continue;
+      var meta=result.meta;
+      var price=meta.regularMarketPrice||meta.chartPreviousClose;
+      var prev=meta.chartPreviousClose||price;
+      return{price:price,prevClose:prev,change:parseFloat((price-prev).toFixed(2)),changePct:parseFloat(((price-prev)/prev*100).toFixed(2)),live:true};
+    }catch(e2){continue;}
+  }
+  return null;
+}
 
-function getSessionStatus() {
-  const now = new Date();
-  const ist = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-  const h = ist.getHours(), m = ist.getMinutes();
-  const day = ist.getDay(); // 0=Sun, 6=Sat
-  if (day === 0 || day === 6) return 'closed';
-  const mins = h * 60 + m;
-  if (mins >= 555 && mins < 570) return 'premarket';  // 9:15-9:30
-  if (mins >= 570 && mins < 930) return 'open';       // 9:30-15:30
-  if (mins >= 930 && mins < 960) return 'closing';    // 15:30-16:00
+function getSessionStatus(){
+  var now=new Date();
+  var ist=new Date(now.toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
+  var h=ist.getHours(),day=ist.getDay();
+  if(day===0||day===6)return 'closed';
+  var mins=h*60+ist.getMinutes();
+  if(mins>=555&&mins<570)return 'premarket';
+  if(mins>=570&&mins<930)return 'open';
+  if(mins>=930&&mins<960)return 'closing';
   return 'closed';
 }
 
-function getMoodFromVix(vix) {
-  if (!vix) return { mood: 'unknown', label: '—', color: 'neutral' };
-  if (vix > 25) return { mood: 'EXTREME FEAR', label: 'Extreme Fear', color: 'down', bg: 'danger' };
-  if (vix > 18) return { mood: 'FEAR', label: 'Fear', color: 'down', bg: 'warn' };
-  if (vix > 13) return { mood: 'NEUTRAL', label: 'Neutral', color: 'neutral', bg: 'neutral' };
-  if (vix > 10) return { mood: 'GREED', label: 'Greed', color: 'up', bg: 'good' };
-  return { mood: 'EXTREME GREED', label: 'Extreme Greed', color: 'up', bg: 'good' };
+function getMoodFromVix(vix){
+  if(!vix)return{mood:'UNKNOWN',label:'--',color:'neutral'};
+  if(vix>25)return{mood:'EXTREME FEAR',label:'Extreme Fear',color:'down'};
+  if(vix>18)return{mood:'FEAR',label:'Fear',color:'down'};
+  if(vix>13)return{mood:'NEUTRAL',label:'Neutral',color:'neutral'};
+  if(vix>10)return{mood:'GREED',label:'Greed',color:'up'};
+  return{mood:'EXTREME GREED',label:'Extreme Greed',color:'up'};
+}
+function getPCRMood(pcr){
+  if(!pcr)return{text:'--',color:'neutral'};
+  if(pcr>1.3)return{text:'Bullish',color:'up'};
+  if(pcr>1.0)return{text:'Slight Bull',color:'up'};
+  if(pcr>0.7)return{text:'Neutral',color:'neutral'};
+  return{text:'Bearish',color:'down'};
+}
+function getTrendStyle(trend){
+  switch(trend){
+    case 'TRENDING_UP':  return{color:'var(--green)',bg:'var(--green-bg)',bd:'var(--green-bd)',arrow:'UP'};
+    case 'TRENDING_DOWN':return{color:'var(--red)',bg:'var(--red-bg)',bd:'var(--red-bd)',arrow:'DN'};
+    case 'SLIGHT_UP':    return{color:'var(--green)',bg:'var(--green-bg)',bd:'var(--green-bd)',arrow:'UP'};
+    case 'SLIGHT_DOWN':  return{color:'var(--red)',bg:'var(--red-bg)',bd:'var(--red-bd)',arrow:'DN'};
+    default:             return{color:'var(--amber)',bg:'var(--amber-bg)',bd:'var(--amber-bd)',arrow:'--'};
+  }
+}
+function getBehavioralAlert(session,vixData,niftyData,trendData){
+  var vixP=vixData&&vixData.price;
+  if(vixP&&vixP>22)return{type:'danger',icon:'(!)',text:'<strong>High Volatility VIX '+vixP.toFixed(1)+'</strong> Revenge trades 2x more likely. Reduce size 30-50%.'};
+  if(trendData&&trendData.trend==='SIDEWAYS')return{type:'warn',icon:'~',text:'<strong>Chop Zone Detected.</strong> No clear direction. Wait for breakout before entering.'};
+  if(niftyData&&Math.abs(niftyData.changePct)>1.5)return{type:'warn',icon:'>>',text:'<strong>NIFTY moved '+Math.abs(niftyData.changePct).toFixed(1)+'%.</strong> Large moves increase FOMO. Do not chase.'};
+  if(session==='open'){var h2=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'})).getHours();if(h2>=12&&h2<14)return{type:'warn',icon:'~',text:'<strong>Lunch hour (12-2 PM).</strong> Low liquidity. Historical performance drops here.'};}
+  return null;
 }
 
-function generatePCR() {
-  // Simulate realistic PCR (Put/Call Ratio) — updated with some randomness
-  const base = 0.85 + (Math.random() * 0.4);
-  return Math.round(base * 100) / 100;
+function renderMarketStrip(nifty,banknifty,vix,oc,fii,session,trendData,isLive){
+  var sd=document.getElementById('ms-session-dot'),st=document.getElementById('ms-session-text');
+  if(sd&&st){
+    var sm={open:{cls:'open',text:'NSE OPEN',tcls:'open'},premarket:{cls:'premarket',text:'PRE-MARKET',tcls:'premarket'},closing:{cls:'premarket',text:'CLOSING',tcls:'premarket'},closed:{cls:'closed',text:'NSE CLOSED',tcls:'closed'}};
+    var s=sm[session]||sm.closed;sd.className='pulse-dot '+s.cls;st.className='pulse-session-txt '+s.tcls;st.textContent=s.text;
+  }
+  if(nifty){
+    var en=document.getElementById('ms-nifty'),cn=document.getElementById('ms-nifty-chg');
+    if(en)en.textContent=nifty.price.toLocaleString('en-IN',{maximumFractionDigits:0});
+    if(cn){var un=nifty.change>=0;cn.textContent=(un?'+':'')+nifty.change.toFixed(1)+' ('+(un?'+':'')+nifty.changePct.toFixed(2)+'%)';cn.className='pulse-chg '+(un?'up':'down');}
+  }
+  if(banknifty){
+    var eb=document.getElementById('ms-banknifty'),cb=document.getElementById('ms-banknifty-chg');
+    if(eb)eb.textContent=banknifty.price.toLocaleString('en-IN',{maximumFractionDigits:0});
+    if(cb){var ub=banknifty.change>=0;cb.textContent=(ub?'+':'')+banknifty.change.toFixed(1)+' ('+(ub?'+':'')+banknifty.changePct.toFixed(2)+'%)';cb.className='pulse-chg '+(ub?'up':'down');}
+  }
+  if(vix){
+    var ev=document.getElementById('ms-vix'),mv=document.getElementById('ms-vix-mood'),bv=document.getElementById('vix-bar');
+    var vm=getMoodFromVix(vix.price);
+    if(ev)ev.textContent=vix.price.toFixed(1);
+    if(mv){mv.textContent=vm.label;mv.className='pulse-chg '+vm.color;}
+    if(bv){bv.style.width=Math.min(100,(vix.price/35)*100)+'%';bv.style.background=vix.price>22?'var(--red)':vix.price>16?'var(--amber)':'var(--green)';}
+  }
+  var pcr=oc&&oc.pcr||null;
+  var pe=document.getElementById('ms-pcr'),pm2=document.getElementById('ms-pcr-mood');
+  if(pe&&pcr)pe.textContent=pcr.toFixed(2);
+  if(pm2&&pcr){var pp=getPCRMood(pcr);pm2.textContent=pp.text;pm2.className='pulse-chg '+pp.color;}
+  var tel=document.getElementById('ms-mood');
+  if(tel&&trendData){var ts2=getTrendStyle(trendData.trend);tel.textContent=trendData.label||'--';tel.style.color=ts2.color;tel.style.background=ts2.bg;tel.style.border='1px solid '+ts2.bd;tel.style.padding='3px 10px';tel.style.borderRadius='20px';tel.style.fontSize='0.68rem';tel.style.fontWeight='700';}
+  if(fii){var fe=document.getElementById('ms-fii');if(fe){var fn=fii.fiiNet;fe.textContent=(fn>=0?'FII +':'FII -')+'Rs.'+Math.abs(Math.round(fn/100))+'Cr';fe.style.color=fn>=0?'var(--green)':'var(--red)';}}
+  if(oc){var re2=document.getElementById('ms-resistance'),se2=document.getElementById('ms-support');if(re2)re2.textContent='RES: '+(oc.maxCallOI&&oc.maxCallOI.strike||'--');if(se2)se2.textContent='SUP: '+(oc.maxPutOI&&oc.maxPutOI.strike||'--');}
+  var uel=document.getElementById('ms-updated');
+  if(uel){var t2=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});uel.textContent=(isLive?'Live ':'Sim ')+t2;uel.style.color=isLive?'rgba(0,230,118,0.7)':'rgba(255,171,0,0.6)';}
+  var al2=getBehavioralAlert(session,vix,nifty,trendData);
+  var ael=document.getElementById('mkt-alert');
+  if(ael){if(al2){ael.className='mkt-alert show '+al2.type;var ai2=document.getElementById('mkt-alert-icon');var at2=document.getElementById('mkt-alert-text');if(ai2)ai2.textContent=al2.icon;if(at2)at2.innerHTML=al2.text;}else{ael.className='mkt-alert';}}
+  if(typeof rUpdateFromLiveData==='function')rUpdateFromLiveData({nifty:nifty,banknifty:banknifty,vix:vix,oc:oc,fii:fii,trendData:trendData});
 }
 
-function getPCRMood(pcr) {
-  if (!pcr) return { text: '—', color: 'neutral' };
-  if (pcr > 1.3) return { text: 'Bearish', color: 'down' };
-  if (pcr > 1.0) return { text: 'Slightly Bearish', color: 'down' };
-  if (pcr > 0.7) return { text: 'Neutral', color: 'neutral' };
-  return { text: 'Bullish', color: 'up' };
+function getSimulatedData(){
+  var seed=new Date().getDate()+new Date().getMonth()*30;
+  var nBase=24200+(seed%800),bBase=51500+(seed%2000),vBase=12+(seed%10);
+  var nChg=(Math.random()-0.5)*200,bChg=(Math.random()-0.5)*400;
+  return{nifty:{price:nBase+nChg,change:nChg,changePct:(nChg/nBase)*100,prevClose:nBase,live:false},banknifty:{price:bBase+bChg,change:bChg,changePct:(bChg/bBase)*100,prevClose:bBase,live:false},vix:{price:vBase,change:0,changePct:0,live:false}};
 }
 
-function getBehavioralAlert(session, vixData, niftyData) {
-  const alerts = [];
-  if (vixData && vixData.price > 22) {
-    alerts.push({
-      type: 'danger',
-      icon: '⚠️',
-      text: `<strong>High Volatility Alert (VIX ${vixData.price.toFixed(1)})</strong> — Market fear is elevated. Your historical data shows revenge trades are 2× more likely on high-VIX days. Consider reducing position size by 30%.`
-    });
-  } else if (niftyData && Math.abs(niftyData.changePct) > 1.5) {
-    const dir = niftyData.change > 0 ? 'up' : 'down';
-    alerts.push({
-      type: 'warn',
-      icon: '📊',
-      text: `<strong>NIFTY moved ${Math.abs(niftyData.changePct).toFixed(1)}% ${dir} today.</strong> Large moves increase FOMO entries. Wait for a clear setup — don't chase the trend.`
-    });
-  } else if (session === 'open') {
-    const h = new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'})).getHours();
-    if (h >= 12 && h < 14) {
-      alerts.push({
-        type: 'warn',
-        icon: '🕐',
-        text: `<strong>Lunch hour caution (12:00–2:00 PM).</strong> Your win rate drops to 31% in this window. Low liquidity + fatigue = poor entries. Consider logging off until 2 PM.`
-      });
-    } else if (h >= 14) {
-      alerts.push({
-        type: 'warn',
-        icon: '⏰',
-        text: `<strong>Afternoon session.</strong> Your historical afternoon win rate is 31% vs 74% morning. If you've had losses today, this is your highest revenge-trade risk window.`
-      });
-    }
-  }
-  return alerts[0] || null;
+function renderFIIPanel(fii){
+  if(!fii)return;var el=document.getElementById('fii-panel-wrap');if(!el)return;
+  var fNet=fii.fiiNet,dNet=fii.diiNet,fUp=fNet>=0,dUp=dNet>=0;
+  el.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'
+    +'<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:10px;text-align:center;">'
+    +'<div style="font-size:0.58rem;color:var(--label);margin-bottom:4px;">FII NET</div>'
+    +'<div style="font-family:var(--mono);font-size:1rem;font-weight:800;color:'+(fUp?'var(--green)':'var(--red)')+';">'+(fUp?'+':'')+'Rs.'+Math.round(Math.abs(fNet)/100)+'Cr</div>'
+    +'<div style="font-size:0.6rem;color:var(--muted);margin-top:2px;">'+(fUp?'Net Buyers':'Net Sellers')+'</div></div>'
+    +'<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:10px;text-align:center;">'
+    +'<div style="font-size:0.58rem;color:var(--label);margin-bottom:4px;">DII NET</div>'
+    +'<div style="font-family:var(--mono);font-size:1rem;font-weight:800;color:'+(dUp?'var(--green)':'var(--red)')+';">'+(dUp?'+':'')+'Rs.'+Math.round(Math.abs(dNet)/100)+'Cr</div>'
+    +'<div style="font-size:0.6rem;color:var(--muted);margin-top:2px;">'+(dUp?'Net Buyers':'Net Sellers')+'</div></div></div>'
+    +'<div style="font-size:0.68rem;color:var(--text);margin-top:8px;padding:8px;background:rgba(255,255,255,0.02);border-radius:var(--r);line-height:1.5;">'
+    +(fNet>500?'FII buying - dips likely supported.':fNet<-500?'FII selling - rallies may face pressure.':'FII neutral today.')+'</div>';
 }
 
-function renderMarketStrip(nifty, banknifty, vix, pcr, session, isLive=false) {
-  // Session indicator
-  const sessionDot = document.getElementById('ms-session-dot');
-  const sessionText = document.getElementById('ms-session-text');
-  if (sessionDot && sessionText) {
-    const sessionMap = {
-      open: { cls: 'open', text: '● NSE OPEN', tcls: 'open' },
-      premarket: { cls: 'premarket', text: '◐ PRE-MARKET', tcls: 'premarket' },
-      closing: { cls: 'premarket', text: '◑ CLOSING', tcls: 'premarket' },
-      closed: { cls: 'closed', text: '◯ NSE CLOSED', tcls: 'closed' }
-    };
-    const s = sessionMap[session] || sessionMap.closed;
-    sessionDot.className = 'pulse-dot ' + s.cls;
-    sessionText.className = 'pulse-session-txt ' + s.tcls;
-    sessionText.textContent = s.text;
-  }
+function renderOIPanel(oc){
+  if(!oc)return;var el=document.getElementById('oi-panel-wrap');if(!el)return;
+  var mco=oc.maxCallOI,mpo=oc.maxPutOI,pcr=oc.pcr,uv=oc.underlyingValue,exp=oc.expiry;
+  var pm=getPCRMood(pcr);var pCol=pm.color==='up'?'var(--green)':pm.color==='down'?'var(--red)':'var(--amber)';
+  var loc=mco&&mco.strike||'--';var lop=mpo&&mpo.strike||'--';
+  var uvNote='';if(uv&&mco&&mco.strike){uvNote=' NIFTY '+uv.toLocaleString('en-IN')+(uv>mco.strike?' above resistance.':' below resistance at '+mco.strike+'.');}
+  el.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">'
+    +'<div style="background:var(--red-bg);border:1px solid var(--red-bd);border-radius:var(--r);padding:8px;text-align:center;">'
+    +'<div style="font-size:0.58rem;color:var(--label);margin-bottom:3px;">MAX CALL OI</div>'
+    +'<div style="font-family:var(--mono);font-weight:800;color:var(--red);font-size:0.95rem;">'+loc+'</div>'
+    +'<div style="font-size:0.6rem;color:var(--muted);">Resistance</div></div>'
+    +'<div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:var(--r);padding:8px;text-align:center;">'
+    +'<div style="font-size:0.58rem;color:var(--label);margin-bottom:3px;">MAX PUT OI</div>'
+    +'<div style="font-family:var(--mono);font-weight:800;color:var(--green);font-size:0.95rem;">'+lop+'</div>'
+    +'<div style="font-size:0.6rem;color:var(--muted);">Support</div></div></div>'
+    +'<div style="display:flex;align-items:center;gap:10px;background:var(--card2);border-radius:var(--r);padding:8px 10px;margin-bottom:6px;">'
+    +'<div style="font-size:0.7rem;color:var(--label);">PCR</div>'
+    +'<div style="font-family:var(--mono);font-size:1rem;font-weight:800;color:'+pCol+';">'+(pcr?pcr.toFixed(2):'--')+'</div>'
+    +'<div style="font-size:0.65rem;color:var(--text);">'+pm.text+'</div>'
+    +'<div style="margin-left:auto;font-size:0.6rem;color:var(--muted);">Expiry: '+(exp||'--')+'</div></div>'
+    +'<div style="font-size:0.68rem;color:var(--text);line-height:1.5;padding:6px 8px;background:rgba(255,255,255,0.02);border-radius:var(--r);">'
+    +(pcr>1.2?'High PCR - put writing dominant, support building below.':pcr<0.8?'Low PCR - call writing dominant, resistance above.':'PCR neutral - balanced activity.')+uvNote+'</div>';
+}
 
-  // NIFTY
-  if (nifty) {
-    const el = document.getElementById('ms-nifty');
-    const chg = document.getElementById('ms-nifty-chg');
-    if (el) el.textContent = nifty.price.toLocaleString('en-IN', { maximumFractionDigits: 0 });
-    if (chg) {
-      const up = nifty.change >= 0;
-      chg.textContent = (up ? '+' : '') + nifty.change.toFixed(1) + ' (' + (up ? '+' : '') + nifty.changePct.toFixed(2) + '%)';
-      chg.className = 'ms-chg ' + (up ? 'up' : 'down');
-    }
-  } else {
-    const el = document.getElementById('ms-nifty');
-    if (el) el.textContent = '—';
-    const chg = document.getElementById('ms-nifty-chg');
-    if (chg) { chg.textContent = 'Loading...'; chg.className = 'ms-chg neutral'; }
-  }
+function renderTrendPanel(trend){
+  if(!trend)return;var el=document.getElementById('trend-panel-wrap');if(!el)return;
+  var ts=getTrendStyle(trend.trend);var sc=trend.scores||{};var sig=trend.signals||[];
+  var bars='<div style="margin-bottom:10px;">'
+    +'<div style="display:flex;gap:4px;margin-bottom:4px;"><div style="font-size:0.6rem;color:var(--green);width:60px;">BULL '+(sc.bullPct||0)+'%</div><div style="flex:1;height:6px;background:var(--card2);border-radius:3px;overflow:hidden;margin-top:3px;"><div style="height:100%;width:'+(sc.bullPct||0)+'%;background:var(--green);border-radius:3px;"></div></div></div>'
+    +'<div style="display:flex;gap:4px;margin-bottom:4px;"><div style="font-size:0.6rem;color:var(--red);width:60px;">BEAR '+(sc.bearPct||0)+'%</div><div style="flex:1;height:6px;background:var(--card2);border-radius:3px;overflow:hidden;margin-top:3px;"><div style="height:100%;width:'+(sc.bearPct||0)+'%;background:var(--red);border-radius:3px;"></div></div></div>'
+    +'<div style="display:flex;gap:4px;"><div style="font-size:0.6rem;color:var(--amber);width:60px;">CHOP '+(sc.chopPct||0)+'%</div><div style="flex:1;height:6px;background:var(--card2);border-radius:3px;overflow:hidden;margin-top:3px;"><div style="height:100%;width:'+(sc.chopPct||0)+'%;background:var(--amber);border-radius:3px;"></div></div></div></div>';
+  var tags=sig.map(function(s){return '<div style="font-size:0.6rem;font-weight:700;padding:2px 7px;border-radius:4px;background:'+(s.bias==='bull'?'var(--green-bg)':s.bias==='bear'?'var(--red-bg)':'var(--amber-bg)')+';color:'+(s.bias==='bull'?'var(--green)':s.bias==='bear'?'var(--red)':'var(--amber)')+';border:1px solid '+(s.bias==='bull'?'var(--green-bd)':s.bias==='bear'?'var(--red-bd)':'var(--amber-bd)')+';">'+s.label+': '+s.val+'</div>';}).join('');
+  el.innerHTML='<div style="margin-bottom:12px;"><div style="background:'+ts.bg+';border:1px solid '+ts.bd+';border-radius:var(--r);padding:10px 14px;">'
+    +'<div style="font-family:var(--mono);font-size:1rem;font-weight:800;color:'+ts.color+';">['+ts.arrow+'] '+(trend.label||'--')+'</div>'
+    +'<div style="font-size:0.62rem;color:var(--muted);margin-top:2px;">'+(trend.strength||'')+' - '+sig.length+' signals</div></div></div>'
+    +bars+'<div style="display:flex;flex-wrap:wrap;gap:5px;">'+tags+'</div>';
+}
 
-  // BANKNIFTY
-  if (banknifty) {
-    const el = document.getElementById('ms-banknifty');
-    const chg = document.getElementById('ms-banknifty-chg');
-    if (el) el.textContent = banknifty.price.toLocaleString('en-IN', { maximumFractionDigits: 0 });
-    if (chg) {
-      const up = banknifty.change >= 0;
-      chg.textContent = (up ? '+' : '') + banknifty.change.toFixed(1) + ' (' + (up ? '+' : '') + banknifty.changePct.toFixed(2) + '%)';
-      chg.className = 'ms-chg ' + (up ? 'up' : 'down');
-    }
-  } else {
-    const el = document.getElementById('ms-banknifty');
-    if (el) el.textContent = '—';
-  }
+function renderMentorFromAPI(messages){
+  if(!messages||!messages.length)return;
+  var el=document.getElementById('ai-market-mentor');
+  if(el)el.innerHTML=messages.map(function(m){return '<div style="padding:8px 10px;margin-bottom:6px;border-left:2px solid var(--green);background:rgba(0,230,118,0.04);border-radius:0 var(--r) var(--r) 0;font-size:0.78rem;color:var(--text);line-height:1.55;">'+m+'</div>';}).join('');
+  if(typeof rAddMentor==='function'&&messages[0])rAddMentor(messages[0]);
+}
 
-  // VIX
-  if (vix) {
-    const vixMood = getMoodFromVix(vix.price);
-    const el = document.getElementById('ms-vix');
-    const mood = document.getElementById('ms-vix-mood');
-    const bar = document.getElementById('vix-bar');
-    const lbl = document.getElementById('vix-label');
-    if (el) el.textContent = vix.price.toFixed(1);
-    if (mood) { mood.textContent = vixMood.label; mood.className = 'ms-chg ' + vixMood.color; }
-    if (bar) {
-      const pct = Math.min(100, (vix.price / 40) * 100);
-      const col = vix.price > 22 ? 'var(--red)' : vix.price > 16 ? 'var(--amber)' : 'var(--green)';
-      bar.style.width = pct + '%';
-      bar.style.background = col;
-    }
-    if (lbl) lbl.textContent = vixMood.label;
+async function refreshMarket(){
+  var session=getSessionStatus();
+  var uel2=document.getElementById('ms-updated');if(uel2)uel2.textContent='Fetching...';
+  var snapshot=await fetchMarketSnapshot();
+  if(snapshot){
+    var q=snapshot.quotes,oc2=snapshot.optionChain,fii2=snapshot.fiidii,trend2=snapshot.trend;
+    renderMarketStrip(q.nifty,q.banknifty,q.vix,oc2,fii2,snapshot.session||session,trend2,snapshot.isLive);
+    renderFIIPanel(fii2);renderOIPanel(oc2);renderTrendPanel(trend2);renderMentorFromAPI(snapshot.mentor);
+    return;
   }
-
-  // PCR
-  const pcrVal = pcr || generatePCR();
-  const pcrMood = getPCRMood(pcrVal);
-  const pcrEl = document.getElementById('ms-pcr');
-  const pcrMoodEl = document.getElementById('ms-pcr-mood');
-  if (pcrEl) pcrEl.textContent = pcrVal.toFixed(2);
-  if (pcrMoodEl) { pcrMoodEl.textContent = pcrMood.text; pcrMoodEl.className = 'ms-chg ' + pcrMood.color; }
-
-  // Overall mood
-  const overallMood = getMoodFromVix(vix ? vix.price : 14);
-  const moodEl = document.getElementById('ms-mood');
-  const moodSub = document.getElementById('ms-mood-sub');
-  const pulseMood = document.getElementById('ms-mood'); // same element, id kept
-  if (moodEl) {
-    moodEl.textContent = overallMood.mood;
-    moodEl.style.color = overallMood.color === 'up' ? 'var(--green)' : overallMood.color === 'down' ? 'var(--red)' : 'var(--amber)';
-  }
-  if (moodSub) {
-    moodSub.textContent = 'Market Sentiment';
-    moodSub.className = 'ms-chg neutral';
-  }
-
-  // Updated time
-  const upd = document.getElementById('ms-updated');
-  if (upd) {
-    const timeStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-    upd.textContent = (isLive ? '🟢 Live ' : '🟡 Simulated ') + timeStr;
-    upd.style.color = isLive ? 'rgba(0,230,118,0.6)' : 'rgba(255,171,0,0.6)';
-    upd.title = isLive ? 'Live data from Yahoo Finance' : 'Live data unavailable — showing realistic simulation';
-  }
-
-  // Behavioral alert
-  const alert = getBehavioralAlert(session, vix, nifty);
-  const alertEl = document.getElementById('mkt-alert');
-  if (alertEl) {
-    if (alert) {
-      alertEl.className = 'mkt-alert show ' + alert.type;
-      document.getElementById('mkt-alert-icon').textContent = alert.icon;
-      document.getElementById('mkt-alert-text').innerHTML = alert.text;
-    } else {
-      alertEl.className = 'mkt-alert';
-    }
+  try{
+    var res=await Promise.all([fetchYahooFallback('^NSEI'),fetchYahooFallback('^NSEBANK'),fetchYahooFallback('^INDIAVIX')]);
+    var sim=getSimulatedData();
+    var ni=res[0]||sim.nifty,bn=res[1]||sim.banknifty,vi=res[2]||sim.vix;
+    var pct=ni.changePct;
+    var bt={trend:pct>0.5?'TRENDING_UP':pct<-0.5?'TRENDING_DOWN':'SIDEWAYS',label:pct>0.5?'UPTREND':pct<-0.5?'DOWNTREND':'SIDEWAYS',strength:'MODERATE',scores:{bullPct:50,bearPct:30,chopPct:20},signals:[{label:'Price',val:pct.toFixed(2)+'%',bias:pct>0?'bull':'bear'}]};
+    renderMarketStrip(ni,bn,vi,null,null,session,bt,!!(res[0]&&res[0].live||res[1]&&res[1].live));
+  }catch(e3){
+    var sim2=getSimulatedData();
+    renderMarketStrip(sim2.nifty,sim2.banknifty,sim2.vix,null,null,session,null,false);
   }
 }
 
-// Use simulated realistic data when market is closed or API unavailable
-function getSimulatedData(session) {
-  const isOpen = session === 'open';
-  // Base values with realistic daily fluctuation
-  const seed = new Date().getDate() + new Date().getMonth() * 30;
-  const niftyBase = 24200 + (seed % 800);
-  const bnfBase = 51500 + (seed % 2000);
-  const vixBase = 12 + (seed % 12);
-  const niftyChg = isOpen ? (Math.random() - 0.5) * 300 : (seed % 200) - 100;
-  const bnfChg = isOpen ? (Math.random() - 0.5) * 600 : (seed % 400) - 200;
-  return {
-    nifty: { price: niftyBase + niftyChg, change: niftyChg, changePct: (niftyChg / niftyBase) * 100, prevClose: niftyBase },
-    banknifty: { price: bnfBase + bnfChg, change: bnfChg, changePct: (bnfChg / bnfBase) * 100, prevClose: bnfBase },
-    vix: { price: vixBase, change: 0, changePct: 0 }
-  };
-}
-
-async function refreshMarket() {
-  const session = getSessionStatus();
-
-  // Show loading state
-  const updEl = document.getElementById('ms-updated');
-  if (updEl) updEl.textContent = 'Fetching live data...';
-
-  try {
-    // Fetch all three simultaneously — 6s timeout each
-    const [nifty, banknifty, vix] = await Promise.all([
-      fetchYahoo(MARKET_SYMBOLS.nifty),
-      fetchYahoo(MARKET_SYMBOLS.banknifty),
-      fetchYahoo(MARKET_SYMBOLS.vix)
-    ]);
-
-    const isLive = nifty?.source === 'live' || banknifty?.source === 'live';
-    const sim = getSimulatedData(session);
-
-    renderMarketStrip(
-      nifty    || sim.nifty,
-      banknifty|| sim.banknifty,
-      vix      || sim.vix,
-      null, session, isLive
-    );
-
-  } catch(e) {
-    const sim = getSimulatedData(session);
-    renderMarketStrip(sim.nifty, sim.banknifty, sim.vix, null, session, false);
-  }
-}
-
-function initMarket() {
+function initMarket(){
   refreshMarket();
-  // Refresh every 30 seconds when market is open, every 5 mins otherwise
   clearInterval(marketRefreshTimer);
-  const interval = getSessionStatus() === 'open' ? 30000 : 300000;
-  marketRefreshTimer = setInterval(refreshMarket, interval);
+  var interval=getSessionStatus()==='open'?15000:120000;
+  marketRefreshTimer=setInterval(refreshMarket,interval);
 }
 
 
-// ══════════════════════════════════════════════════
 // GUEST UPGRADE FLOW
 // ══════════════════════════════════════════════════
 function showGuestBanner(){
@@ -7130,6 +7579,8 @@ function fmtINRShort(n){
 }
 let toastTimer;
 function showToast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('on'),3200);}
-</script>
+
+
+// LIVE TRADER ROOM ENGINE — MindOfTrader v4.0\n// Behavioral trading room for Indian markets\n// Integrates with existing trade journal + Firebase\n// ══════════════════════════════════════════════════\n\n(function() {\n'use strict';\n\n// ── ROOM STATE ──\nlet rPhase = 'volatile', rPrice = 24512, rBaseP = 24415, rLastP = 24512;\nlet rCandles = [], rCur = null, rCT = 0, rCDur = 32;\nlet rInTrade = false, rTradeP = 0, rTradeT = 0, rSecs = 0;\nlet rULines = [], rSRPrices = [], rDrawTool = 'cur', rLnStart = null;\nlet rTS = {d:80, p:65, r:25};\nlet rTrades=0, rWins=0, rLosses=0, rNet=0, rStreak=0;\nlet rEarlyE=0, rChopE=0, rTrendE=0, rMistakes=[];\nlet rLastPat='', rVoiceTO=null, rLoopHandle=null, rClockHandle=null;\nlet rCanvas=null, rCtx=null, rInitialized=false;\n\n// ── CANDLESTICK PATTERNS ──\nconst R_PATS = {\n  'DOJI': c => Math.abs(c.c-c.o) < (c.h-c.l)*0.07,\n  'HAMMER': (c) => { const b=Math.abs(c.c-c.o),rng=c.h-c.l,lw=Math.min(c.o,c.c)-c.l; return lw>b*2.2&&b<rng*0.35; },\n  'SHOOTING STAR': (c) => { const b=Math.abs(c.c-c.o),rng=c.h-c.l,us=c.h-Math.max(c.o,c.c); return us>b*2.2&&b<rng*0.35; },\n  'ENGULFING BULL': (c,p) => p&&c.c>c.o&&p.c<p.o&&c.o<=p.c&&c.c>=p.o,\n  'ENGULFING BEAR': (c,p) => p&&c.c<c.o&&p.c>p.o&&c.o>=p.c&&c.c<=p.o,\n  'INSIDE BAR': (c,p) => p&&c.h<p.h&&c.l>p.l,\n  'MARUBOZU+': c => (c.c-c.o)>(c.h-c.l)*0.88&&c.c>c.o,\n  'MARUBOZU-': c => (c.o-c.c)>(c.h-c.l)*0.88&&c.c<c.o,\n  'PIN BAR': (c) => { const lw=Math.min(c.o,c.c)-c.l,b=Math.abs(c.c-c.o); return lw>b*3.2; },\n  'SPINNING TOP': (c) => { const b=Math.abs(c.c-c.o),rng=c.h-c.l; return b<rng*0.22&&b>rng*0.04; },\n};\nconst R_PATINFO = {\n  'DOJI':'Indecision. Neither buyers nor sellers in control. Next candle decides direction.',\n  'HAMMER':'Buyers stepped in after decline. Long lower shadow = strong rejection of lows.',\n  'SHOOTING STAR':'Sellers rejecting higher prices. Upper shadow = supply zone overhead.',\n  'ENGULFING BULL':'Buyers completely overpowered sellers. Strong momentum shift signal.',\n  'ENGULFING BEAR':'Sellers swallowed the bull candle. Downside pressure confirmed.',\n  'INSIDE BAR':'Market compressing. Energy coiling. Breakout imminent. Wait for direction.',\n  'MARUBOZU+':'Pure buying. No shadows. Buyers in complete control. Respect the move.',\n  'MARUBOZU-':'Pure selling. No shadows. Sellers in control. Do not fight it.',\n  'PIN BAR':'Strong rejection of lower prices. Buyers defending this level aggressively.',\n  'SPINNING TOP':'Low conviction on both sides. Market losing momentum here.',\n};\n\nfunction rDetectPat() {\n  if(rCandles.length < 2) return null;\n  const c = rCandles[rCandles.length-1], p = rCandles[rCandles.length-2];\n  for(const [n,fn] of Object.entries(R_PATS)) {\n    if(fn(c,p)) {\n      const bull = n.includes('BULL')||n==='HAMMER'||n==='PIN BAR'||n==='MARUBOZU+';\n      const bear = n.includes('BEAR')||n==='SHOOTING STAR'||n==='MARUBOZU-';\n      return {name:n, type:bull?'bull':bear?'bear':'neutral'};\n    }\n  }\n  return null;\n}\n\n// ── MENTOR MESSAGES ──\nconst R_MENT = {\n  phase: {\n    volatile: ['Extreme volatility. Stand aside. Let the market reveal itself.','Opening volatility designed to trap impatient traders. Observe first.','Wait. Smart money is shaking out retail positions right now.'],\n    trend: ['Trend is developing. Identify your entry zone, do not chase.','Structure is forming. A clean pullback is your opportunity.','Market found direction. Your discipline now is your edge.'],\n    chop: ['Market is ranging. Your enemy here is boredom.','Chop phase. Every trade here is a coin flip. Sit on hands.','No setup in chop. Patience is the most underrated trading skill.'],\n  },\n  pre: {\n    volatile: ['You are entering in volatile phase. High risk.','Market has not settled. This entry is premature.'],\n    trend: ['Clean entry in trend structure. Hold your plan.','Good zone. Let the trade develop. Trust your analysis.'],\n    chop: ['You are forcing a trade in a ranging market.','No structure. You are guessing, not trading.'],\n  },\n  up: ['Hold. Structure is intact. Let it breathe.','Momentum is in your favour. Do not exit out of fear.','Trust the move. Your analysis was correct.','Let it run to the next level. Stay patient.'],\n  dn: ['Momentum is fading. Stay alert.','Do not hold out of hope. Respect your stop.','If structure breaks, your original plan is invalid.','Watch carefully. This is not what you entered for.'],\n  win: ['Clean execution.','Patience was your edge today.','You followed the plan. That is all trading is.','Good discipline. Remember this feeling before the next trade.'],\n  lossC: ['You entered in chop. That was a behaviour error, not strategy.','No structure existed on this entry. Study why you took it.','Chop entries will bleed your account slowly. Eliminate this pattern.','This loss was predictable from the candle structure.'],\n  lossV: ['Volatile entries carry extreme risk. You experienced it today.','The stop hunt happened before you saw a real move.','High volatility demanded patience. You gave it urgency instead.'],\n  earlyExit: ['You exited before structure broke. That was fear, not analysis.','The trade continued without you. Hold your plan next time.','Early exits compound over time. Your plan had a target. Honour it.'],\n};\n\nfunction rGetMentor(k, sub) {\n  const d = R_MENT[k]; if(!d) return '';\n  const pool = sub ? (d[sub]||d) : d;\n  if(!Array.isArray(pool)) return rGetMentor(k, rPhase);\n  return pool[Math.floor(Math.random()*pool.length)];\n}\n\n// ── INIT (called when Room tab is opened) ──\nwindow.rInitRoom = function rInitRoom() {\n  if(rInitialized) { rResumeRoom(); return; }\n  rInitialized = true;\n\n  rCanvas = document.getElementById('room-canvas');\n  rCtx = rCanvas.getContext('2d');\n\n  function rRsz() {\n    const stage = document.querySelector('.room-stage');\n    if(stage && rCanvas) { rCanvas.width = stage.clientWidth; rCanvas.height = stage.clientHeight; }\n  }\n  rRsz(); window.addEventListener('resize', rRsz);\n\n  rCanvas.addEventListener('click', e => {\n    if(rDrawTool === 'sr') { rAddSR(); return; }\n    if(rDrawTool !== 'ln') return;\n    const rect = rCanvas.getBoundingClientRect();\n    const x = (e.clientX-rect.left)/rCanvas.width, y = e.clientY-rect.top;\n    if(!rLnStart) { rLnStart={x,y}; }\n    else { rULines.push({x1:rLnStart.x,y1:rLnStart.y,x2:x,y2:y}); rLnStart=null; }\n  });\n\n  // Load real trade history for behavioral context\n  rLoadRealHistory();\n\n  rSetPhase('volatile');\n  rSetMode('observe');\n  rAddMentor('Session open. Market is volatile. Observe before you act.');\n  rAddMentor('Your trade history is loaded. The mentor knows your patterns.');\n  rJLog('Session opened. Observe mode. Market: VOLATILE OPEN.', '', 'SESSION');\n\n  rLoopHandle = setInterval(rLoop, 50);\n  rClockHandle = setInterval(rTickClock, 1000);\n\n  setTimeout(() => rAddMentor('First 5 candles closed. Identify your key levels.'), 4000);\n  setTimeout(() => rShowVoice(), 1500);\n};\n\nfunction rResumeRoom() {\n  // Re-sync canvas size if needed\n  const stage = document.querySelector('.room-stage');\n  if(stage && rCanvas) { rCanvas.width = stage.clientWidth; rCanvas.height = stage.clientHeight; }\n}\n\nfunction rLoadRealHistory() {\n  // Pull real behavioral data from existing trade system\n  try {\n    const realTrades = window.trades || [];\n    if(!realTrades.length) return;\n    const chopEntries = realTrades.filter(t => t.emotion === 'revenge' || t.broken === true).length;\n    const fomoTrades = realTrades.filter(t => t.emotion === 'fomo' || t.emotion === 'greed').length;\n    const totalLosses = realTrades.filter(t => t.pnl < 0).length;\n    const wr = realTrades.length ? Math.round((realTrades.filter(t=>t.pnl>0).length/realTrades.length)*100) : 0;\n\n    setTimeout(() => {\n      if(chopEntries > 2) rAddMentor('Your history shows ' + chopEntries + ' rule-break trades. Watch for this pattern today.');\n      if(fomoTrades > 2) rAddMentor('FOMO entries have cost you before. High alert mode activated.');\n      if(wr < 40 && realTrades.length > 5) rAddMentor('Your win rate is ' + wr + '%. Setup quality, not quantity, is the fix.');\n    }, 2000);\n  } catch(e) {}\n}\n\n// ── PRICE ENGINE ──\nfunction rStep() {\n  if(!rCur) rCur = {o:rPrice, h:rPrice, l:rPrice, c:rPrice, done:false};\n  let v=0, b=0;\n  if(rPhase==='volatile'){v=95+Math.random()*85; b=(Math.random()>.5?1:-1)*35;}\n  else if(rPhase==='chop'){v=16+Math.random()*20; b=(Math.random()>.5?1:-1)*6;}\n  else{v=28+Math.random()*26; b=(Math.random()>.36?1:-1)*16;}\n  const d = (Math.random()-.5)*v + b;\n  rPrice = Math.max(23200, Math.min(25800, rPrice+d));\n  rCur.c=rPrice; rCur.h=Math.max(rCur.h,rPrice+Math.random()*16); rCur.l=Math.min(rCur.l,rPrice-Math.random()*16);\n  rCT++;\n  if(rCT >= rCDur) {\n    const pr = rDetectPat();\n    rCur.done=true; rCur._pat=pr?.name||''; rCur._ptyp=pr?.type||'';\n    rCandles.push({...rCur});\n    if(rCandles.length > 90) rCandles.shift();\n    if(pr && pr.name !== rLastPat) { rLastPat=pr.name; rOnPat(pr); }\n    rCur = {o:rPrice, h:rPrice, l:rPrice, c:rPrice, done:false};\n    rCT = 0;\n  }\n  rUpdateHUD();\n  // Volume indicator\n  const pv = Math.min(100, Math.abs(rPrice-rLastP)*3 + 20);\n  const vf = document.getElementById('room-vfill');\n  if(vf) { vf.style.width=pv+'%'; vf.style.background=pv>70?'#ff2244':pv>40?'#ffaa00':'#00ff88'; }\n  rLastP = rPrice;\n}\n\nfunction rOnPat(pr) {\n  const col = pr.type==='bull'?'#00ff88':pr.type==='bear'?'#ff2244':'#ffaa00';\n  const bg = pr.type==='bull'?'rgba(0,255,136,0.08)':pr.type==='bear'?'rgba(255,34,68,0.08)':'rgba(255,170,0,0.08)';\n  const el = document.getElementById('room-pat-flash');\n  if(el) { el.style.color=col; el.style.background=bg; el.style.borderColor=col; el.textContent=(pr.type==='bull'?'↑ BULLISH ':pr.type==='bear'?'↓ BEARISH ':'◆ ')+pr.name+' PATTERN'; el.style.opacity='1'; setTimeout(()=>el.style.opacity='0',3500); }\n  const cpb = document.getElementById('room-cpat-bar');\n  if(cpb) { cpb.textContent=pr.name; cpb.style.color=col; }\n  const pi = document.getElementById('room-pat-intel');\n  if(pi) { pi.textContent=R_PATINFO[pr.name]||pr.name+' detected.'; pi.style.color=col; }\n  // Mentor reacts to pattern\n  const mp = {\n    'HAMMER':['Hammer formed. Buyers defending this level.','Lower shadow shows strong rejection. Watch for follow-through.'],\n    'SHOOTING STAR':['Shooting star. Sellers rejecting push higher.','Upper shadow rejection. Be cautious on longs here.'],\n    'ENGULFING BULL':['Bullish engulfing. Momentum shifted. Do not chase it.','Buyers overpowered sellers. Your setup may be developing.'],\n    'ENGULFING BEAR':['Bearish engulfing confirmed. Sellers in control.','This is a momentum shift lower. Respect it.'],\n    'DOJI':['Doji. No one is in control. Wait for the next candle.','Market is indecisive. Do not force a trade here.'],\n    'INSIDE BAR':['Market is coiling. A breakout is coming. Be ready.','Inside bar compression. Direction will reveal itself.'],\n    'MARUBOZU+':['Pure bull candle. No shadows. Respect the strength.','Marubozu — buyers were relentless this candle.'],\n    'MARUBOZU-':['Pure bear candle. Sellers dominated. Careful on longs.','Marubozu down — do not fight this candle.'],\n    'PIN BAR':['Pin bar — buyers rejected lows hard. Watch for bounce.','Strong lower wick. Sellers lost control of this candle.'],\n  };\n  const pool = mp[pr.name];\n  if(pool) rAddMentor(pool[Math.floor(Math.random()*pool.length)]);\n}\n\n// ── HUD ──\nfunction rUpdateHUD() {\n  const pm = document.getElementById('room-price-main');\n  const ps = document.getElementById('room-price-sub');\n  if(!pm) return;\n  pm.textContent = Math.round(rPrice).toLocaleString('en-IN');\n  const diff = Math.round(rPrice-rBaseP), pct = ((diff/rBaseP)*100).toFixed(2);\n  const col = rPrice > rLastP ? '#00ff88' : rPrice < rLastP ? '#ff2244' : '#c8dde8';\n  pm.style.color=col; pm.style.textShadow='0 0 40px '+col;\n  ps.textContent=(diff>=0?'▲ +':'▼ ')+Math.abs(diff)+' pts · '+(diff>=0?'+':'')+pct+'%';\n  ps.style.color=col;\n  // Tickers\n  const t1=document.getElementById('rtk1'); if(t1){t1.textContent=Math.round(rPrice).toLocaleString('en-IN');t1.style.color=col;}\n  const t1c=document.getElementById('rtk1c'); if(t1c){t1c.textContent=(diff>=0?'+':'')+diff+' '+(diff>=0?'+':'')+pct+'%';t1c.style.color=col;}\n  const t2=document.getElementById('rtk2'); if(t2)t2.textContent=Math.round(52180+(rPrice-24512)*2.1).toLocaleString('en-IN');\n  const t3=document.getElementById('rtk3'); if(t3)t3.textContent=(14.1+Math.random()*.15-.07).toFixed(1);\n  const t4=document.getElementById('rtk4'); if(t4)t4.textContent=Math.round(rPrice-14).toLocaleString('en-IN');\n}\n\n// ── DRAW ──\nfunction rGetSR() {\n  if(rCandles.length < 8) return [];\n  const step = 30, lvls = [];\n  for(let p=23500; p<=25500; p+=step) {\n    const hits = rCandles.filter(c => Math.abs(c.h-p)<step*0.8 || Math.abs(c.l-p)<step*0.8).length;\n    if(hits >= 3) lvls.push({p, hits, res:p>rPrice});\n  }\n  lvls.sort((a,b)=>b.hits-a.hits);\n  return lvls.slice(0,8);\n}\n\nfunction rDraw() {\n  if(!rCanvas || !rCtx) return;\n  const W=rCanvas.width, H=rCanvas.height;\n  rCtx.clearRect(0,0,W,H);\n\n  // Grid\n  rCtx.strokeStyle='rgba(13,30,46,0.9)'; rCtx.lineWidth=0.5;\n  for(let i=1;i<6;i++){rCtx.beginPath();rCtx.moveTo(0,H*i/6);rCtx.lineTo(W,H*i/6);rCtx.stroke();}\n  for(let i=1;i<9;i++){rCtx.beginPath();rCtx.moveTo(W*i/9,0);rCtx.lineTo(W*i/9,H);rCtx.stroke();}\n\n  // Vertical scan\n  const scanX = ((Date.now()/1000)%8)/8*W;\n  rCtx.strokeStyle='rgba(0,255,136,0.03)'; rCtx.lineWidth=2;\n  rCtx.beginPath(); rCtx.moveTo(scanX,0); rCtx.lineTo(scanX,H); rCtx.stroke();\n\n  const all = [...rCandles];\n  if(rCur) all.push({...rCur, done:false});\n  if(all.length < 2) return;\n\n  const vis = Math.min(all.length, 65), sl = all.length-vis;\n  const highs=all.slice(sl).map(c=>c.h), lows=all.slice(sl).map(c=>c.l);\n  const maxP=Math.max(...highs)+140, minP=Math.min(...lows)-90;\n  const rng=maxP-minP;\n  const toY = p => H-((p-minP)/rng)*H*0.86-H*0.07;\n  const cw = Math.max(5, Math.floor((W*0.91)/vis)), sx = W*0.04;\n\n  // SR lines\n  rGetSR().forEach(sr => {\n    const y=toY(sr.p);\n    rCtx.setLineDash([3,5]); rCtx.strokeStyle=sr.res?'rgba(255,34,68,0.22)':'rgba(0,255,136,0.2)'; rCtx.lineWidth=1;\n    rCtx.beginPath(); rCtx.moveTo(0,y); rCtx.lineTo(W,y); rCtx.stroke();\n    rCtx.setLineDash([]);\n    rCtx.font='bold 8px Share Tech Mono,monospace'; rCtx.fillStyle=sr.res?'rgba(255,34,68,0.65)':'rgba(0,255,136,0.55)';\n    rCtx.fillText((sr.res?'RES':'SUP')+' '+Math.round(sr.p), W-62, y-3);\n  });\n\n  // User SR lines\n  rSRPrices.forEach(sp => {\n    const y=toY(sp); rCtx.setLineDash([2,6]); rCtx.strokeStyle='rgba(0,136,255,0.35)'; rCtx.lineWidth=1;\n    rCtx.beginPath(); rCtx.moveTo(0,y); rCtx.lineTo(W,y); rCtx.stroke(); rCtx.setLineDash([]);\n    rCtx.font='8px Share Tech Mono,monospace'; rCtx.fillStyle='rgba(0,136,255,0.6)';\n    rCtx.fillText('USER '+Math.round(sp), 4, y-3);\n  });\n\n  // Drawn trendlines\n  rULines.forEach(l => {\n    rCtx.strokeStyle='rgba(0,136,255,0.45)'; rCtx.lineWidth=1.5; rCtx.setLineDash([6,3]);\n    rCtx.beginPath(); rCtx.moveTo(l.x1*W,l.y1); rCtx.lineTo(l.x2*W,l.y2); rCtx.stroke();\n    rCtx.setLineDash([]);\n  });\n\n  // Candles\n  all.slice(sl).forEach((c,i) => {\n    const x=sx+i*(cw+2), cx=x+cw/2, isG=c.c>=c.o;\n    const alive = i===all.slice(sl).length-1 && !c.done;\n    rCtx.globalAlpha = alive ? 0.65 : 1;\n    rCtx.strokeStyle = isG?'rgba(0,255,136,0.7)':'rgba(255,34,68,0.7)'; rCtx.lineWidth=1;\n    rCtx.beginPath(); rCtx.moveTo(cx,toY(c.h)); rCtx.lineTo(cx,toY(c.l)); rCtx.stroke();\n    const bT=toY(Math.max(c.o,c.c)), bH=Math.max(2,Math.abs(toY(c.o)-toY(c.c)));\n    if(bH>3){rCtx.shadowColor=isG?'#00ff88':'#ff2244'; rCtx.shadowBlur=alive?12:4;}\n    rCtx.fillStyle=isG?'rgba(0,255,136,0.85)':'rgba(255,34,68,0.85)';\n    rCtx.fillRect(x,bT,cw,bH);\n    rCtx.shadowBlur=0;\n    // Pattern annotation\n    if(c.done && c._pat) {\n      rCtx.globalAlpha=0.85;\n      const pc=c._ptyp==='bull'?'#00ff88':c._ptyp==='bear'?'#ff2244':'#ffaa00';\n      rCtx.fillStyle=pc; rCtx.font='bold 7px Share Tech Mono,monospace';\n      const short=c._pat.replace(/ BULL| BEAR/,'').substring(0,4);\n      rCtx.fillText(short, x, isG?bT-7:bT+bH+11);\n      rCtx.font='9px monospace'; rCtx.fillText(c._ptyp==='bull'?'↑':c._ptyp==='bear'?'↓':'◆', cx-3, isG?bT-16:bT+bH+22);\n    }\n    rCtx.globalAlpha=1;\n  });\n\n  // Current price line\n  const lp=all[all.length-1].c, ly=toY(lp);\n  rCtx.setLineDash([2,4]); rCtx.strokeStyle='rgba(0,255,136,0.18)'; rCtx.lineWidth=1;\n  rCtx.beginPath(); rCtx.moveTo(0,ly); rCtx.lineTo(W,ly); rCtx.stroke(); rCtx.setLineDash([]);\n  rCtx.fillStyle='rgba(0,255,136,0.1)'; rCtx.fillRect(W-72,ly-10,70,20);\n  rCtx.strokeStyle='rgba(0,255,136,0.3)'; rCtx.lineWidth=0.5; rCtx.strokeRect(W-72,ly-10,70,20);\n  rCtx.fillStyle='#00ff88'; rCtx.font='bold 9px Orbitron,monospace';\n  rCtx.fillText(Math.round(lp).toLocaleString('en-IN'), W-67, ly+4);\n\n  // Trade zone\n  if(rInTrade) {\n    const ey=toY(rTradeP), pnl=Math.round(rPrice-rTradeP), tc=pnl>=0?'#00ff88':'#ff2244';\n    rCtx.fillStyle=pnl>=0?'rgba(0,255,136,0.04)':'rgba(255,34,68,0.04)';\n    rCtx.fillRect(0,Math.min(ey,ly),W,Math.abs(ey-ly));\n    rCtx.setLineDash([4,4]); rCtx.strokeStyle='rgba(255,170,0,0.5)'; rCtx.lineWidth=1.5;\n    rCtx.beginPath(); rCtx.moveTo(0,ey); rCtx.lineTo(W,ey); rCtx.stroke(); rCtx.setLineDash([]);\n    rCtx.font='bold 8px Orbitron,monospace'; rCtx.fillStyle='#ffaa00';\n    rCtx.fillText('ENTRY', 4, ey-5); rCtx.fillText(Math.round(rTradeP), 50, ey-5);\n    rCtx.fillStyle=tc; rCtx.font='bold 9px Orbitron,monospace';\n    rCtx.fillText((pnl>=0?'+':'')+pnl+' PTS', 4, ey+13);\n    const pv=document.getElementById('room-pnl-val');\n    if(pv){pv.textContent=(pnl>=0?'+':'')+pnl;pv.style.color=tc;}\n  }\n}\n\n// ── PHASE ──\nconst R_PHASE_CFG = {\n  volatile:{name:'OPENING SESSION',badge:'VOLATILE',col:'#ff2244',bg:'rgba(255,34,68,0.06)',bdr:'rgba(255,34,68,0.3)',dot:'#ff2244'},\n  trend:{name:'TREND PHASE',badge:'EXPANDING',col:'#00ff88',bg:'rgba(0,255,136,0.06)',bdr:'rgba(0,255,136,0.3)',dot:'#00ff88'},\n  chop:{name:'CONSOLIDATION',badge:'RANGING',col:'#ffaa00',bg:'rgba(255,170,0,0.06)',bdr:'rgba(255,170,0,0.3)',dot:'#ffaa00'},\n};\nwindow.rSetPhase = function(p) {\n  rPhase=p;\n  const cfg=R_PHASE_CFG[p];\n  const pn=document.getElementById('room-phase-name'); if(pn)pn.textContent=cfg.name;\n  const pb=document.getElementById('room-phase-badge');\n  if(pb){pb.textContent=cfg.badge;pb.style.color=cfg.col;pb.style.background=cfg.bg;pb.style.borderColor=cfg.bdr;}\n  rShowVoice(); rAddMentor(rGetMentor('phase'));\n};\n\n// ── VOICE ──\nconst R_VOICES = {\n  volatile:['TRAP ZONE\nACTIVE','STOP HUNT\nIN PROGRESS','HIGH RISK\nSTAY OUT','SHAKE\nOUT','VOLATILITY\nSPIKE'],\n  trend:['BUYERS\nSTEPPING IN','BREAKOUT\nBUILDING','MOMENTUM\nIS REAL','TREND\nEXPANDING','STRUCTURE\nFORMING'],\n  chop:['NO DIRECTION\nWAIT','MARKET\nBREATHING','PATIENCE\nREQUIRED','AVOID\nFORCING','LOW\nCONVICTION'],\n};\nfunction rShowVoice() {\n  const pool=R_VOICES[rPhase], msg=pool[Math.floor(Math.random()*pool.length)].split('\n');\n  const col=R_PHASE_CFG[rPhase].col;\n  const v1=document.getElementById('rvl1'),v2=document.getElementById('rvl2');\n  if(!v1) return;\n  v1.style.color=col; v2.style.color=col; v1.textContent=msg[0]; v2.textContent=msg[1]||'';\n  v1.classList.remove('off'); v2.classList.remove('off');\n  requestAnimationFrame(()=>{v1.classList.add('on');v2.classList.add('on');});\n  clearTimeout(rVoiceTO);\n  rVoiceTO=setTimeout(()=>{v1.classList.remove('on');v1.classList.add('off');v2.classList.remove('on');v2.classList.add('off');},3000);\n}\n\n// ── MENTOR ──\nfunction rAddMentor(txt) {\n  if(!txt) return;\n  const w=document.getElementById('room-mlines'); if(!w) return;\n  w.querySelectorAll('.room-mline').forEach(e=>e.classList.add('old'));\n  const d=document.createElement('div'); d.className='room-mline'; d.textContent=txt;\n  w.appendChild(d); requestAnimationFrame(()=>d.classList.add('vis'));\n  w.scrollTop=w.scrollHeight;\n}\nfunction rMintShow(txt) {\n  const e=document.getElementById('room-mint'); if(!e) return;\n  e.textContent=txt; e.classList.add('on'); setTimeout(()=>e.classList.remove('on'),3800);\n}\n\n// ── JOURNAL ──\nfunction rJLog(txt, type, tag) {\n  const w=document.getElementById('room-jscroll'); if(!w) return;\n  const d=document.createElement('div');\n  const tc={win:'win',loss:'loss',insight:'insight',setup:'setup'};\n  d.className='room-jcard '+(tc[type]||'');\n  const h=Math.floor(rSecs/3600).toString().padStart(2,'0');\n  const m=Math.floor((rSecs%3600)/60).toString().padStart(2,'0');\n  const s=(rSecs%60).toString().padStart(2,'0');\n  d.innerHTML='<div class="room-jtime">'+h+':'+m+':'+s+' // '+(tag||type||'NOTE').toUpperCase()+'</div><div class="room-jtext">'+txt+'</div>';\n  w.appendChild(d); w.scrollTop=w.scrollHeight;\n\n  // ALSO push to main trade journal if it's a real trade event\n  if((type==='win'||type==='loss') && window.trades !== undefined) {\n    // Sync to main app journal view — a visual note entry\n    try {\n      if(window.renderTradeFeed) window.renderTradeFeed(window.trades);\n    } catch(e) {}\n  }\n}\nwindow.rLogManual = function() {\n  const note=document.getElementById('room-jnote')?.value.trim();\n  const tag=document.getElementById('room-jtag')?.value;\n  if(!note) return;\n  const type=tag.includes('fomo')||tag.includes('exit')||tag.includes('revenge')||tag.includes('chop')?'loss':tag==='insight'?'insight':tag==='setup'?'setup':'';\n  rJLog(note, type, tag);\n  document.getElementById('room-jnote').value='';\n  if(type==='loss'){rMistakes.push({tag,note,t:rSecs});rUpdMistakes();}\n};\n\n// ── MODE ──\nfunction rSetMode(m) {\n  const dot=document.getElementById('room-mode-dot'), txt=document.getElementById('room-mode-txt');\n  const pill=document.getElementById('room-mode-pill');\n  const cfg={observe:{c:'#0088ff',t:'OBSERVE'},trade:{c:'#00ff88',t:'IN TRADE'},review:{c:'#ffaa00',t:'REVIEW'}};\n  const c=cfg[m]; if(!dot||!txt) return;\n  dot.style.background=c.c; txt.textContent=c.t; txt.style.color=c.c;\n  if(pill) pill.style.borderColor=c.c.replace('#','rgba(').replace(/^rgba\((.{6})\)$/,'rgba($1,0.3)');\n}\n\n// ── TRADE ──\nwindow.rEnterTrade = function() {\n  if(rInTrade) return;\n  rTrades++; rInTrade=true; rTradeP=rPrice; rTradeT=rSecs;\n  rSetMode('trade');\n  const good=rPhase==='trend';\n  if(!good) {\n    if(rPhase==='chop'){rChopE++;rTS.p=Math.max(5,rTS.p-16);rTS.d=Math.max(5,rTS.d-10);rTS.r=Math.min(100,rTS.r+20);}\n    else{rEarlyE++;rTS.p=Math.max(5,rTS.p-10);rTS.r=Math.min(100,rTS.r+14);}\n    rMintShow(rGetMentor('pre',rPhase));\n    const mp=document.getElementById('room-mpop');\n    if(mp){mp.textContent=rPhase==='chop'?'CHOP ENTRY — NO STRUCTURE':'VOLATILE ENTRY — UNCONFIRMED';mp.classList.add('on');setTimeout(()=>mp.classList.remove('on'),3200);}\n    rJLog('Entered at '+Math.round(rTradeP)+' — '+rPhase.toUpperCase()+' phase. No clear structure.','loss','ENTRY');\n    rMistakes.push({tag:rPhase==='chop'?'chop-entry':'volatile-entry',note:'Entered at '+Math.round(rTradeP),t:rSecs});\n    rUpdMistakes();\n  } else {\n    rTrendE++; rTS.d=Math.min(100,rTS.d+3);\n    rAddMentor(rGetMentor('pre','trend'));\n    rJLog('Entered at '+Math.round(rTradeP)+' — TREND ALIGNED. Structure confirmed.','setup','ENTRY');\n  }\n  const ef=document.getElementById('room-efx');\n  if(ef){ef.style.borderColor=good?'rgba(0,255,136,0.4)':'rgba(255,34,68,0.4)';ef.style.background=good?'rgba(0,255,136,0.04)':'rgba(255,34,68,0.04)';ef.style.opacity='1';setTimeout(()=>ef.style.opacity='0',800);}\n  const bx=document.getElementById('room-bx'); if(bx)bx.disabled=false;\n  rUpdTS(); rUpdStats();\n};\n\nwindow.rExitTrade = function() {\n  if(!rInTrade) return;\n  const pnl=Math.round(rPrice-rTradeP), isWin=pnl>0, ht=rSecs-rTradeT, early=ht<10&&Math.abs(pnl)<18;\n  rInTrade=false; rNet+=pnl;\n  const bx=document.getElementById('room-bx'); if(bx)bx.disabled=true;\n  const pv=document.getElementById('room-pnl-val'); if(pv){pv.textContent='— —';pv.style.color='#4a6070';}\n  if(isWin){rWins++;rStreak++;rTS.d=Math.min(100,rTS.d+5);rTS.p=Math.min(100,rTS.p+4);rTS.r=Math.max(0,rTS.r-8);rAddMentor(rGetMentor('win'));rJLog('CLOSED +'+(pnl)+' pts. W:'+rWins+' L:'+rLosses,'win','PROFIT');}\n  else{rLosses++;rStreak=0;rTS.p=Math.max(5,rTS.p-8);rTS.r=Math.min(100,rTS.r+12);rAddMentor(rGetMentor(rPhase==='chop'?'lossC':'lossV'));rJLog('CLOSED '+(pnl)+' pts. W:'+rWins+' L:'+rLosses,'loss','LOSS');}\n  if(early){rAddMentor(rGetMentor('earlyExit'));rTS.p=Math.max(5,rTS.p-6);}\n\n  // Save room trade to main Firebase journal\n  try {\n    const roomTrade = {\n      id: 'room_'+Date.now(),\n      date: new Date().toISOString().split('T')[0],\n      symbol: 'NIFTY',\n      strike: 'SPOT',\n      action: pnl>0?'BUY':'BUY',\n      lots: 1,\n      entry: Math.round(rTradeP),\n      exit: Math.round(rPrice),\n      sl: 0, target: 0,\n      setup: 'room_'+rPhase,\n      emotion: rTS.r > 60 ? 'stressed' : rTS.r > 40 ? 'neutral' : 'calm',\n      rules: rPhase === 'trend',\n      pnl: pnl,\n      broken: rPhase !== 'trend',\n      notes: 'Live Room trade. Phase: '+rPhase+'. Pattern: '+rLastPat,\n      lesson: '',\n      source: 'live-room'\n    };\n    if(window.trades) window.trades.unshift(roomTrade);\n    if(window.saveTrades) window.saveTrades();\n    if(window.db_saveTrade && window.currentUserProfile?.uid)\n      window.db_saveTrade(window.currentUserProfile.uid, roomTrade);\n  } catch(e) {}\n\n  rSetMode('review'); setTimeout(()=>rSetMode('observe'),4500);\n  rGenInsights(); rUpdTS(); rUpdStats();\n};\n\n// ── TRADER STATE ──\nfunction rUpdTS() {\n  const setBar = (id,v) => {\n    const isRisk = id==='r';\n    const col = isRisk ? (v>60?'#ff2244':v>40?'#ffaa00':'#00ff88') : (v>60?'#00ff88':v>40?'#ffaa00':'#ff2244');\n    const b=document.getElementById('rb'+id), vv=document.getElementById('rv'+id);\n    if(b){b.style.width=v+'%';b.style.background=col;b.style.color=col;}\n    if(vv){vv.textContent=v;vv.style.color=col;}\n  };\n  setBar('d',rTS.d); setBar('p',rTS.p); setBar('r',rTS.r);\n}\n\n// ── STATS ──\nfunction rUpdStats() {\n  const st=document.getElementById('rst-t'); if(st)st.textContent=rTrades;\n  const wr=rTrades?Math.round(rWins/rTrades*100):0;\n  const sw=document.getElementById('rst-w'); if(sw){sw.textContent=wr+'%';sw.style.color=wr>=60?'#00ff88':wr>=40?'#ffaa00':'#ff2244';}\n  const sp=document.getElementById('rst-p'); if(sp){sp.textContent=(rNet>=0?'+':'')+rNet;sp.style.color=rNet>=0?'#00ff88':'#ff2244';}\n  const ss=document.getElementById('rst-s'); if(ss)ss.textContent=rStreak;\n}\nfunction rUpdMistakes() {\n  const w=document.getElementById('room-mistakes-wrap'); if(!w)return;\n  w.innerHTML='';\n  if(!rMistakes.length){w.innerHTML='<div style="font-size:10px;color:#4a6070;font-family:Share Tech Mono,monospace">NO MISTAKES LOGGED</div>';return;}\n  const cnt={}; rMistakes.forEach(m=>cnt[m.tag]=(cnt[m.tag]||0)+1);\n  Object.entries(cnt).forEach(([t,n])=>{\n    const d=document.createElement('div'); d.className='room-mblock';\n    d.textContent=t.toUpperCase().replace(/-/g,' ')+' ×'+n; w.appendChild(d);\n  });\n}\nfunction rGenInsights() {\n  const w=document.getElementById('room-insights-wrap'); if(!w)return; w.innerHTML='';\n  const ins=[];\n  if(rEarlyE>=2) ins.push('You have made '+rEarlyE+' premature entries this session. The market punishes impatience.');\n  if(rChopE>=2) ins.push('You consistently trade in ranging phases. Eliminate chop entries completely.');\n  if(rTrendE>rChopE&&rWins>rLosses) ins.push('Your edge is in trend continuation setups. Stay in your lane.');\n  if(rLosses>rWins&&rTrades>=4) ins.push('Win rate below 50%. Setup quality needs work, not quantity.');\n  if(rNet>100) ins.push('Strong positive session. Your process created this result — remember it.');\n  if(!ins.length) ins.push('Insufficient data. Keep trading. Behavioral patterns surface after volume.');\n  ins.forEach(t=>{\n    const d=document.createElement('div'); d.className='room-iblock';\n    d.innerHTML='<div class="room-itag">// BEHAVIORAL PATTERN</div><div class="room-itxt">'+t+'</div>';\n    w.appendChild(d);\n  });\n}\n\n// ── TABS ──\nwindow.rTab = function(id,el) {\n  document.querySelectorAll('.room-pview').forEach(p=>p.classList.remove('show'));\n  document.querySelectorAll('.room-ptab').forEach(t=>t.classList.remove('on'));\n  const pv=document.getElementById('rpv-'+id); if(pv)pv.classList.add('show');\n  if(el)el.classList.add('on');\n};\n\n// ── TOOLS ──\nwindow.rTool = function(t) {\n  rDrawTool=t;\n  document.querySelectorAll('.rr-btn').forEach(b=>b.classList.remove('on'));\n  const el=document.getElementById('rrb-'+t); if(el)el.classList.add('on');\n};\nwindow.rAddSR = function() { rSRPrices.push(Math.round(rPrice/20)*20); };\nwindow.rClrLines = function() { rULines=[]; rSRPrices=[]; };\n\n// ── CLOCK ──\nfunction rTickClock() {\n  rSecs++;\n  const h=Math.floor(rSecs/3600).toString().padStart(2,'0');\n  const m=Math.floor((rSecs%3600)/60).toString().padStart(2,'0');\n  const s=(rSecs%60).toString().padStart(2,'0');\n  const t=h+':'+m+':'+s;\n  const c1=document.getElementById('room-clock'); if(c1)c1.textContent=t;\n  const c2=document.getElementById('room-clock2'); if(c2)c2.textContent=t;\n}\n\n// ── MAIN LOOP ──\nlet rTick=0, rVTick=0, rMTick=0, rPhTick=0;\nconst R_PHASE_SEQ=['volatile','trend','trend','chop','volatile','trend','chop'];\nlet rPhIdx=0;\n\nfunction rLoop() {\n  rStep(); rDraw();\n  rTick++; rVTick++; rMTick++; rPhTick++;\n  if(rVTick>=200){rVTick=0;rShowVoice();}\n  if(rMTick>=480){rMTick=0;rAddMentor(rGetMentor(rInTrade?(rPrice>rTradeP?'up':'dn'):'phase'));}\n  if(rPhTick>=1100){rPhTick=0;rPhIdx=(rPhIdx+1)%R_PHASE_SEQ.length;rSetPhase(R_PHASE_SEQ[rPhIdx]);rJLog('Phase shift → '+R_PHASE_SEQ[rPhIdx].toUpperCase(),'','MARKET');}\n}\n\n})(); // end IIFE\n\n\n// ══════════════════════════════════════════════════\n// LIVE ROOM ↔ REAL MARKET DATA BRIDGE\n// Called by renderMarketStrip every refresh cycle\n// ══════════════════════════════════════════════════\nwindow.rUpdateFromLiveData = function({ nifty, banknifty, vix, oc, fii, trendData }) {\n  if (!rInitialized) return;\n\n  // 1. Update price from real NIFTY data\n  if (nifty?.price) {\n    const prev = rPrice;\n    rPrice = nifty.price;\n    rBaseP = nifty.prevClose || rBaseP;\n    rLastP = prev;\n  }\n\n  // 2. Auto-set phase from real trend detection\n  if (trendData?.trend) {\n    const phaseMap = {\n      'TRENDING_UP':   'trend',\n      'TRENDING_DOWN': 'trend',\n      'SLIGHT_UP':     'trend',\n      'SLIGHT_DOWN':   'trend',\n      'SIDEWAYS':      'chop',\n    };\n    const newPhase = phaseMap[trendData.trend] || 'chop';\n\n    // Only change phase if different (avoid flicker)\n    if (newPhase !== rPhase) {\n      rPhase = newPhase;\n      // Update phase HUD\n      const phaseMap2 = {\n        trend:    { name: 'TREND PHASE',   badge: trendData.label || 'TRENDING',  col:'#00ff88', bg:'rgba(0,255,136,0.06)', bdr:'rgba(0,255,136,0.3)' },\n        chop:     { name: 'CONSOLIDATION', badge: 'SIDEWAYS',    col:'#ffaa00', bg:'rgba(255,170,0,0.06)', bdr:'rgba(255,170,0,0.3)' },\n        volatile: { name: 'HIGH VOLATILITY', badge: 'VOLATILE',  col:'#ff2244', bg:'rgba(255,34,68,0.06)', bdr:'rgba(255,34,68,0.3)' },\n      };\n      const cfg = phaseMap2[rPhase] || phaseMap2.chop;\n      const pn = document.getElementById('room-phase-name');\n      const pb = document.getElementById('room-phase-badge');\n      if (pn) pn.textContent = cfg.name;\n      if (pb) { pb.textContent = cfg.badge; pb.style.color = cfg.col; pb.style.background = cfg.bg; pb.style.borderColor = cfg.bdr; }\n    }\n  }\n\n  // 3. Update VIX-based volatility\n  if (vix?.price) {\n    const v = vix.price;\n    // If VIX spikes, force volatile phase\n    if (v > 22 && rPhase !== 'volatile') {\n      rPhase = 'volatile';\n      rSetPhase('volatile');\n    }\n  }\n\n  // 4. Update room tickers with real data\n  if (nifty) {\n    const t1  = document.getElementById('rtk1');\n    const t1c = document.getElementById('rtk1c');\n    const up  = nifty.change >= 0;\n    if (t1)  { t1.textContent  = nifty.price.toLocaleString('en-IN', { maximumFractionDigits: 0 }); t1.style.color = up ? '#00ff88' : '#ff2244'; }\n    if (t1c) { t1c.textContent = (up?'+':'') + nifty.change.toFixed(1) + ' ' + (up?'+':'') + nifty.changePct.toFixed(2) + '%'; t1c.style.color = up ? '#00ff88' : '#ff2244'; }\n  }\n  if (banknifty) {\n    const t2  = document.getElementById('rtk2');\n    const t2c = document.getElementById('rtk2c');\n    const up  = banknifty.change >= 0;\n    if (t2)  { t2.textContent  = banknifty.price.toLocaleString('en-IN', { maximumFractionDigits: 0 }); t2.style.color = up ? '#00ff88' : '#ff2244'; }\n    if (t2c) { t2c.textContent = (up?'+':'') + banknifty.change.toFixed(1) + ' ' + (up?'+':'') + banknifty.changePct.toFixed(2) + '%'; t2c.style.color = up ? '#00ff88' : '#ff2244'; }\n  }\n  if (vix) {\n    const t3 = document.getElementById('rtk3');\n    if (t3) { t3.textContent = vix.price.toFixed(1); t3.style.color = vix.price > 20 ? '#ff2244' : vix.price > 15 ? '#ffaa00' : '#00ff88'; }\n  }\n\n  // 5. Update room S/R lines from real OI data\n  if (oc?.maxCallOI?.strike && oc?.maxPutOI?.strike) {\n    // Replace simulated SR with real OI-based levels\n    rSRPrices = [oc.maxCallOI.strike, oc.maxPutOI.strike];\n    // Add top 2 call/put strikes as additional levels\n    if (oc.topCalls?.[1]) rSRPrices.push(oc.topCalls[1].strike);\n    if (oc.topPuts?.[1])  rSRPrices.push(oc.topPuts[1].strike);\n  }\n\n  // 6. Market voice from real trend voice lines\n  if (trendData?.voice && trendData.voice.length) {\n    const pool = trendData.voice;\n    const msg  = pool[Math.floor(Math.random() * pool.length)].split('\n');\n    const col  = rPhase === 'trend' ? '#00ff88' : rPhase === 'volatile' ? '#ff2244' : '#ffaa00';\n    const v1   = document.getElementById('rvl1');\n    const v2   = document.getElementById('rvl2');\n    if (v1 && v2) {\n      v1.style.color = col; v2.style.color = col;\n      v1.textContent = msg[0]; v2.textContent = msg[1] || '';\n      v1.classList.remove('off'); v2.classList.remove('off');\n      requestAnimationFrame(() => { v1.classList.add('on'); v2.classList.add('on'); });\n      clearTimeout(rVoiceTO);\n      rVoiceTO = setTimeout(() => {\n        v1.classList.remove('on'); v1.classList.add('off');\n        v2.classList.remove('on'); v2.classList.add('off');\n      }, 4000);\n    }\n  }\n\n\n  // Update PCR ticker in room\n  if (oc?.pcr) {\n    const tp  = document.getElementById('rtk-pcr');\n    const tpc = document.getElementById('rtk-pcr-c');\n    if (tp)  tp.textContent  = oc.pcr.toFixed(2);\n    if (tpc) { const pm = getPCRMood ? getPCRMood(oc.pcr) : {text:'',color:'neutral'}; tpc.textContent = pm.text; tpc.style.color = pm.color === 'up' ? '#00ff88' : pm.color === 'down' ? '#ff2244' : '#ffaa00'; }\n  }\n  if (fii?.fiiNet !== undefined) {\n    const tf  = document.getElementById('rtk-fii');\n    const tfc = document.getElementById('rtk-fii-c');\n    const fn  = fii.fiiNet;\n    if (tf)  { tf.textContent = (fn >= 0 ? '+' : '') + '₹' + Math.round(Math.abs(fn)/100) + 'Cr'; tf.style.color = fn >= 0 ? '#00ff88' : '#ff2244'; }\n    if (tfc) { tfc.textContent = fn >= 0 ? 'Buying' : 'Selling'; tfc.style.color = fn >= 0 ? '#00ff88' : '#ff2244'; }\n  }\n  if (oc?.maxCallOI?.strike) {\n    const tr = document.getElementById('rtk-res');\n    const ts2 = document.getElementById('rtk-sup');\n    if (tr)  tr.textContent  = oc.maxCallOI.strike.toLocaleString('en-IN');\n    if (ts2) ts2.textContent = 'SUP ' + (oc.maxPutOI?.strike || '—');\n  }\n\n    // 7. Real candle price tracking — candles now build from real NIFTY price\n  // rStep() uses rPrice which we just updated from real data — chart is now live\n};\n\n\n\nfunction fmtINR(n){return '₹'+Math.abs(n).toLocaleString('en-IN');}\nfunction fmtINRShort(n){\n  if(!isFinite(n)||isNaN(n))return '₹0';\n  const a=Math.abs(n);\n  const sign=n>=0?'+':'-';\n  if(a>=10000000)return sign+'₹'+(a/10000000).toFixed(1)+'Cr'; // crores\n  if(a>=100000)return sign+'₹'+(a/100000).toFixed(1)+'L';      // lakhs\n  if(a>=1000)return sign+'₹'+Math.round(a/1000)+'K';           // thousands\n  return sign+'₹'+Math.round(a);\n}\nlet toastTimer;\nfunction showToast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('on'),3200);}\n</script>
 </body>
 </html>
