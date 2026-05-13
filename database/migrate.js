@@ -48,6 +48,12 @@ async function run() {
   await client.query(auth)
   console.log('002_auth.sql  ✓')
 
+  const push = fs.readFileSync(
+    path.join(__dirname, 'migrations', '003_push.sql'), 'utf8'
+  )
+  await client.query(push)
+  console.log('003_push.sql  ✓')
+
   await client.end()
   console.log('\nDatabase ready.')
 }

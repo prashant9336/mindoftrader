@@ -17,6 +17,7 @@ import { useTradeLimit } from '@/hooks/useTradeLimit'
 import { useEdgeScore } from '@/hooks/useEdgeScore'
 import { useEdgeStats } from '@/hooks/useEdgeStats'
 import { getLatestVerdict, subscribe as busSubscribe } from '@/lib/coachMessageBus'
+import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { formatNumber } from '@/lib/utils'
 import type { MarketState, BehaviorStatus, CoachMessage } from '@/types'
 
@@ -214,6 +215,41 @@ function LatestVerdictStrip({ verdict }: { verdict: CoachMessage }) {
   )
 }
 
+// ── Alerts toggle button (shown in Header) ────────────────────────────────────
+function AlertsButton() {
+  const { state, subscribe, unsubscribe } = usePushNotifications()
+
+  if (state === 'unsupported') return null
+
+  const isOn      = state === 'subscribed'
+  const isLoading = state === 'loading'
+  const isDenied  = state === 'denied'
+
+  return (
+    <button
+      onClick={isOn ? unsubscribe : subscribe}
+      disabled={isLoading || isDenied}
+      title={
+        isDenied   ? 'Notifications blocked — allow them in browser settings' :
+        isOn       ? 'FVG alerts ON — click to disable' :
+        isLoading  ? 'Loading...' :
+        'Enable FVG signal alerts'
+      }
+      className="flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all"
+      style={{
+        borderColor:     isOn ? 'rgba(0,229,160,0.3)' : 'rgba(125,133,144,0.3)',
+        color:           isDenied ? '#7D8590' : isOn ? '#00E5A0' : '#7D8590',
+        backgroundColor: isOn ? 'rgba(0,229,160,0.08)' : 'transparent',
+        cursor:          isDenied ? 'not-allowed' : 'pointer',
+        opacity:         isLoading ? 0.5 : 1,
+      }}
+    >
+      <span>{isOn ? '🔔' : '🔕'}</span>
+      <span>{isOn ? 'Alerts On' : isDenied ? 'Blocked' : 'Alerts Off'}</span>
+    </button>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const { result: market, loading: marketLoading } = useMarketState()
@@ -234,7 +270,9 @@ export default function DashboardPage() {
 
   return (
     <div className="page-enter">
-      <Header title="Command Center" subtitle="System overview" />
+      <Header title="Command Center" subtitle="System overview">
+        <AlertsButton />
+      </Header>
 
       <div className="p-4 sm:p-6 lg:p-8">
         {/* Daily check-in — shows once per day */}
