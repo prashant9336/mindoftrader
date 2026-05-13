@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin as supabase, IS_ADMIN_CONFIGURED } from '@/lib/supabaseAdmin'
+import { sql, IS_DB_CONFIGURED, toTextArray } from '@/lib/db'
 import { generateMockMarketData, evaluateMarketState } from '@/lib/engines/marketBrain'
 import { evaluateTrade } from '@/lib/engines/tradePermission'
 import { shouldAutoLock, getLockExpiry, analyzeBehavior } from '@/lib/engines/behaviorEngine'
 import {
-  calculateEdgeScore,
-  buildUserContext,
-  computeRollingAvg,
-  DEFAULT_USER_CONTEXT,
+  calculateEdgeScore, buildUserContext, computeRollingAvg, DEFAULT_USER_CONTEXT,
 } from '@/lib/edgeScore'
 import type { TradeDirection, Trade } from '@/types'
 
@@ -20,51 +17,39 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Get market state and evaluate trade
     const marketData = generateMockMarketData(symbol || 'NIFTY')
     const { state: marketState } = evaluateMarketState(marketData)
     const evaluation = evaluateTrade(
       { entryPrice, stopLoss, target, direction: direction as TradeDirection },
-      marketState,
-      marketData
+      marketState, marketData
     )
 
-    // ── No Supabase — demo mode ─────────────────────────────────
-    if (!IS_ADMIN_CONFIGURED) {
+    if (!IS_DB_CONFIGURED) {
       const edgeScore = calculateEdgeScore(
-        evaluation.permission,
-        evaluation.rrRatio,
-        evaluation.signals,
-        DEFAULT_USER_CONTEXT
+        evaluation.permission, evaluation.rrRatio, evaluation.signals, DEFAULT_USER_CONTEXT
       )
       return NextResponse.json({ trade: { id: 'demo', status: 'open' }, evaluation, edgeScore })
     }
 
-    // ── Check if user is locked ────────────────────────────────
-    const { data: lock } = await supabase
-      .from('user_locks')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('is_active', true)
-      .gt('unlocks_at', new Date().toISOString())
-      .single()
-
-    if (lock) {
+    // Check for active trading lock
+    const { rows: locks } = await sql`
+      SELECT * FROM user_locks
+      WHERE user_id = ${userId} AND is_active = true AND unlocks_at > NOW()
+      LIMIT 1
+    `
+    if (locks[0]) {
       return NextResponse.json(
-        { error: 'Trading locked', lockedUntil: lock.unlocks_at, reason: lock.reason },
+        { error: 'Trading locked', lockedUntil: locks[0].unlocks_at, reason: locks[0].reason },
         { status: 403 }
       )
     }
 
-    // ── Fetch behavior context ─────────────────────────────────
-    const { data: recentRaw } = await supabase
-      .from('trades')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(20)
-
-    const recentTrades: Trade[] = (recentRaw || []).map((t) => ({
+    // Fetch recent trades for behavior context
+    const { rows: recentRaw } = await sql`
+      SELECT * FROM trades WHERE user_id = ${userId}
+      ORDER BY created_at DESC LIMIT 20
+    `
+    const recentTrades: Trade[] = recentRaw.map((t) => ({
       id: t.id, userId: t.user_id, symbol: t.symbol, direction: t.direction,
       entryPrice: t.entry_price, stopLoss: t.stop_loss, target: t.target,
       quantity: t.quantity, pnl: t.pnl, permissionStatus: t.permission_status,
@@ -77,71 +62,56 @@ export async function POST(req: NextRequest) {
     const todayTrades = recentTrades.filter(
       (t) => new Date(t.createdAt).toDateString() === today
     )
-
     const userCtx = buildUserContext(
-      behavior.consecutiveLosses,
-      behavior.tradesToday,
-      behavior.revengeRisk,
-      2,
+      behavior.consecutiveLosses, behavior.tradesToday, behavior.revengeRisk, 2,
       todayTrades.map((t) => ({ permission: t.permissionStatus }))
     )
 
-    // ── Calculate edge score with full context ─────────────────
     const edgeScore = calculateEdgeScore(
-      evaluation.permission,
-      evaluation.rrRatio,
-      evaluation.signals,
-      userCtx
+      evaluation.permission, evaluation.rrRatio, evaluation.signals, userCtx
     )
 
-    // ── Insert trade with scores ───────────────────────────────
-    const { data: trade, error } = await supabase
-      .from('trades')
-      .insert({
-        user_id:            userId,
-        symbol:             symbol || 'NIFTY',
-        direction,
-        entry_price:        entryPrice,
-        stop_loss:          stopLoss,
-        target,
-        quantity:           quantity || 1,
-        permission_status:  evaluation.permission,
-        market_state:       marketState,
-        block_reasons:      evaluation.reasons,
-        rr_ratio:           evaluation.rrRatio,
-        discipline_score:   edgeScore.discipline,
-        timing_score:       edgeScore.timing,
-        risk_score:         edgeScore.risk,
-        consistency_score:  edgeScore.consistency,
-        edge_score:         edgeScore.total,
-      })
-      .select()
-      .single()
+    // Insert trade
+    const { rows: [trade] } = await sql`
+      INSERT INTO trades (
+        user_id, symbol, direction, entry_price, stop_loss, target, quantity,
+        permission_status, market_state, block_reasons, rr_ratio,
+        discipline_score, timing_score, risk_score, consistency_score, edge_score
+      ) VALUES (
+        ${userId}, ${symbol || 'NIFTY'}, ${direction},
+        ${entryPrice}, ${stopLoss}, ${target}, ${quantity || 1},
+        ${evaluation.permission}, ${marketState}, ${toTextArray(evaluation.reasons)},
+        ${evaluation.rrRatio},
+        ${edgeScore.discipline}, ${edgeScore.timing}, ${edgeScore.risk},
+        ${edgeScore.consistency}, ${edgeScore.total}
+      )
+      RETURNING *
+    `
 
-    if (error) throw error
+    // Log behavior event
+    await sql`
+      INSERT INTO behavior_logs (user_id, event_type, metadata)
+      VALUES (
+        ${userId},
+        ${evaluation.permission === 'BLOCKED' ? 'trade_blocked' : 'trade_placed'},
+        ${JSON.stringify({ tradeId: trade.id, permission: evaluation.permission, edgeScore: edgeScore.total })}
+      )
+    `
 
-    // ── Log behavior event ─────────────────────────────────────
-    await supabase.from('behavior_logs').insert({
-      user_id:    userId,
-      event_type: evaluation.permission === 'BLOCKED' ? 'trade_blocked' : 'trade_placed',
-      metadata:   { tradeId: trade.id, permission: evaluation.permission, edgeScore: edgeScore.total },
-    })
-
-    // ── Update rolling edge stats ──────────────────────────────
+    // Update rolling edge stats
     await upsertEdgeStats(userId)
 
-    // ── Auto-lock on consecutive losses ───────────────────────
+    // Auto-lock on consecutive losses
     let consecutiveLosses = 0
     for (const t of recentTrades) {
       if (t.pnl !== undefined && t.pnl < 0) consecutiveLosses++
       else break
     }
     if (shouldAutoLock(consecutiveLosses)) {
-      await supabase.from('user_locks').insert({
-        user_id:    userId,
-        reason:     `${consecutiveLosses} consecutive losses`,
-        unlocks_at: getLockExpiry(),
-      })
+      await sql`
+        INSERT INTO user_locks (user_id, reason, unlocks_at)
+        VALUES (${userId}, ${`${consecutiveLosses} consecutive losses`}, ${getLockExpiry()})
+      `
     }
 
     return NextResponse.json({ trade, evaluation, edgeScore })
@@ -151,36 +121,38 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// ── Rolling average upsert ──────────────────────────────────────
 async function upsertEdgeStats(userId: string) {
-  const { data: scores } = await supabase
-    .from('trades')
-    .select('edge_score, discipline_score, timing_score, risk_score, consistency_score')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(10)
-
-  if (!scores || scores.length === 0) return
+  const { rows: scores } = await sql`
+    SELECT edge_score, discipline_score, timing_score, risk_score, consistency_score
+    FROM trades WHERE user_id = ${userId}
+    ORDER BY created_at DESC LIMIT 10
+  `
+  if (!scores.length) return
 
   const mapped = scores.map((r) => ({
-    total:        r.edge_score        ?? 100,
-    discipline:   r.discipline_score  ?? 100,
-    timing:       r.timing_score      ?? 100,
-    risk:         r.risk_score        ?? 100,
-    consistency:  r.consistency_score ?? 100,
+    total:       r.edge_score        ?? 100,
+    discipline:  r.discipline_score  ?? 100,
+    timing:      r.timing_score      ?? 100,
+    risk:        r.risk_score        ?? 100,
+    consistency: r.consistency_score ?? 100,
   }))
 
   const avg = computeRollingAvg(mapped)
   if (!avg) return
 
-  await supabase.from('user_edge_stats').upsert({
-    user_id:         userId,
-    avg_edge_score:  avg.avgEdgeScore,
-    discipline_avg:  avg.disciplineAvg,
-    timing_avg:      avg.timingAvg,
-    risk_avg:        avg.riskAvg,
-    consistency_avg: avg.consistencyAvg,
-    trade_count:     avg.tradeCount,
-    updated_at:      new Date().toISOString(),
-  })
+  await sql`
+    INSERT INTO user_edge_stats
+      (user_id, avg_edge_score, discipline_avg, timing_avg, risk_avg, consistency_avg, trade_count, updated_at)
+    VALUES
+      (${userId}, ${avg.avgEdgeScore}, ${avg.disciplineAvg}, ${avg.timingAvg},
+       ${avg.riskAvg}, ${avg.consistencyAvg}, ${avg.tradeCount}, NOW())
+    ON CONFLICT (user_id) DO UPDATE SET
+      avg_edge_score  = EXCLUDED.avg_edge_score,
+      discipline_avg  = EXCLUDED.discipline_avg,
+      timing_avg      = EXCLUDED.timing_avg,
+      risk_avg        = EXCLUDED.risk_avg,
+      consistency_avg = EXCLUDED.consistency_avg,
+      trade_count     = EXCLUDED.trade_count,
+      updated_at      = NOW()
+  `
 }

@@ -3,7 +3,7 @@ import { generateMockMarketData, evaluateMarketState } from '@/lib/engines/marke
 import { evaluateTrade } from '@/lib/engines/tradePermission'
 import { calculateEdgeScore, buildUserContext, DEFAULT_USER_CONTEXT } from '@/lib/edgeScore'
 import { generateCoachMessages } from '@/lib/liveCoachEngine'
-import { supabaseAdmin as supabase, IS_ADMIN_CONFIGURED } from '@/lib/supabaseAdmin'
+import { sql, IS_DB_CONFIGURED } from '@/lib/db'
 import { analyzeBehavior } from '@/lib/engines/behaviorEngine'
 import type { TradeDirection, Trade } from '@/types'
 
@@ -24,29 +24,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Prices must be positive' }, { status: 400 })
     }
 
-    // Get current market state
     const marketData = generateMockMarketData(symbol || 'NIFTY')
     const { state: marketState } = evaluateMarketState(marketData)
-
-    // Evaluate trade
     const evaluation = evaluateTrade(
       { entryPrice, stopLoss, target, direction: direction as TradeDirection },
       marketState,
       marketData
     )
 
-    // Build user context for edge score ─────────────────────────
     let userCtx = DEFAULT_USER_CONTEXT
 
-    if (IS_ADMIN_CONFIGURED && userId) {
-      const { data: trades } = await supabase
-        .from('trades')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(20)
-
-      if (trades) {
+    if (IS_DB_CONFIGURED && userId) {
+      const { rows: trades } = await sql`
+        SELECT * FROM trades
+        WHERE user_id = ${userId}
+        ORDER BY created_at DESC
+        LIMIT 20
+      `
+      if (trades.length > 0) {
         const mapped: Trade[] = trades.map((t) => ({
           id: t.id, userId: t.user_id, symbol: t.symbol, direction: t.direction,
           entryPrice: t.entry_price, stopLoss: t.stop_loss, target: t.target,
@@ -69,7 +64,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Calculate edge score preview
     const edgeScore = calculateEdgeScore(
       evaluation.permission,
       evaluation.rrRatio,

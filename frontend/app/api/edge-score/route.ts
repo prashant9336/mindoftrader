@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin as supabase, IS_ADMIN_CONFIGURED } from '@/lib/supabaseAdmin'
+import { sql, IS_DB_CONFIGURED } from '@/lib/db'
 import { calculateEdgeScore, DEFAULT_USER_CONTEXT, computeRollingAvg } from '@/lib/edgeScore'
 import { getLevel } from '@/lib/edgeScoreHelpers'
 import type { UserEdgeStats, EdgeBreakdown, TradeSignals } from '@/types'
@@ -17,18 +17,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'userId required' }, { status: 400 })
   }
 
-  // ── No Supabase — return defaults ──────────────────────────
-  if (!IS_ADMIN_CONFIGURED) {
+  if (!IS_DB_CONFIGURED) {
     const defaultScore = calculateEdgeScore('ALLOWED', 1.5, NEUTRAL_SIGNALS, DEFAULT_USER_CONTEXT)
     return NextResponse.json({ stats: null, latestScore: defaultScore, history: [] })
   }
 
-  // ── Fetch user_edge_stats row ──────────────────────────────
-  const { data: statsRow } = await supabase
-    .from('user_edge_stats')
-    .select('*')
-    .eq('user_id', userId)
-    .single()
+  const { rows: statsRows } = await sql`
+    SELECT * FROM user_edge_stats WHERE user_id = ${userId} LIMIT 1
+  `
+  const statsRow = statsRows[0] ?? null
 
   const stats: UserEdgeStats | null = statsRow
     ? {
@@ -43,17 +40,16 @@ export async function GET(req: NextRequest) {
       }
     : null
 
-  // ── Fetch last 10 trades ───────────────────────────────────
-  const { data: trades } = await supabase
-    .from('trades')
-    .select(
-      'id, edge_score, discipline_score, timing_score, risk_score, consistency_score, created_at, permission_status, market_state'
-    )
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(10)
+  const { rows: trades } = await sql`
+    SELECT id, edge_score, discipline_score, timing_score, risk_score, consistency_score,
+           created_at, permission_status, market_state
+    FROM trades
+    WHERE user_id = ${userId}
+    ORDER BY created_at DESC
+    LIMIT 10
+  `
 
-  const history = (trades || []).map((t) => ({
+  const history = trades.map((t) => ({
     id:          t.id,
     edgeScore:   t.edge_score        ?? 100,
     discipline:  t.discipline_score  ?? 100,
@@ -65,7 +61,6 @@ export async function GET(req: NextRequest) {
     createdAt:   t.created_at,
   }))
 
-  // ── Latest trade breakdown ─────────────────────────────────
   let latestScore: EdgeBreakdown | null = null
   if (history.length > 0) {
     const t = history[0]
@@ -80,7 +75,6 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // ── If no stats row yet, compute on-the-fly ────────────────
   let resolvedStats = stats
   if (!resolvedStats && history.length > 0) {
     const avg = computeRollingAvg(
