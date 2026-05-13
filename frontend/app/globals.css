@@ -1,0 +1,149 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #080B14;
+  --bg-secondary: #0D1117;
+  --bg-card: #111520;
+  --bg-border: #1C2333;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  /* Radial depth — not flat black */
+  background-color: #080B14;
+  background-image: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(79, 142, 247, 0.05) 0%, transparent 60%),
+                    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(139, 92, 246, 0.04) 0%, transparent 60%);
+  color: #E6EDF3;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #0D1117; }
+::-webkit-scrollbar-thumb { background: #1C2333; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #3D444D; }
+
+/* Number inputs */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type='number'] { -moz-appearance: textfield; }
+
+/* Selection */
+::selection { background-color: rgba(79, 142, 247, 0.3); color: #E6EDF3; }
+
+/* ── Card hover micro-interaction ── */
+.card-interactive {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-interactive:hover {
+  transform: translateY(-1px) scale(1.005);
+}
+
+/* ── Input focus glow ── */
+.input-field {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.input-field:focus {
+  outline: none;
+  border-color: rgba(79, 142, 247, 0.5);
+  box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.12), 0 0 12px rgba(79, 142, 247, 0.08);
+}
+
+/* ── Glow utilities ── */
+.glow-green  { box-shadow: 0 0 24px rgba(0, 229, 160, 0.18); }
+.glow-red    { box-shadow: 0 0 24px rgba(255, 59, 107, 0.18); }
+.glow-yellow { box-shadow: 0 0 24px rgba(245, 158, 11, 0.18); }
+.glow-blue   { box-shadow: 0 0 24px rgba(79, 142, 247, 0.18); }
+
+/* ── Market state ambient glow (behind hero text) ── */
+.state-glow-green  { text-shadow: 0 0 40px rgba(0, 229, 160, 0.6), 0 0 80px rgba(0, 229, 160, 0.2); }
+.state-glow-yellow { text-shadow: 0 0 40px rgba(245, 158, 11, 0.6), 0 0 80px rgba(245, 158, 11, 0.2); }
+.state-glow-red    { text-shadow: 0 0 40px rgba(255, 59, 107, 0.6), 0 0 80px rgba(255, 59, 107, 0.2); }
+
+/* ── Page transition ── */
+@layer utilities {
+  .page-enter {
+    animation: page-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(10px); filter: blur(2px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+}
+
+/* ── Shake animation for BLOCKED verdict ── */
+@keyframes verdict-shake {
+  0%   { transform: translateX(0) scale(1); }
+  10%  { transform: translateX(-10px) scale(1.01); }
+  20%  { transform: translateX(10px) scale(1.01); }
+  30%  { transform: translateX(-8px); }
+  40%  { transform: translateX(8px); }
+  50%  { transform: translateX(-4px); }
+  60%  { transform: translateX(4px); }
+  70%  { transform: translateX(-2px); }
+  100% { transform: translateX(0) scale(1); }
+}
+.verdict-shake {
+  animation: verdict-shake 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+/* ── Ambient pulse for state hero ── */
+@keyframes state-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
+}
+.state-pulse {
+  animation: state-pulse 3s ease-in-out infinite;
+}
+
+/* ── Mobile: remove tap highlight ── */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Safe area bottom padding ── */
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pb-safe-20 {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* ── Touch targets ── */
+button, a, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ── Gradient button ── */
+.btn-gradient {
+  background: linear-gradient(135deg, #4F8EF7 0%, #8B5CF6 100%);
+  box-shadow: 0 4px 20px rgba(79, 142, 247, 0.3);
+  transition: box-shadow 0.2s ease, transform 0.15s ease, filter 0.2s ease;
+}
+.btn-gradient:hover {
+  box-shadow: 0 6px 28px rgba(79, 142, 247, 0.45);
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+.btn-gradient:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(79, 142, 247, 0.2);
+}

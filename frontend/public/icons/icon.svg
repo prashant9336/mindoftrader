@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="100" fill="#0B0F14"/>
+  <rect width="512" height="512" rx="100" fill="url(#grad)"/>
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4F8EF7;stop-opacity:0.15"/>
+      <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:0.1"/>
+    </linearGradient>
+  </defs>
+  <text x="256" y="310" font-family="system-ui, -apple-system, sans-serif" font-size="280" font-weight="900" text-anchor="middle" fill="#4F8EF7">M</text>
+  <text x="256" y="420" font-family="system-ui, -apple-system, sans-serif" font-size="60" font-weight="600" text-anchor="middle" fill="#7D8590" letter-spacing="8">MOT</text>
+</svg>
