@@ -77,7 +77,14 @@ export function calculateEdgeScore(
     penalties.push('Sideways market: −15 timing')
   }
   if (signals.goodEntry) {
-    timing += 10 // bonus — quality entry in trending market
+    timing += 10
+  }
+  if (signals.fvgAligned === true) {
+    timing += 15
+  }
+  if (signals.fvgAligned === false) {
+    timing -= 15
+    penalties.push('Against ICT FVG structure: −15 timing')
   }
   timing = clamp(timing)
 

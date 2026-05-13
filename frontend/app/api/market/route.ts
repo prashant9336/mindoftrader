@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { data: marketData, source } = await getMarketData(symbol)
+    const { data: marketData, source, fvg } = await getMarketData(symbol)
     const { state, signals } = evaluateMarketState(marketData)
     const ttl = source === 'live' ? 30_000 : 5_000
 
@@ -22,6 +22,7 @@ export async function GET(request: Request) {
       data:     marketData,
       signals,
       source,
+      fvg,
       cachedAt: new Date().toISOString(),
     }
 

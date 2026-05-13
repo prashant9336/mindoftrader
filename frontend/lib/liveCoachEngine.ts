@@ -90,6 +90,12 @@ function timingMessages(score: EdgeBreakdown, trade: TradeContext): ScoredMessag
   if (signals.trapMarket) {
     return [make('alert', 'Trap market condition. Smart money is hunting stops. Your entry is the target, not the winner.', 3)]
   }
+  if (signals.fvgAligned === true) {
+    return [make('success', 'ICT FVG retest confirmed — multi-timeframe VWAP structure supports this entry. You are trading with smart money flow, not against it.', 2)]
+  }
+  if (signals.fvgAligned === false) {
+    return [make('warning', 'Active ICT Fair Value Gap signal opposes your trade direction. You are fading institutional structure. High-probability setups go WITH the FVG, not against it.', 3)]
+  }
   if (signals.goodEntry && score.timing >= 60) {
     return [make('info', 'Clean entry with trend structure confirmed. Timing validated — honor the stop and let it run.', 1)]
   }

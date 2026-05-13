@@ -24,12 +24,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Prices must be positive' }, { status: 400 })
     }
 
-    const { data: marketData } = await getMarketData(symbol || 'NIFTY')
+    const { data: marketData, fvg } = await getMarketData(symbol || 'NIFTY')
     const { state: marketState } = evaluateMarketState(marketData)
     const evaluation = evaluateTrade(
       { entryPrice, stopLoss, target, direction: direction as TradeDirection },
       marketState,
-      marketData
+      marketData,
+      fvg
     )
 
     let userCtx = DEFAULT_USER_CONTEXT

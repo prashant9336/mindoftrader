@@ -1,13 +1,24 @@
-import type { MarketData, MarketState, MarketStateResult } from '@/types'
-import { fetchLiveMarketData } from '@/lib/market/marketData'
+import type { MarketData, MarketState, MarketStateResult, FVGContext } from '@/types'
+import { fetchLiveMarketData, fetchMultiTFCandles } from '@/lib/market/marketData'
+import { analyzeFVG } from '@/lib/engines/fvgEngine'
 
-// Unified entry point — live data from Yahoo Finance, mock as fallback
-export async function getMarketData(symbol = 'NIFTY'): Promise<{ data: MarketData; source: string }> {
+// Unified entry point — live data from Yahoo Finance + FVG analysis, mock as fallback
+export async function getMarketData(symbol = 'NIFTY'): Promise<{
+  data: MarketData
+  source: string
+  fvg: FVGContext | null
+}> {
   try {
-    const data = await fetchLiveMarketData(symbol)
-    return { data, source: 'live' }
+    const [data, multiTF] = await Promise.all([
+      fetchLiveMarketData(symbol),
+      fetchMultiTFCandles().catch(() => null),
+    ])
+    const fvg = multiTF
+      ? analyzeFVG(multiTF.candles5m, multiTF.candles15m, multiTF.candlesHTF)
+      : null
+    return { data, source: 'live', fvg }
   } catch {
-    return { data: generateMockMarketData(symbol), source: 'mock' }
+    return { data: generateMockMarketData(symbol), source: 'mock', fvg: null }
   }
 }
 

@@ -1,9 +1,10 @@
-import type { TradeInput, TradeEvaluation, TradeSignals, MarketData, MarketState } from '@/types'
+import type { TradeInput, TradeEvaluation, TradeSignals, MarketData, MarketState, FVGContext } from '@/types'
 
 export function evaluateTrade(
   input: TradeInput,
   marketState: MarketState,
-  marketData: MarketData
+  marketData: MarketData,
+  fvgContext?: FVGContext | null
 ): TradeEvaluation {
   const reasons: string[] = []
   let blocked = false
@@ -76,6 +77,26 @@ export function evaluateTrade(
     reasons.push('Stop loss is very wide — reduces position sizing efficiency')
   }
 
+  // ── ICT FVG Alignment ─────────────────────────────────────────
+  let fvgAligned: boolean | undefined = undefined
+
+  if (fvgContext?.signal) {
+    const fvgIsLong = fvgContext.signal.direction === 'LONG'
+    fvgAligned = isLong === fvgIsLong
+    if (fvgAligned) {
+      reasons.push(
+        `ICT FVG retest confirmed at ${fvgContext.signal.fvgBot}–${fvgContext.signal.fvgTop} — structure supports this direction`
+      )
+    } else {
+      risky = true
+      reasons.push(
+        `Active ICT FVG signal is ${fvgContext.signal.direction} — your trade is against the structure`
+      )
+    }
+  } else if (fvgContext && !fvgContext.signal) {
+    reasons.push('No active FVG retest — trade lacks ICT structure confirmation')
+  }
+
   // ── Good entry heuristic ──────────────────────────────────────
   const goodEntry = !lateEntry && rrRatio >= 1.5 && !blocked && !sidewaysMarket && !trapMarket
 
@@ -94,8 +115,9 @@ export function evaluateTrade(
     sidewaysMarket,
     trapMarket,
     goodEntry,
-    hasSL: true,    // SL is always required in our form
-    movedSL: false, // post-trade only — always false at evaluation time
+    hasSL: true,
+    movedSL: false,
+    fvgAligned,
   }
 
   return {

@@ -1,5 +1,48 @@
 // Core domain types for MindOfTrader
 
+// ── Candles / FVG ────────────────────────────────────────────
+
+export interface Candle {
+  open: number
+  high: number
+  low: number
+  close: number
+  volume: number
+  timestamp: number
+}
+
+export interface FVGZone {
+  top: number
+  bot: number
+  dir: 1 | -1  // +1 = bull FVG, -1 = bear FVG
+}
+
+export type FVGTrendState = 'strong_bull' | 'strong_bear' | 'weak_bull' | 'weak_bear' | 'neutral'
+
+export interface FVGSignal {
+  direction: 'LONG' | 'SHORT'
+  entry: number
+  stopLoss: number
+  target: number
+  rrRatio: number
+  fvgTop: number
+  fvgBot: number
+  optionTarget: number  // risk × delta — approx CE/PE premium pts
+}
+
+export interface FVGContext {
+  trendState: FVGTrendState
+  inSession: boolean
+  vwap5m: number
+  vwap15m: number
+  vwapHTF: number
+  above5mVwap: boolean
+  above15mVwap: boolean
+  aboveHTFVwap: boolean
+  fvgZoneCount: number
+  signal: FVGSignal | null
+}
+
 export type MarketState    = 'TRENDING' | 'SIDEWAYS' | 'TRAP'
 export type TradePermission = 'ALLOWED' | 'RISKY' | 'BLOCKED'
 export type TradeDirection  = 'CALL' | 'PUT' | 'LONG' | 'SHORT'
@@ -27,6 +70,7 @@ export interface MarketStateResult {
   state: MarketState
   data: MarketData
   signals: string[]
+  fvg?: FVGContext | null
 }
 
 // ── Trade evaluation ─────────────────────────────────────────
@@ -47,7 +91,8 @@ export interface TradeSignals {
   trapMarket: boolean
   goodEntry: boolean
   hasSL: boolean
-  movedSL: boolean   // post-trade only; false at evaluation time
+  movedSL: boolean          // post-trade only; false at evaluation time
+  fvgAligned?: boolean      // undefined = no FVG active; true = aligned; false = against structure
 }
 
 export interface TradeEvaluation {

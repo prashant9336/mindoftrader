@@ -1,4 +1,4 @@
-import type { MarketData } from '@/types'
+import type { MarketData, Candle } from '@/types'
 
 const SYMBOL = '%5ENSEI'  // ^NSEI = NIFTY 50
 
@@ -32,7 +32,57 @@ function calcVWAP(
   return parseFloat((tpv.reduce((s, v) => s + v, 0) / totalVol).toFixed(2))
 }
 
-// In-memory cache (30 s)
+// ── Multi-TF candle fetching ──────────────────────────────────
+
+const _candleCaches = new Map<string, { data: Candle[]; expiresAt: number }>()
+
+async function fetchCandles(interval: string, range: string): Promise<Candle[]> {
+  const key = `${interval}_${range}`
+  const cached = _candleCaches.get(key)
+  if (cached && Date.now() < cached.expiresAt) return cached.data
+
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${SYMBOL}?interval=${interval}&range=${range}&includePrePost=false`
+  const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, cache: 'no-store' })
+  if (!res.ok) throw new Error(`Yahoo Finance [${interval}]: ${res.status}`)
+
+  const json   = await res.json()
+  const result = json?.chart?.result?.[0]
+  if (!result) throw new Error('Yahoo Finance: unexpected response shape')
+
+  const timestamps: number[] = result.timestamp ?? []
+  const quote = result.indicators?.quote?.[0] ?? {}
+
+  const candles: Candle[] = []
+  for (let i = 0; i < timestamps.length; i++) {
+    const h = quote.high?.[i]
+    const l = quote.low?.[i]
+    const o = quote.open?.[i]
+    const c = quote.close?.[i]
+    const v = quote.volume?.[i] ?? 0
+    if (h != null && l != null && o != null && c != null) {
+      candles.push({ high: h, low: l, open: o, close: c, volume: v, timestamp: timestamps[i] })
+    }
+  }
+
+  const ttl = interval === '5m' ? 30_000 : interval === '15m' ? 60_000 : 300_000
+  _candleCaches.set(key, { data: candles, expiresAt: Date.now() + ttl })
+  return candles
+}
+
+export async function fetchMultiTFCandles(): Promise<{
+  candles5m: Candle[]
+  candles15m: Candle[]
+  candlesHTF: Candle[]
+}> {
+  const [candles5m, candles15m, candlesHTF] = await Promise.all([
+    fetchCandles('5m', '1d'),
+    fetchCandles('15m', '1d'),
+    fetchCandles('60m', '1d'),
+  ])
+  return { candles5m, candles15m, candlesHTF }
+}
+
+// ── In-memory cache (30 s) ────────────────────────────────────
 let _cache: { data: MarketData; expiresAt: number } | null = null
 
 export async function fetchLiveMarketData(symbol = 'NIFTY'): Promise<MarketData> {

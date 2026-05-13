@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatNumber, formatPercent, marketStateColor } from '@/lib/utils'
+import { FVGSignalWidget } from '@/components/market/FVGSignalWidget'
 import type { MarketStateResult, MarketState } from '@/types'
 
 interface MarketStatusProps {
@@ -28,7 +29,7 @@ export function MarketStatus({ result, loading }: MarketStatusProps) {
     )
   }
 
-  const { state, data, signals } = result
+  const { state, data, signals, fvg } = result
   const color = marketStateColor(state)
   const meta = STATE_META[state]
 
@@ -121,6 +122,9 @@ export function MarketStatus({ result, loading }: MarketStatusProps) {
           ))}
         </div>
       )}
+
+      {/* ── ICT / FVG Signal ─────────────────────────────── */}
+      {fvg && <FVGSignalWidget fvg={fvg} />}
     </div>
   )
 }
