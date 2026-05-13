@@ -1,6 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════
 -- Migration 001 — Edge Score System
--- Run in: Supabase SQL Editor (Project → SQL Editor → New query)
 -- ═══════════════════════════════════════════════════════════════
 
 -- ── 1. Add edge score columns to the trades table ─────────────
@@ -26,21 +25,7 @@ CREATE TABLE IF NOT EXISTS user_edge_stats (
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- ── 3. Row Level Security ─────────────────────────────────────
-ALTER TABLE user_edge_stats ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Users read own edge stats"   ON user_edge_stats;
-DROP POLICY IF EXISTS "Users upsert own edge stats" ON user_edge_stats;
-
-CREATE POLICY "Users read own edge stats"
-  ON user_edge_stats FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users upsert own edge stats"
-  ON user_edge_stats FOR ALL
-  USING (auth.uid() = user_id);
-
--- ── 4. Helper: recalculate rolling average for a user ─────────
+-- ── 3. Helper: recalculate rolling average for a user ─────────
 -- Called via: SELECT recalculate_edge_stats('user-uuid');
 CREATE OR REPLACE FUNCTION recalculate_edge_stats(p_user_id UUID)
 RETURNS void
