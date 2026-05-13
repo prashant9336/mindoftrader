@@ -9,11 +9,8 @@ import { useWebSocket } from '@/hooks/useWebSocket'
 import { useMarketState } from '@/hooks/useMarketState'
 
 export default function CoachPage() {
-  const { isConnected, messages, marketFromWS } = useWebSocket()
-  const { result: marketFallback, loading } = useMarketState()
-
-  // Prefer WebSocket market data for lowest latency
-  const market = marketFromWS || marketFallback
+  const { messages } = useWebSocket()
+  const { result: market, loading } = useMarketState()
 
   return (
     <div className="page-enter">
@@ -30,7 +27,7 @@ export default function CoachPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <CoachPanel messages={messages} isConnected={isConnected} />
+            <CoachPanel messages={messages} />
           </motion.div>
 
           {/* Right side */}
@@ -40,7 +37,7 @@ export default function CoachPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.1 }}
             >
-              <MarketStatus result={market} loading={loading && !marketFromWS} />
+              <MarketStatus result={market} loading={loading} />
             </motion.div>
 
             {/* Coach Philosophy */}

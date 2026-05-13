@@ -8,7 +8,6 @@ import { formatTime, cn } from '@/lib/utils'
 
 interface CoachPanelProps {
   messages: CoachMessage[]
-  isConnected: boolean
 }
 
 const MSG_CONFIG: Record<CoachMessage['type'], { dot: string; bar: string; label: string }> = {
@@ -18,7 +17,7 @@ const MSG_CONFIG: Record<CoachMessage['type'], { dot: string; bar: string; label
   success: { dot: '#00E5A0', bar: 'rgba(0,229,160,0.5)',   label: 'INSIGHT' },
 }
 
-export function CoachPanel({ messages, isConnected }: CoachPanelProps) {
+export function CoachPanel({ messages }: CoachPanelProps) {
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -41,11 +40,9 @@ export function CoachPanel({ messages, isConnected }: CoachPanelProps) {
             <motion.span
               animate={{ opacity: [1, 0.2, 1] }}
               transition={{ duration: 1.5, repeat: Infinity }}
-              className={cn('h-1.5 w-1.5 rounded-full', isConnected ? 'bg-state-allowed' : 'bg-state-blocked')}
+              className="h-1.5 w-1.5 rounded-full bg-state-allowed"
             />
-            <span className="font-mono text-xs text-text-muted">
-              {isConnected ? 'LIVE' : 'RECONNECTING'}
-            </span>
+            <span className="font-mono text-xs text-text-muted">ACTIVE</span>
           </div>
         }
       />

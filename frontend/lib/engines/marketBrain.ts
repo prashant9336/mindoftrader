@@ -3,7 +3,13 @@ import { fetchMarketData, IS_DHAN_CONFIGURED } from '@/lib/market/dhanApi'
 
 // Unified entry point — real data when Dhan is configured, mock otherwise
 export async function getMarketData(symbol = 'NIFTY'): Promise<MarketData> {
-  if (IS_DHAN_CONFIGURED) return fetchMarketData(symbol)
+  if (IS_DHAN_CONFIGURED) {
+    try {
+      return await fetchMarketData(symbol)
+    } catch {
+      return generateMockMarketData(symbol)
+    }
+  }
   return generateMockMarketData(symbol)
 }
 

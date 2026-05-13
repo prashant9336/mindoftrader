@@ -14,8 +14,8 @@ export function useMarketState(symbol = 'NIFTY', refreshInterval = 5000) {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setResult({
-        state: data.marketState,
-        data: data.marketData,
+        state: data.state,
+        data: data.data,
         signals: data.signals,
       })
       setError(null)
