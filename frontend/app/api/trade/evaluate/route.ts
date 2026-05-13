@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateMockMarketData, evaluateMarketState } from '@/lib/engines/marketBrain'
+import { getMarketData, evaluateMarketState } from '@/lib/engines/marketBrain'
 import { evaluateTrade } from '@/lib/engines/tradePermission'
 import { calculateEdgeScore, buildUserContext, DEFAULT_USER_CONTEXT } from '@/lib/edgeScore'
 import { generateCoachMessages } from '@/lib/liveCoachEngine'
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Prices must be positive' }, { status: 400 })
     }
 
-    const marketData = generateMockMarketData(symbol || 'NIFTY')
+    const marketData = await getMarketData(symbol || 'NIFTY')
     const { state: marketState } = evaluateMarketState(marketData)
     const evaluation = evaluateTrade(
       { entryPrice, stopLoss, target, direction: direction as TradeDirection },

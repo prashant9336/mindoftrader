@@ -1,7 +1,14 @@
 import type { MarketData, MarketState, MarketStateResult } from '@/types'
+import { fetchMarketData, IS_DHAN_CONFIGURED } from '@/lib/market/dhanApi'
 
-// Mock price generator — replace with Yahoo Finance / real feed in Phase 2
-let mockPrice = 19847.5
+// Unified entry point — real data when Dhan is configured, mock otherwise
+export async function getMarketData(symbol = 'NIFTY'): Promise<MarketData> {
+  if (IS_DHAN_CONFIGURED) return fetchMarketData(symbol)
+  return generateMockMarketData(symbol)
+}
+
+// Mock price generator (fallback)
+let mockPrice = 22500.0
 let mockOi = 1_250_000
 let mockPrevAtr = 85.5
 

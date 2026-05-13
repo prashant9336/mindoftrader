@@ -1,32 +1,37 @@
 import { NextResponse } from 'next/server'
-import { generateMockMarketData, evaluateMarketState } from '@/lib/engines/marketBrain'
+import { getMarketData, evaluateMarketState } from '@/lib/engines/marketBrain'
+import { IS_DHAN_CONFIGURED } from '@/lib/market/dhanApi'
 
-// Simple in-memory cache — replace with Redis in Phase 3
+// Module-level cache — shared across requests within the same serverless instance
 let cache: { data: object; expiresAt: number } | null = null
-const CACHE_TTL_MS = 5000 // 5 seconds
+const TTL = IS_DHAN_CONFIGURED ? 30_000 : 5_000  // 30 s real / 5 s mock
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const symbol = searchParams.get('symbol') || 'NIFTY'
 
-  // Serve from cache if fresh
   if (cache && Date.now() < cache.expiresAt) {
     return NextResponse.json(cache.data)
   }
 
-  const marketData = generateMockMarketData(symbol)
-  const { state, signals } = evaluateMarketState(marketData)
+  try {
+    const marketData = await getMarketData(symbol)
+    const { state, signals } = evaluateMarketState(marketData)
 
-  const response = {
-    marketData,
-    marketState: state,
-    signals,
-    cachedAt: new Date().toISOString(),
+    const response = {
+      state,
+      data:     marketData,
+      signals,
+      source:   IS_DHAN_CONFIGURED ? 'dhan' : 'mock',
+      cachedAt: new Date().toISOString(),
+    }
+
+    cache = { data: response, expiresAt: Date.now() + TTL }
+    return NextResponse.json(response, {
+      headers: { 'Cache-Control': `public, max-age=${TTL / 1000}` },
+    })
+  } catch (err) {
+    console.error('[market]', err)
+    return NextResponse.json({ error: 'Market data unavailable' }, { status: 503 })
   }
-
-  cache = { data: response, expiresAt: Date.now() + CACHE_TTL_MS }
-
-  return NextResponse.json(response, {
-    headers: { 'Cache-Control': 'public, max-age=5' },
-  })
 }

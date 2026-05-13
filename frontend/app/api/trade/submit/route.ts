@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sql, IS_DB_CONFIGURED, toTextArray } from '@/lib/db'
-import { generateMockMarketData, evaluateMarketState } from '@/lib/engines/marketBrain'
+import { getMarketData, evaluateMarketState } from '@/lib/engines/marketBrain'
 import { evaluateTrade } from '@/lib/engines/tradePermission'
 import { shouldAutoLock, getLockExpiry, analyzeBehavior } from '@/lib/engines/behaviorEngine'
 import {
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    const marketData = generateMockMarketData(symbol || 'NIFTY')
+    const marketData = await getMarketData(symbol || 'NIFTY')
     const { state: marketState } = evaluateMarketState(marketData)
     const evaluation = evaluateTrade(
       { entryPrice, stopLoss, target, direction: direction as TradeDirection },
