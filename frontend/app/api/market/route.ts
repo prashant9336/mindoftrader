@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { generateMockMarketData, evaluateMarketState } from '@/lib/engines/marketBrain'
-import { fetchMarketData, IS_DHAN_CONFIGURED } from '@/lib/market/dhanApi'
+import { getMarketData, evaluateMarketState } from '@/lib/engines/marketBrain'
 
 // Module-level cache — shared across requests within the same serverless instance
 let cache: { data: object; expiresAt: number } | null = null
@@ -14,22 +13,9 @@ export async function GET(request: Request) {
   }
 
   try {
-    let source = 'mock'
-    let marketData
-
-    if (IS_DHAN_CONFIGURED) {
-      try {
-        marketData = await fetchMarketData(symbol)
-        source = 'dhan'
-      } catch {
-        marketData = generateMockMarketData(symbol)
-      }
-    } else {
-      marketData = generateMockMarketData(symbol)
-    }
-
+    const { data: marketData, source } = await getMarketData(symbol)
     const { state, signals } = evaluateMarketState(marketData)
-    const ttl = source === 'dhan' ? 30_000 : 5_000
+    const ttl = source === 'live' ? 30_000 : 5_000
 
     const response = {
       state,

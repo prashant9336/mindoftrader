@@ -1,16 +1,14 @@
 import type { MarketData, MarketState, MarketStateResult } from '@/types'
-import { fetchMarketData, IS_DHAN_CONFIGURED } from '@/lib/market/dhanApi'
+import { fetchLiveMarketData } from '@/lib/market/marketData'
 
-// Unified entry point — real data when Dhan is configured, mock otherwise
-export async function getMarketData(symbol = 'NIFTY'): Promise<MarketData> {
-  if (IS_DHAN_CONFIGURED) {
-    try {
-      return await fetchMarketData(symbol)
-    } catch {
-      return generateMockMarketData(symbol)
-    }
+// Unified entry point — live data from Yahoo Finance, mock as fallback
+export async function getMarketData(symbol = 'NIFTY'): Promise<{ data: MarketData; source: string }> {
+  try {
+    const data = await fetchLiveMarketData(symbol)
+    return { data, source: 'live' }
+  } catch {
+    return { data: generateMockMarketData(symbol), source: 'mock' }
   }
-  return generateMockMarketData(symbol)
 }
 
 // Mock price generator (fallback)
