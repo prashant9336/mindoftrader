@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { formatTime } from '@/lib/utils'
 import { useState, useEffect } from 'react'
+import { useSession, signOut } from 'next-auth/react'
 
 interface HeaderProps {
   title: string
@@ -12,12 +13,17 @@ interface HeaderProps {
 
 export function Header({ title, subtitle, children }: HeaderProps) {
   const [time, setTime] = useState('')
+  const { data: session } = useSession()
 
   useEffect(() => {
     setTime(new Date().toISOString())
     const t = setInterval(() => setTime(new Date().toISOString()), 1000)
     return () => clearInterval(t)
   }, [])
+
+  const initials = session?.user?.name
+    ? session.user.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+    : 'T'
 
   return (
     <header className="flex items-center justify-between border-b border-bg-border bg-bg-secondary px-8 py-4">
@@ -37,9 +43,19 @@ export function Header({ title, subtitle, children }: HeaderProps) {
           <p className="font-mono text-sm text-text-primary">{formatTime(time)}</p>
           <p className="text-xs text-text-muted">IST</p>
         </div>
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-blue/20 text-xs font-bold text-accent-blue">
-          T
-        </div>
+        {session ? (
+          <button
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            title={`Sign out (${session.user?.email})`}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-blue/20 text-xs font-bold text-accent-blue hover:bg-accent-blue/30 transition-colors"
+          >
+            {initials}
+          </button>
+        ) : (
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-blue/20 text-xs font-bold text-accent-blue">
+            T
+          </div>
+        )}
       </div>
     </header>
   )

@@ -42,6 +42,12 @@ async function run() {
   await client.query(migration)
   console.log('001_edge_score.sql  ✓')
 
+  const auth = fs.readFileSync(
+    path.join(__dirname, 'migrations', '002_auth.sql'), 'utf8'
+  )
+  await client.query(auth)
+  console.log('002_auth.sql  ✓')
+
   await client.end()
   console.log('\nDatabase ready.')
 }

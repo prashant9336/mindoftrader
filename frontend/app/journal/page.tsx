@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useSession } from 'next-auth/react'
 import { motion } from 'framer-motion'
 import { Header } from '@/components/layout/Header'
 import { TradeHistory } from '@/components/journal/TradeHistory'
@@ -41,12 +42,15 @@ function mapTrade(t: Record<string, unknown>): Trade {
 }
 
 export default function JournalPage() {
+  const { data: session } = useSession()
+  const userId = session?.user?.id ?? DEMO_USER_ID
+
   const [trades,  setTrades]  = useState<Trade[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchTrades = useCallback(async () => {
     try {
-      const res  = await fetch(`/api/journal?userId=${DEMO_USER_ID}`)
+      const res  = await fetch(`/api/journal?userId=${userId}`)
       const data = await res.json()
       if (res.ok) setTrades((data.trades || []).map(mapTrade))
     } finally {
@@ -60,7 +64,7 @@ export default function JournalPage() {
     const res = await fetch('/api/journal', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tradeId, exitPrice, userId: DEMO_USER_ID }),
+      body: JSON.stringify({ tradeId, exitPrice, userId }),
     })
     if (res.ok) fetchTrades()
   }

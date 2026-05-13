@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { useSession } from 'next-auth/react'
 import type { TradeEvaluation } from '@/types'
 import { DEMO_USER_ID } from '@/lib/supabase'
 
-export function useTradeEvaluator(userId = DEMO_USER_ID) {
+export function useTradeEvaluator() {
+  const { data: session } = useSession()
+  const userId = session?.user?.id ?? DEMO_USER_ID
   const [evaluation, setEvaluation] = useState<TradeEvaluation | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)

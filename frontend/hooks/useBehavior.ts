@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useSession } from 'next-auth/react'
 import type { BehaviorStatus } from '@/types'
 import { DEMO_USER_ID } from '@/lib/supabase'
 
-export function useBehavior(userId = DEMO_USER_ID, refreshInterval = 30000) {
+export function useBehavior(refreshInterval = 30000) {
+  const { data: session } = useSession()
+  const userId = session?.user?.id ?? DEMO_USER_ID
   const [behavior, setBehavior] = useState<BehaviorStatus | null>(null)
   const [loading, setLoading] = useState(true)
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useSession } from 'next-auth/react'
 import { DEMO_USER_ID } from '@/lib/supabase'
 import type { EdgeBreakdown, UserEdgeStats } from '@/types'
 
@@ -22,7 +23,10 @@ interface EdgeStatsResult {
   refresh: () => void
 }
 
-export function useEdgeStats(userId = DEMO_USER_ID): EdgeStatsResult {
+export function useEdgeStats(): EdgeStatsResult {
+  const { data: session } = useSession()
+  const userId = session?.user?.id ?? DEMO_USER_ID
+
   const [data, setData] = useState<Omit<EdgeStatsResult, 'loading' | 'refresh'>>({
     stats: null,
     latestScore: null,

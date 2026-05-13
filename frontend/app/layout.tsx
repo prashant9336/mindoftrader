@@ -5,6 +5,7 @@ import { BottomNav } from '@/components/layout/BottomNav'
 import { ServiceWorkerRegistrar } from '@/components/pwa/ServiceWorkerRegistrar'
 import { InstallPrompt } from '@/components/pwa/InstallPrompt'
 import { OfflineBanner } from '@/components/pwa/OfflineBanner'
+import { SessionProvider } from '@/components/providers/SessionProvider'
 
 export const metadata: Metadata = {
   title: 'MindOfTrader — Trading Decision OS',
@@ -39,16 +40,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className="bg-bg-primary text-text-primary">
-        <OfflineBanner />
-        <div className="flex h-screen overflow-hidden">
-          <Sidebar />
-          <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
-            {children}
-          </main>
-        </div>
-        <BottomNav />
-        <InstallPrompt />
-        <ServiceWorkerRegistrar />
+        <SessionProvider>
+          <OfflineBanner />
+          <div className="flex h-screen overflow-hidden">
+            <Sidebar />
+            <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+              {children}
+            </main>
+          </div>
+          <BottomNav />
+          <InstallPrompt />
+          <ServiceWorkerRegistrar />
+        </SessionProvider>
       </body>
     </html>
   )
