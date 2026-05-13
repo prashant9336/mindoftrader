@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server'
-import { getMarketData, evaluateMarketState } from '@/lib/engines/marketBrain'
-import { IS_DHAN_CONFIGURED } from '@/lib/market/dhanApi'
+import { generateMockMarketData, evaluateMarketState } from '@/lib/engines/marketBrain'
+import { fetchMarketData, IS_DHAN_CONFIGURED } from '@/lib/market/dhanApi'
 
 // Module-level cache — shared across requests within the same serverless instance
 let cache: { data: object; expiresAt: number } | null = null
-const TTL = IS_DHAN_CONFIGURED ? 30_000 : 5_000  // 30 s real / 5 s mock
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -15,20 +14,34 @@ export async function GET(request: Request) {
   }
 
   try {
-    const marketData = await getMarketData(symbol)
+    let source = 'mock'
+    let marketData
+
+    if (IS_DHAN_CONFIGURED) {
+      try {
+        marketData = await fetchMarketData(symbol)
+        source = 'dhan'
+      } catch {
+        marketData = generateMockMarketData(symbol)
+      }
+    } else {
+      marketData = generateMockMarketData(symbol)
+    }
+
     const { state, signals } = evaluateMarketState(marketData)
+    const ttl = source === 'dhan' ? 30_000 : 5_000
 
     const response = {
       state,
       data:     marketData,
       signals,
-      source:   IS_DHAN_CONFIGURED ? 'dhan' : 'mock',
+      source,
       cachedAt: new Date().toISOString(),
     }
 
-    cache = { data: response, expiresAt: Date.now() + TTL }
+    cache = { data: response, expiresAt: Date.now() + ttl }
     return NextResponse.json(response, {
-      headers: { 'Cache-Control': `public, max-age=${TTL / 1000}` },
+      headers: { 'Cache-Control': `public, max-age=${ttl / 1000}` },
     })
   } catch (err) {
     console.error('[market]', err)

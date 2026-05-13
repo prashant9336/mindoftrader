@@ -14,14 +14,14 @@ export async function getMarketData(symbol = 'NIFTY'): Promise<MarketData> {
 }
 
 // Mock price generator (fallback)
-let mockPrice = 22500.0
+let mockPrice = 23400.0
 let mockOi = 1_250_000
 let mockPrevAtr = 85.5
 
 export function generateMockMarketData(symbol = 'NIFTY'): MarketData {
   // Simulate realistic price movement
   const noise = (Math.random() - 0.5) * 40
-  mockPrice = Math.max(18000, Math.min(21000, mockPrice + noise))
+  mockPrice = Math.max(22000, Math.min(25000, mockPrice + noise))
 
   const high = mockPrice + Math.random() * 60
   const low = mockPrice - Math.random() * 60
